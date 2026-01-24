@@ -1,157 +1,423 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Phát YouTube (cố gắng chạy khi tắt màn hình)</title>
-  <style>
-    body { font-family: system-ui, -apple-system, Roboto, "Segoe UI", Arial; padding: 20px; }
-    label, input, button { display:block; margin:8px 0; }
-    #playerWrap { margin-top: 12px; }
-    #youtubeFrame { width: 320px; height: 180px; border: 1px solid #ddd; }
-    .small { width: 1px; height: 1px; border: 0; } /* nếu muốn ẩn video */
-    .controls { margin-top: 10px; }
-    .hint { color: #555; font-size: 0.9em; margin-top: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Trang Chủ - Minh Nhựt</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* ---------- Cơ bản & layout ---------- */
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(120deg, #e0eaff 0%, #f7f7f7 100%);
+            margin: 0; 
+            padding: 0;
+            min-height: 100vh;
+            animation: bgMove 8s infinite alternate;
+        }
+        @keyframes bgMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 100% 100%; }
+        }
+        .container {
+            max-width: 480px;
+            margin: 40px auto;
+            background: #fff;
+            box-shadow: 0 8px 32px rgba(44, 108, 223, 0.09), 0 2px 8px rgba(0,0,0,.08);
+            border-radius: 16px;
+            padding: 38px 28px;
+            position: relative;
+            animation: fadeInUp 1.2s cubic-bezier(.42,.65,.27,.99);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px) scale(.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        h1 {
+            color: #2d6cdf;
+            text-align: center;
+            margin-bottom: 18px;
+            font-size: 2.1em;
+            letter-spacing: 1px;
+            animation: titlePop .8s;
+        }
+        @keyframes titlePop {
+            from { transform: scale(0.9); opacity: 0.3; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        p {
+            text-align: center;
+            color: #444;
+            margin-bottom: 32px;
+            font-size: 1.08em;
+            animation: fadeIn 1.2s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            margin: 18px 0;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: listFadeIn 0.6s forwards;
+        }
+        li:nth-child(1) { animation-delay: 0.2s; }
+        li:nth-child(2) { animation-delay: 0.4s; }
+        li:nth-child(3) { animation-delay: 0.6s; }
+        li:nth-child(4) { animation-delay: 0.8s; }
+        li:nth-child(5) { animation-delay: 1.0s; }
+        li:nth-child(6) { animation-delay: 1.2s; }
+        li:nth-child(7) { animation-delay: 1.4s; }
+        li:nth-child(8) { animation-delay: 1.6s; }
+        li:nth-child(9) { animation-delay: 1.8s; }
+        li:nth-child(10) { animation-delay: 2.0s; }
+        li:nth-child(11) { animation-delay: 2.2s; }
+        li:nth-child(12) { animation-delay: 2.4s; }
+        li:nth-child(13) { animation-delay: 2.6s; }
+        li:nth-child(14) { animation-delay: 2.8s; }
+        li:nth-child(15) { animation-delay: 3.0s; }
+        li:nth-child(16) { animation-delay: 3.2s; }
+        @keyframes listFadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        a {
+            display: inline-block;
+            text-decoration: none;
+            background: linear-gradient(90deg, #2d6cdf 60%, #61a0ff 100%);
+            color: white;
+            padding: 14px 36px;
+            border-radius: 8px;
+            font-size: 1.14em;
+            box-shadow: 0 2px 8px rgba(44,108,223,.10);
+            transition: background 0.23s, box-shadow 0.23s, transform 0.18s;
+        }
+        a:hover {
+            background: linear-gradient(90deg, #174d9c 60%, #3e7fd8 100%);
+            box-shadow: 0 8px 24px rgba(44,108,223,.12);
+            transform: translateY(-2px) scale(1.07);
+        }
+
+        @keyframes colorShift {
+            0% { color: #2d6cdf; }
+            50% { color: #61a0ff; }
+            100% { color: #2d6cdf; }
+        }
+        .footer {
+            margin-top: 44px;
+            text-align: center;
+            color: #888;
+            font-size: 1em;
+            letter-spacing: 0.5px;
+            animation: fadeIn 1.5s;
+        }
+        .footer .name {
+            animation: colorShift 3s infinite ease-in-out;
+        }
+
+        .signature {
+            position: fixed;
+            right: 14px;
+            bottom: 10px;
+            font-size: 0.70em;
+            color: rgba(0,0,0,0.22);
+            pointer-events: none;
+            user-select: none;
+            letter-spacing: 1px;
+            animation: fadeIn 3s;
+        }
+
+        /* ---------- Khung Chúc Mừng Năm Mới (thay thế khung đếm ngược & hoa mai) ---------- */
+        :root { --box-width: 480px; }
+        .newyear-box {
+            position: relative;
+            width: 100%;
+            max-width: var(--box-width);
+            height: 220px;
+            background: linear-gradient(to bottom, #0a0a2e, #16213e, #1a1a3e);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 24px rgba(255, 200, 50, 0.08);
+            margin-bottom: 24px;
+        }
+        .newyear-canvas {
+            position: absolute;
+            inset: 0;
+            display: block;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: auto;
+        }
+        .newyear-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            z-index: 10;
+            text-align: center;
+            pointer-events: none;
+            user-select: none;
+            width: 100%;
+        }
+        .newyear-text h3 {
+            margin: 0 0 8px 0;
+            color: #fff;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            text-shadow: 0 0 18px rgba(255,100,100,0.35);
+        }
+        .newyear-text h4 {
+            margin: 0;
+            color: #ffd700;
+            font-size: 3.2rem;
+            font-weight: 800;
+            text-shadow: 0 0 30px rgba(255,100,100,0.25), 0 0 50px rgba(255,215,0,0.18);
+        }
+        @media (max-width:420px) {
+            .newyear-text h4 { font-size: 2.2rem; }
+            .newyear-box { height: 180px; }
+        }
+
+        /* small accessibility hint for decorative canvas */
+        .newyear-box[aria-hidden="true"] .newyear-canvas { display: none; }
+    </style>
 </head>
 <body>
-  <h2>Phát YouTube (dán link / id)</h2>
+    <div class="container">
+        <!-- Khung chúc mừng năm mới (thay thế vị trí khung đếm ngược + hoa mai) -->
+        <div class="newyear-box" aria-hidden="false">
+            <canvas id="fireworkCanvas" class="newyear-canvas" aria-hidden="false"></canvas>
+            <div class="newyear-text" aria-hidden="true">
+                <h3>Chúc Mừng Năm Mới</h3>
+                <h4>2026</h4>
+            </div>
+        </div>
 
-  <label for="url">Dán link YouTube hoặc ID video:</label>
-  <input id="url" placeholder="ví dụ: https://www.youtube.com/watch?v=dQw4w9WgXcQ hoặc dQw4w9WgXcQ" />
+        <!-- Nội dung gốc -->
+        <h1>Chào mừng đến với Trang Chủ!</h1>
+        <p>
+            Đây là bộ trang liên kết đến các dịch vụ và ứng dụng do chúng tôi phát triển. Hãy chọn một liên kết bên dưới để khám phá:
+        </p>
+        <ul>
+            <li>
+                <a href="https://nhut990.github.io/audio/">
+                    Audio &amp; Radio
+                </a>
+            </li>
+            <li>
+                <a href="https://nhut990.github.io/color/">
+                    Xem Mã Màu
+                </a>
+            </li>
+            <li>
+                <a href="https://nhut990.github.io/color/lcd/">
+                    TEST Màn Hình
+                </a>
+            </li>
+            <li>
+                <a href="https://nhut990.github.io/camtest/">
+                    TEST Camera - Micro
+                </a>
+            </li>
+            <li>
+                <a href="https://nhut990.github.io/piano/">
+                    Giả Lập Piano
+                </a>
+            </li>
+            <!-- Liên kết mới nằm dưới Giả Lập Piano -->
+            <li>
+                <a href="https://nhut990.github.io/piano/chord/">
+                    🎹 Hợp Âm Piano
+                </a>
+            </li>
+            <li>
+                <a href="https://nhut990.github.io/maps/">
+                    Xem Địa Chỉ Mới Sau Sáp Nhập
+                </a>
+            </li>
+            <li>
+                <a href="https://nhut990.github.io/Windows/">
+                    Windows
+                </a>
+            </li>
+            <li>
+                <a href="https://nhut990.github.io/lich/">
+                    Lịch
+                </a>
+            </li>
+            <li>
+                <a href="https://nhut990.github.io/appcuios/">
+                    Ứng Dụng Phiên Bản Cũ iOS
+                </a>
+            </li>
+            <li>
+                <a href="https://nhut990.github.io/Bundle/">
+                    Tìm Bundle ID App Store
+                </a>
+            </li>
+        </ul>
+        <div class="footer">
+            Created by <span class="name">Minh Nhựt</span><br>
+            &copy; 2025
+        </div>
+    </div>
+    <div class="signature">nhut117se4</div>
 
-  <div class="controls">
-    <button id="loadBtn">Tải video</button>
-    <button id="playBtn" disabled>Play</button>
-    <button id="pauseBtn" disabled>Tạm dừng</button>
-    <label>
-      <input type="checkbox" id="hideVideo" /> Ẩn video (chỉ nghe audio)
-    </label>
-  </div>
+    <script>
+        // ---------- Fireworks cho khung Chúc Mừng Năm Mới ----------
+        (function () {
+            const canvas = document.getElementById('fireworkCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d', { alpha: true });
 
-  <div id="playerWrap">
-    <!-- IFrame sẽ được chèn ở đây -->
-    <div id="playerContainer"></div>
-  </div>
+            function resizeCanvas() {
+                const rect = canvas.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+                canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+                canvas.style.width = rect.width + 'px';
+                canvas.style.height = rect.height + 'px';
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
 
-  <p class="hint">
-    Hướng dẫn: dán link và nhấn "Tải video", sau đó nhấn Play bằng thao tác chạm để cấp quyền phát. Khóa màn hình để kiểm tra — kết quả phụ thuộc vào trình duyệt & thiết bị.
-  </p>
+            class Particle {
+                constructor(x, y, color) {
+                    this.x = x;
+                    this.y = y;
+                    this.color = color;
+                    this.radius = Math.random() * 3 + 1;
+                    const speed = Math.random() * 5 + 2;
+                    const angle = Math.random() * Math.PI * 2;
+                    this.velocity = { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
+                    this.gravity = 0.06;
+                    this.friction = 0.995;
+                    this.opacity = 1;
+                    this.fade = Math.random() * 0.015 + 0.008;
+                }
+                update() {
+                    this.velocity.y += this.gravity;
+                    this.velocity.x *= this.friction;
+                    this.velocity.y *= this.friction;
+                    this.x += this.velocity.x;
+                    this.y += this.velocity.y;
+                    this.opacity -= this.fade;
+                }
+                draw(ctx) {
+                    if (this.opacity <= 0) return;
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, this.opacity);
+                    ctx.beginPath();
+                    ctx.fillStyle = this.color;
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.closePath();
+                    ctx.restore();
+                }
+            }
 
-  <script src="https://www.youtube.com/iframe_api"></script>
-  <script>
-    // Utility: parse YouTube video ID từ URL hoặc ID trực tiếp
-    function parseYouTubeID(input) {
-      if (!input) return null;
-      input = input.trim();
-      // Nếu đúng dạng ID 11 ký tự (cơ bản)
-      const idMatch = input.match(/^[a-zA-Z0-9_-]{11}$/);
-      if (idMatch) return idMatch[0];
+            class Firework {
+                constructor(x, y) {
+                    this.x = x;
+                    this.y = y;
+                    this.velocity = { x: (Math.random() - 0.5) * 2, y: - (Math.random() * 6 + 8) };
+                    this.exploded = false;
+                    this.particles = [];
+                    this.color = `hsl(${Math.floor(Math.random() * 360)},100%,55%)`;
+                    this.trail = [];
+                }
+                update(canvasHeight) {
+                    if (!this.exploded) {
+                        this.trail.push({ x: this.x, y: this.y });
+                        if (this.trail.length > 8) this.trail.shift();
+                        this.velocity.y += 0.18;
+                        this.x += this.velocity.x;
+                        this.y += this.velocity.y;
+                        // explode when velocity.y >= 0 (peak) or it reaches upper area
+                        if (this.velocity.y >= 0 || this.y < canvasHeight * 0.15) {
+                            this.explode();
+                        }
+                    } else {
+                        for (let i = this.particles.length - 1; i >= 0; i--) {
+                            this.particles[i].update();
+                            if (this.particles[i].opacity <= 0) this.particles.splice(i, 1);
+                        }
+                    }
+                }
+                explode() {
+                    this.exploded = true;
+                    const count = Math.floor(Math.random() * 80 + 60);
+                    for (let i = 0; i < count; i++) {
+                        this.particles.push(new Particle(this.x, this.y, this.color));
+                    }
+                }
+                draw(ctx) {
+                    if (!this.exploded) {
+                        ctx.beginPath();
+                        ctx.lineWidth = 2;
+                        ctx.strokeStyle = this.color;
+                        for (let i = 0; i < this.trail.length; i++) {
+                            const p = this.trail[i];
+                            if (i === 0) ctx.moveTo(p.x, p.y);
+                            else ctx.lineTo(p.x, p.y);
+                        }
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.fillStyle = this.color;
+                        ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else {
+                        this.particles.forEach(p => p.draw(ctx));
+                    }
+                }
+            }
 
-      // Các dạng URL phổ biến
-      const urlMatch = input.match(
-        /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?.*v=|embed\/|v\/|shorts\/))([a-zA-Z0-9_-]{11})/
-      );
-      return urlMatch ? urlMatch[1] : null;
-    }
+            let fireworks = [];
 
-    let player = null;
-    let pendingVideoId = null;
+            function createFirework(x) {
+                const startX = (typeof x === 'number') ? x : Math.random() * canvas.clientWidth;
+                const startY = canvas.clientHeight;
+                fireworks.push(new Firework(startX, startY));
+            }
 
-    // Khi API YouTube sẵn sàng, hàm này sẽ gọi
-    function onYouTubeIframeAPIReady() {
-      // nothing initially; we'll tạo player khi có video
-    }
+            function animate() {
+                // slight trail by painting a translucent rect
+                ctx.fillStyle = 'rgba(10, 10, 30, 0.18)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    function createOrLoadPlayer(videoId) {
-      pendingVideoId = videoId;
-      const container = document.getElementById('playerContainer');
+                if (Math.random() < 0.06) createFirework();
 
-      if (!player) {
-        // tạo iframe player
-        player = new YT.Player(container, {
-          height: '180',
-          width: '320',
-          videoId: videoId,
-          playerVars: {
-            enablejsapi: 1,
-            origin: location.origin,
-            rel: 0,
-            playsinline: 1, // iOS inline playback
-            modestbranding: 1,
-            controls: 1
-          },
-          events: {
-            onReady: onPlayerReady,
-            onStateChange: onPlayerStateChange,
-            onError: onPlayerError
-          }
-        });
-      } else {
-        player.loadVideoById(videoId);
-      }
-    }
+                for (let i = fireworks.length - 1; i >= 0; i--) {
+                    const fw = fireworks[i];
+                    fw.update(canvas.clientHeight);
+                    fw.draw(ctx);
+                    if (fw.exploded && fw.particles.length === 0) fireworks.splice(i, 1);
+                }
 
-    function onPlayerReady(event) {
-      document.getElementById('playBtn').disabled = false;
-      document.getElementById('pauseBtn').disabled = false;
+                requestAnimationFrame(animate);
+            }
 
-      // Thiết lập Media Session (nếu được hỗ trợ) để trình duyệt nhận dạng media
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: 'YouTube playback',
-          artist: '',
-        });
-        navigator.mediaSession.setActionHandler('play', function() { player.playVideo(); });
-        navigator.mediaSession.setActionHandler('pause', function() { player.pauseVideo(); });
-      }
-    }
+            // Initial bursts
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => createFirework(), i * 300);
+            }
 
-    function onPlayerStateChange(e) {
-      // bạn có thể cập nhật UI theo trạng thái nếu cần
-      // YT.PlayerState.ENDED / PLAYING / PAUSED ...
-    }
+            // Click to launch
+            canvas.addEventListener('click', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                createFirework(x);
+            });
 
-    function onPlayerError(e) {
-      alert('Lỗi khi tải video YouTube. Vui lòng kiểm tra ID/link và thử lại.');
-    }
-
-    // DOM handlers
-    document.getElementById('loadBtn').addEventListener('click', function() {
-      const input = document.getElementById('url').value;
-      const vid = parseYouTubeID(input);
-      if (!vid) {
-        alert('Không nhận diện được ID YouTube. Vui lòng dán link hợp lệ hoặc ID (11 ký tự).');
-        return;
-      }
-      createOrLoadPlayer(vid);
-    });
-
-    document.getElementById('playBtn').addEventListener('click', function() {
-      if (player && player.playVideo) {
-        // Yêu cầu play phải là thao tác người dùng -> tốt để cho phép phát nền trên nhiều trình duyệt
-        player.playVideo();
-      }
-    });
-
-    document.getElementById('pauseBtn').addEventListener('click', function() {
-      if (player && player.pauseVideo) {
-        player.pauseVideo();
-      }
-    });
-
-    document.getElementById('hideVideo').addEventListener('change', function(e) {
-      const checked = e.target.checked;
-      const frame = document.querySelector('#playerContainer iframe');
-      if (!frame) return;
-      if (checked) {
-        frame.classList.add('small');
-      } else {
-        frame.classList.remove('small');
-      }
-    });
-
-    // Thêm note: một số trình duyệt chỉ cho phép autoplay khi video muted; ở đây yêu cầu người dùng nhấn Play
-  </script>
+            // Start animation
+            animate();
+        })();
+    </script>
 </body>
 </html>
