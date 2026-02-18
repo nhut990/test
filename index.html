@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Công Cụ Chuyển Đổi Định Dạng Âm Thanh</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -24,29 +20,15 @@
         .container {
             background: white;
             border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             max-width: 600px;
             width: 100%;
             padding: 40px;
         }
 
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
+        .form-group { margin-bottom: 25px; }
 
         label {
             display: block;
@@ -56,7 +38,6 @@
             font-size: 14px;
         }
 
-        /* ===== FIX IOS: Wrapper dùng label thay vì div ===== */
         .file-input-wrapper {
             position: relative;
             display: block;
@@ -64,22 +45,15 @@
             cursor: pointer;
         }
 
-        /* 
-         * FIX IOS CHÍNH:
-         * - Không dùng opacity: 0 trên iOS vì Safari ẩn luôn khả năng tap
-         * - Dùng position absolute + width/height 100% + opacity gần 0 (0.01)
-         * - QUAN TRỌNG: KHÔNG đặt pointer-events: none trên label bên trong
-         */
+        /* iOS fix: opacity 0.01 thay vì 0 */
         input[type="file"] {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0.01; /* iOS cần > 0 để nhận tap event */
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0.01;
             cursor: pointer;
             z-index: 10;
-            font-size: 16px; /* Ngăn iOS zoom khi focus */
+            font-size: 16px;
             -webkit-appearance: none;
         }
 
@@ -93,33 +67,25 @@
             border-radius: 8px;
             background-color: #f8f9ff;
             transition: all 0.3s ease;
-            pointer-events: none; /* visual layer không cản input phía trên */
+            pointer-events: none;
             min-height: 90px;
             text-align: center;
         }
 
-        .file-input-visual .icon {
-            font-size: 32px;
-            margin-bottom: 8px;
-        }
+        .file-input-visual .icon { font-size: 32px; margin-bottom: 8px; }
+        .file-input-visual .hint { color: #667eea; font-weight: 600; font-size: 14px; }
+        .file-name { color: #667eea; font-weight: 600; margin-top: 8px; font-size: 13px; }
+        .info-text { font-size: 12px; color: #666; margin-top: 8px; }
 
-        .file-input-visual .hint {
-            color: #667eea;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .file-input-wrapper:hover .file-input-visual,
-        .file-input-wrapper:active .file-input-visual {
-            background-color: #f0f2ff;
-            border-color: #764ba2;
-        }
-
-        .file-name {
-            color: #667eea;
-            font-weight: 600;
+        .ios-note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
             margin-top: 8px;
-            font-size: 13px;
+            display: none;
         }
 
         .format-group {
@@ -129,13 +95,7 @@
             margin-bottom: 25px;
         }
 
-        .format-item {
-            position: relative;
-        }
-
-        .format-item input[type="radio"] {
-            display: none;
-        }
+        .format-item input[type="radio"] { display: none; }
 
         .format-item label {
             display: flex;
@@ -158,15 +118,7 @@
             border-color: #667eea;
         }
 
-        .format-item label:hover,
-        .format-item label:active {
-            border-color: #667eea;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-        }
+        .button-group { display: flex; gap: 10px; }
 
         button {
             flex: 1;
@@ -187,31 +139,15 @@
 
         .btn-convert:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 20px rgba(102,126,234,0.4);
         }
 
-        .btn-convert:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .btn-convert:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-reset { background: #f0f0f0; color: #333; }
+        .btn-reset:hover { background: #e0e0e0; }
 
-        .btn-reset {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .btn-reset:hover {
-            background: #e0e0e0;
-        }
-
-        .progress-section {
-            margin-top: 25px;
-            display: none;
-        }
-
-        .progress-section.show {
-            display: block;
-        }
+        .progress-section { margin-top: 25px; display: none; }
+        .progress-section.show { display: block; }
 
         .progress-label {
             display: flex;
@@ -222,11 +158,7 @@
             color: #333;
         }
 
-        .progress-percentage {
-            font-weight: 700;
-            color: #667eea;
-            font-size: 16px;
-        }
+        .progress-percentage { font-weight: 700; color: #667eea; font-size: 16px; }
 
         .progress-bar-container {
             width: 100%;
@@ -234,7 +166,7 @@
             background-color: #e0e0e0;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .progress-bar-fill {
@@ -243,15 +175,10 @@
             width: 0%;
             transition: width 0.3s ease;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+            box-shadow: 0 0 10px rgba(102,126,234,0.5);
         }
 
-        .progress-text {
-            margin-top: 10px;
-            text-align: center;
-            color: #666;
-            font-size: 13px;
-        }
+        .progress-text { margin-top: 10px; text-align: center; color: #666; font-size: 13px; }
 
         .progress-steps {
             display: flex;
@@ -261,39 +188,26 @@
             color: #999;
         }
 
-        .step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-        }
+        .step { display: flex; flex-direction: column; align-items: center; gap: 5px; }
 
         .step-icon {
-            width: 30px;
-            height: 30px;
+            width: 30px; height: 30px;
             border-radius: 50%;
             background-color: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             font-size: 14px;
             transition: all 0.3s ease;
         }
 
-        .step.completed .step-icon {
-            background-color: #667eea;
-            color: white;
-        }
-
+        .step.completed .step-icon { background-color: #667eea; color: white; }
         .step.active .step-icon {
-            background-color: #667eea;
-            color: white;
+            background-color: #667eea; color: white;
             animation: pulse 1.5s ease-in-out infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
-            50% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+            0%, 100% { box-shadow: 0 0 0 0 rgba(102,126,234,0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(102,126,234,0); }
         }
 
         .result-section {
@@ -302,28 +216,11 @@
             border-top: 2px solid #f0f0f0;
             display: none;
         }
+        .result-section.show { display: block; }
 
-        .result-section.show {
-            display: block;
-        }
-
-        .result-audio {
-            background: #f8f9ff;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .result-audio h3 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        audio {
-            width: 100%;
-            margin-bottom: 10px;
-        }
+        .result-audio { background: #f8f9ff; padding: 20px; border-radius: 8px; margin-bottom: 15px; }
+        .result-audio h3 { color: #333; margin-bottom: 10px; font-size: 14px; }
+        audio { width: 100%; margin-bottom: 10px; }
 
         .download-btn {
             display: inline-block;
@@ -334,43 +231,23 @@
             border-radius: 6px;
             font-size: 13px;
             font-weight: 600;
-            transition: all 0.3s ease;
         }
+        .download-btn:hover { background: #764ba2; }
 
-        .download-btn:hover {
-            background: #764ba2;
-        }
-
-        .message {
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: none;
-            font-size: 14px;
-        }
-
+        .message { padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: none; font-size: 14px; }
         .message.show { display: block; }
         .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .message.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-
-        .info-text {
-            font-size: 12px;
-            color: #666;
-            margin-top: 8px;
-        }
 
         .spinner {
             display: none;
-            width: 20px;
-            height: 20px;
+            width: 20px; height: 20px;
             border: 3px solid #f3f3f3;
             border-top: 3px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-right: 8px;
         }
-
         .spinner.show { display: inline-block; }
 
         @keyframes spin {
@@ -378,397 +255,357 @@
             100% { transform: rotate(360deg); }
         }
 
-        .loading-text {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Badge iOS hint */
-        .ios-note {
-            display: none;
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            color: #856404;
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 12px;
-            margin-top: 8px;
-        }
-
         @media (max-width: 480px) {
             .container { padding: 20px; }
             h1 { font-size: 24px; }
-            .format-group { grid-template-columns: repeat(2, 1fr); }
             .button-group { flex-direction: column; }
             .progress-steps { flex-direction: column; gap: 10px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎵 Chuyển Đổi Âm Thanh</h1>
-        <p class="subtitle">Chuyển đổi giữa các định dạng âm thanh phổ biến</p>
+<div class="container">
+    <h1>🎵 Chuyển Đổi Âm Thanh</h1>
+    <p class="subtitle">Chuyển đổi giữa các định dạng âm thanh phổ biến</p>
 
-        <div id="message" class="message"></div>
+    <div id="message" class="message"></div>
 
-        <div class="form-group">
-            <label>Chọn File Âm Thanh</label>
-
-            <!-- 
-                FIX iOS: Dùng <label> làm wrapper thay vì <div>
-                để iOS nhận diện vùng tap chính xác hơn.
-                Input KHÔNG có pointer-events: none.
-            -->
-            <label class="file-input-wrapper" id="fileWrapper" for="audioFile">
-                <input
-                    type="file"
-                    id="audioFile"
-                    name="audioFile"
-                    accept=".mp3,.wav,.ogg,.m4a,.flac,.aac,.mp4,.aiff,.wma,audio/*"
-                >
-                <div class="file-input-visual" id="fileLabel">
-                    <div class="icon">📁</div>
-                    <div class="hint">Kéo file vào hoặc nhấn để chọn</div>
-                </div>
-            </label>
-
-            <div class="file-name" id="fileName"></div>
-            <div class="info-text">Hỗ trợ: MP3, WAV, OGG, M4A, FLAC, AAC và nhiều định dạng khác</div>
-            <div class="ios-note" id="iosNote">
-                📱 Trên iOS: Chọn "Browse" → "On My iPhone" hoặc iCloud Drive để tìm file âm thanh.
+    <div class="form-group">
+        <label>Chọn File Âm Thanh</label>
+        <label class="file-input-wrapper" for="audioFile">
+            <input
+                type="file"
+                id="audioFile"
+                name="audioFile"
+                accept=".mp3,.wav,.ogg,.m4a,.flac,.aac,.aiff,.wma,audio/*"
+            >
+            <div class="file-input-visual">
+                <div class="icon">📁</div>
+                <div class="hint">Nhấn để chọn file âm thanh</div>
             </div>
-        </div>
-
-        <div class="form-group">
-            <label>Định Dạng Đích</label>
-            <div class="format-group">
-                <div class="format-item">
-                    <input type="radio" id="mp3" name="format" value="mp3">
-                    <label for="mp3">MP3</label>
-                </div>
-                <div class="format-item">
-                    <input type="radio" id="wav" name="format" value="wav">
-                    <label for="wav">WAV</label>
-                </div>
-                <div class="format-item">
-                    <input type="radio" id="ogg" name="format" value="ogg">
-                    <label for="ogg">OGG</label>
-                </div>
-                <div class="format-item">
-                    <input type="radio" id="m4a" name="format" value="m4a">
-                    <label for="m4a">M4A</label>
-                </div>
-            </div>
-        </div>
-
-        <div class="button-group">
-            <button class="btn-convert" id="convertBtn" disabled>
-                <span class="spinner" id="spinner"></span>
-                <span id="btnText">Chuyển Đổi</span>
-            </button>
-            <button class="btn-reset" id="resetBtn">Đặt Lại</button>
-        </div>
-
-        <div class="progress-section" id="progressSection">
-            <div class="progress-label">
-                <span>Tiến độ chuyển đổi</span>
-                <span class="progress-percentage" id="progressPercent">0%</span>
-            </div>
-            <div class="progress-bar-container">
-                <div class="progress-bar-fill" id="progressBar"></div>
-            </div>
-            <div class="progress-text" id="progressText">Đang khởi tạo...</div>
-            <div class="progress-steps">
-                <div class="step completed" id="step1">
-                    <div class="step-icon">✓</div>
-                    <div>Tải File</div>
-                </div>
-                <div class="step active" id="step2">
-                    <div class="step-icon">⚙</div>
-                    <div>Xử Lý</div>
-                </div>
-                <div class="step" id="step3">
-                    <div class="step-icon">📦</div>
-                    <div>Hoàn Thành</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="result-section" id="resultSection">
-            <h2 style="margin-bottom: 20px; color: #333; font-size: 18px;">✓ Kết Quả Chuyển Đổi</h2>
-            <div class="result-audio" id="resultAudio"></div>
+        </label>
+        <div class="file-name" id="fileName"></div>
+        <div class="info-text">Hỗ trợ: MP3, WAV, OGG, M4A, FLAC, AAC...</div>
+        <div class="ios-note" id="iosNote">
+            📱 iOS: Sau khi nhấn → chọn <strong>Browse</strong> → tìm file trong <strong>Files / iCloud Drive / On My iPhone</strong>
         </div>
     </div>
 
-    <script>
-        const audioFile = document.getElementById('audioFile');
-        const fileWrapper = document.getElementById('fileWrapper');
-        const fileName = document.getElementById('fileName');
-        const convertBtn = document.getElementById('convertBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const resultSection = document.getElementById('resultSection');
-        const resultAudio = document.getElementById('resultAudio');
-        const messageEl = document.getElementById('message');
-        const spinner = document.getElementById('spinner');
-        const btnText = document.getElementById('btnText');
-        const progressSection = document.getElementById('progressSection');
-        const progressBar = document.getElementById('progressBar');
-        const progressPercent = document.getElementById('progressPercent');
-        const progressText = document.getElementById('progressText');
-        const step1 = document.getElementById('step1');
-        const step2 = document.getElementById('step2');
-        const step3 = document.getElementById('step3');
-        const iosNote = document.getElementById('iosNote');
+    <div class="form-group">
+        <label>Định Dạng Đích</label>
+        <div class="format-group">
+            <div class="format-item">
+                <input type="radio" id="fmt_mp3" name="format" value="mp3">
+                <label for="fmt_mp3">MP3</label>
+            </div>
+            <div class="format-item">
+                <input type="radio" id="fmt_wav" name="format" value="wav" checked>
+                <label for="fmt_wav">WAV</label>
+            </div>
+            <div class="format-item">
+                <input type="radio" id="fmt_ogg" name="format" value="ogg">
+                <label for="fmt_ogg">OGG</label>
+            </div>
+            <div class="format-item">
+                <input type="radio" id="fmt_m4a" name="format" value="m4a">
+                <label for="fmt_m4a">M4A</label>
+            </div>
+        </div>
+    </div>
 
-        let selectedFile = null;
+    <div class="button-group">
+        <button class="btn-convert" id="convertBtn" disabled>
+            <span class="spinner" id="spinner"></span>
+            <span id="btnText">Chuyển Đổi</span>
+        </button>
+        <button class="btn-reset" id="resetBtn">Đặt Lại</button>
+    </div>
 
-        // Phát hiện iOS để hiện hướng dẫn
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        if (isIOS) {
-            iosNote.style.display = 'block';
-        }
+    <div class="progress-section" id="progressSection">
+        <div class="progress-label">
+            <span>Tiến độ</span>
+            <span class="progress-percentage" id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">Đang khởi tạo...</div>
+        <div class="progress-steps">
+            <div class="step" id="step1"><div class="step-icon">📂</div><div>Đọc File</div></div>
+            <div class="step" id="step2"><div class="step-icon">⚙️</div><div>Xử Lý</div></div>
+            <div class="step" id="step3"><div class="step-icon">📦</div><div>Hoàn Thành</div></div>
+        </div>
+    </div>
 
-        // =============================================
-        // FIX DRAG & DROP (chỉ desktop, không can thiệp iOS)
-        // =============================================
-        if (!isIOS) {
-            fileWrapper.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            });
+    <div class="result-section" id="resultSection">
+        <h2 style="margin-bottom:20px;color:#333;font-size:18px;">✓ Kết Quả Chuyển Đổi</h2>
+        <div class="result-audio" id="resultAudio"></div>
+    </div>
+</div>
 
-            fileWrapper.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-            });
+<script>
+(function() {
+    'use strict';
 
-            fileWrapper.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const files = e.dataTransfer.files;
-                if (files && files.length > 0) {
-                    processFile(files[0]);
-                }
-            });
-        }
+    var audioFileEl    = document.getElementById('audioFile');
+    var fileNameEl     = document.getElementById('fileName');
+    var convertBtn     = document.getElementById('convertBtn');
+    var resetBtn       = document.getElementById('resetBtn');
+    var resultSection  = document.getElementById('resultSection');
+    var resultAudio    = document.getElementById('resultAudio');
+    var messageEl      = document.getElementById('message');
+    var spinnerEl      = document.getElementById('spinner');
+    var btnTextEl      = document.getElementById('btnText');
+    var progressSection= document.getElementById('progressSection');
+    var progressBarEl  = document.getElementById('progressBar');
+    var progressPctEl  = document.getElementById('progressPercent');
+    var progressTxtEl  = document.getElementById('progressText');
+    var step1El = document.getElementById('step1');
+    var step2El = document.getElementById('step2');
+    var step3El = document.getElementById('step3');
+    var iosNote = document.getElementById('iosNote');
 
-        // =============================================
-        // FIX IOS: Lắng nghe sự kiện change trực tiếp
-        // iOS chỉ trigger change khi user thực sự chọn file
-        // =============================================
-        audioFile.addEventListener('change', function(e) {
-            const file = this.files && this.files[0];
-            if (file) {
-                processFile(file);
-            }
+    var selectedFile = null;
+
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) iosNote.style.display = 'block';
+
+    // Drag & drop — desktop only
+    if (!isIOS) {
+        var wrapper = document.querySelector('.file-input-wrapper');
+        wrapper.addEventListener('dragover', function(e) { e.preventDefault(); });
+        wrapper.addEventListener('drop', function(e) {
+            e.preventDefault();
+            var f = e.dataTransfer.files[0];
+            if (f) processFile(f);
         });
+    }
 
-        function processFile(file) {
-            // iOS đôi khi trả về type rỗng → kiểm tra cả extension
-            const name = file.name || '';
-            const ext = name.split('.').pop().toLowerCase();
-            const audioExts = ['mp3','wav','ogg','m4a','flac','aac','aiff','wma','mp4','opus','webm'];
-            const isAudioType = file.type && file.type.startsWith('audio/');
-            const isAudioExt = audioExts.includes(ext);
+    audioFileEl.addEventListener('change', function() {
+        var f = this.files && this.files[0];
+        if (f) processFile(f);
+    });
 
-            if (!isAudioType && !isAudioExt) {
-                showMessage('Vui lòng chọn một file âm thanh hợp lệ! (MP3, WAV, OGG, M4A...)', 'error');
-                audioFile.value = '';
-                return;
-            }
-
-            selectedFile = file;
-            fileName.textContent = `✓ Đã chọn: ${file.name}`;
-            convertBtn.disabled = false;
-            hideMessage();
-            resultSection.classList.remove('show');
-            progressSection.classList.remove('show');
+    function processFile(file) {
+        var ext = ((file.name || '').split('.').pop() || '').toLowerCase();
+        var audioExts = ['mp3','wav','ogg','m4a','flac','aac','aiff','wma','mp4','opus','webm'];
+        var isAudio = (file.type && file.type.startsWith('audio/')) || audioExts.indexOf(ext) !== -1;
+        if (!isAudio) {
+            showMsg('Vui lòng chọn file âm thanh hợp lệ (MP3, WAV, M4A...)', 'error');
+            audioFileEl.value = '';
+            return;
         }
+        selectedFile = file;
+        fileNameEl.textContent = '✓ Đã chọn: ' + file.name;
+        convertBtn.disabled = false;
+        hideMsg();
+        resultSection.classList.remove('show');
+        progressSection.classList.remove('show');
+    }
 
-        convertBtn.addEventListener('click', async () => {
-            if (!selectedFile) {
-                showMessage('Vui lòng chọn một file âm thanh!', 'error');
-                return;
-            }
-            const format = document.querySelector('input[name="format"]:checked');
-            if (!format) {
-                showMessage('Vui lòng chọn định dạng đích!', 'error');
-                return;
-            }
-            convertAudio(selectedFile, format.value);
+    convertBtn.addEventListener('click', function() {
+        if (!selectedFile) { showMsg('Vui lòng chọn file âm thanh!', 'error'); return; }
+        var fmt = document.querySelector('input[name="format"]:checked');
+        if (!fmt) { showMsg('Vui lòng chọn định dạng đích!', 'error'); return; }
+        doConvert(selectedFile, fmt.value);
+    });
+
+    resetBtn.addEventListener('click', function() {
+        audioFileEl.value = '';
+        selectedFile = null;
+        fileNameEl.textContent = '';
+        convertBtn.disabled = true;
+        resultSection.classList.remove('show');
+        progressSection.classList.remove('show');
+        hideMsg();
+        document.getElementById('fmt_wav').checked = true;
+    });
+
+    // ── Helpers ──────────────────────────────────────────────────
+    function setProgress(pct, text, stepN) {
+        progressBarEl.style.width = pct + '%';
+        progressPctEl.textContent = Math.round(pct) + '%';
+        progressTxtEl.textContent = text;
+        var steps = [step1El, step2El, step3El];
+        steps.forEach(function(s, i) {
+            s.classList.remove('active', 'completed');
+            if (stepN === undefined) return;
+            if (i + 1 < stepN)  s.classList.add('completed');
+            if (i + 1 === stepN) s.classList.add('active');
         });
+    }
 
-        resetBtn.addEventListener('click', () => {
-            audioFile.value = '';
-            selectedFile = null;
-            fileName.textContent = '';
-            convertBtn.disabled = true;
-            resultSection.classList.remove('show');
-            progressSection.classList.remove('show');
-            hideMessage();
-            document.querySelectorAll('input[name="format"]').forEach(r => r.checked = false);
-            document.getElementById('mp3').checked = true;
-        });
+    function sleep(ms) {
+        return new Promise(function(r) { setTimeout(r, ms); });
+    }
 
-        function updateProgress(percentage, text, step) {
-            progressBar.style.width = percentage + '%';
-            progressPercent.textContent = Math.round(percentage) + '%';
-            progressText.textContent = text;
+    function showMsg(text, type) {
+        messageEl.textContent = text;
+        messageEl.className = 'message show ' + (type || '');
+    }
+    function hideMsg() { messageEl.className = 'message'; }
 
-            step1.classList.remove('active', 'completed');
-            step2.classList.remove('active', 'completed');
-            step3.classList.remove('active', 'completed');
+    // ── iOS decodeAudioData FIX ───────────────────────────────────
+    // iOS Safari (khá phổ biến trên iPhone 7/8) hay treo mãi ở
+    // decodeAudioData() — không resolve, không reject — đặc biệt
+    // với file có bitrate cao hoặc VBR MP3.
+    // Giải pháp: dùng callback-style (cũ hơn, tương thích hơn) +
+    // timeout cứng 15 giây để thoát ra.
+    function decodeAudio(ctx, arrayBuffer) {
+        return new Promise(function(resolve, reject) {
+            var done = false;
 
-            if (step >= 1) step1.classList.add('completed');
-            if (step > 1 && step < 3) step2.classList.add('active');
-            if (step >= 2 && step < 3) step2.classList.add('completed');
-            if (step >= 3) step3.classList.add('active');
-            if (step > 3) {
-                step3.classList.remove('active');
-                step3.classList.add('completed');
+            var timer = setTimeout(function() {
+                if (done) return;
+                done = true;
+                reject(new Error(
+                    'Giải mã quá lâu (>15s). File có thể bị lỗi hoặc codec không được hỗ trợ. ' +
+                    'Hãy thử file MP3 hoặc WAV tiêu chuẩn khác.'
+                ));
+            }, 15000);
+
+            function onSuccess(buf) {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                resolve(buf);
             }
-        }
 
-        async function convertAudio(file, targetFormat) {
+            function onError() {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                reject(new Error('File không đọc được. Thử file MP3 hoặc WAV thuần túy.'));
+            }
+
             try {
-                convertBtn.disabled = true;
-                spinner.classList.add('show');
-                btnText.textContent = 'Đang chuyển đổi...';
-                hideMessage();
-                progressSection.classList.add('show');
-                resultSection.classList.remove('show');
+                // Callback-style hoạt động tốt hơn Promise-style trên iOS cũ
+                ctx.decodeAudioData(arrayBuffer, onSuccess, onError);
+            } catch (e) {
+                clearTimeout(timer);
+                reject(e);
+            }
+        });
+    }
 
-                updateProgress(10, 'Đang tải file...', 1);
-                await sleep(500);
+    // ── Encode PCM → WAV ─────────────────────────────────────────
+    function encodeWAV(samples, sampleRate) {
+        var len = samples.length;
+        var buf = new ArrayBuffer(44 + len * 2);
+        var v   = new DataView(buf);
 
-                updateProgress(25, 'Đang giải mã âm thanh...', 2);
-                const arrayBuffer = await file.arrayBuffer();
+        function w(off, s) {
+            for (var i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i));
+        }
 
-                updateProgress(40, 'Đang xử lý dữ liệu âm thanh...', 2);
+        w(0, 'RIFF');
+        v.setUint32(4,  36 + len * 2, true);
+        w(8, 'WAVE'); w(12, 'fmt ');
+        v.setUint32(16, 16, true);
+        v.setUint16(20, 1,  true);   // PCM
+        v.setUint16(22, 1,  true);   // mono
+        v.setUint32(24, sampleRate,     true);
+        v.setUint32(28, sampleRate * 2, true);
+        v.setUint16(32, 2,  true);
+        v.setUint16(34, 16, true);
+        w(36, 'data');
+        v.setUint32(40, len * 2, true);
+
+        var off = 44;
+        for (var i = 0; i < len; i++, off += 2) {
+            var x = Math.max(-1, Math.min(1, samples[i]));
+            v.setInt16(off, x < 0 ? x * 0x8000 : x * 0x7FFF, true);
+        }
+        return buf;
+    }
+
+    // ── Main convert ──────────────────────────────────────────────
+    function doConvert(file, targetFmt) {
+        convertBtn.disabled = true;
+        spinnerEl.classList.add('show');
+        btnTextEl.textContent = 'Đang chuyển đổi...';
+        hideMsg();
+        progressSection.classList.add('show');
+        resultSection.classList.remove('show');
+
+        var audioCtx = null;
+
+        (async function() {
+            try {
+                setProgress(10, 'Đang đọc file...', 1);
                 await sleep(300);
 
-                // FIX IOS: iOS yêu cầu AudioContext được tạo sau user gesture
-                // và cần resume() nếu bị suspended
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (!AudioCtx) {
-                    throw new Error('Trình duyệt không hỗ trợ Web Audio API');
-                }
-                const audioContext = new AudioCtx();
+                // Đọc file thành ArrayBuffer
+                var arrayBuffer = await file.arrayBuffer();
 
-                // iOS Safari đôi khi suspend context ngay sau khi tạo
-                if (audioContext.state === 'suspended') {
-                    await audioContext.resume();
-                }
+                setProgress(30, 'Khởi tạo bộ giải mã âm thanh...', 2);
+                await sleep(200);
 
-                let audioBuffer;
-                try {
-                    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-                } catch (decodeErr) {
-                    // iOS không decode được một số codec → fallback
-                    throw new Error(`Không thể đọc file này trên thiết bị của bạn. Thử file MP3 hoặc WAV thuần túy.`);
+                var AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) throw new Error('Trình duyệt không hỗ trợ Web Audio API');
+
+                audioCtx = new AudioCtx({ sampleRate: 44100 });
+
+                // iOS Safari tự suspend context — cần resume trước khi decode
+                if (audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
                 }
 
-                updateProgress(60, 'Đang chuyển đổi định dạng...', 2);
-                await sleep(400);
+                setProgress(40, 'Đang giải mã âm thanh... (có thể mất vài giây)', 2);
 
-                updateProgress(75, 'Đang mã hóa file...', 2);
-                const convertedData = encodeWAV(
-                    audioBuffer.getChannelData(0),
-                    audioBuffer.sampleRate
-                );
+                // ← ĐIỂM FIX CHÍNH: dùng decodeAudio() có timeout
+                var audioBuf = await decodeAudio(audioCtx, arrayBuffer);
 
-                await sleep(300);
-                updateProgress(90, 'Đang hoàn tất...', 3);
+                setProgress(70, 'Đang mã hoá WAV...', 2);
+                await sleep(200);
 
-                const blob = new Blob([convertedData], { type: 'audio/wav' });
-                const url = URL.createObjectURL(blob);
+                var wavData = encodeWAV(audioBuf.getChannelData(0), audioBuf.sampleRate);
 
-                updateProgress(100, 'Chuyển đổi thành công!', 4);
+                setProgress(88, 'Đang tạo file kết quả...', 3);
+                await sleep(150);
+
+                var blob = new Blob([wavData], { type: 'audio/wav' });
+                var url  = URL.createObjectURL(blob);
+
+                setProgress(100, 'Hoàn thành!');
+                step1El.classList.add('completed');
+                step2El.classList.add('completed');
+                step3El.classList.remove('active');
+                step3El.classList.add('completed');
+
                 await sleep(500);
 
-                displayResult(url, targetFormat, file.name);
-                showMessage('✓ Chuyển đổi thành công!', 'success');
+                // Hiển thị kết quả
+                var base = file.name.lastIndexOf('.') > 0
+                         ? file.name.substring(0, file.name.lastIndexOf('.'))
+                         : file.name;
+                var outName = base + '_converted.wav';
 
-                setTimeout(() => progressSection.classList.remove('show'), 2000);
+                resultAudio.innerHTML =
+                    '<h3>File: ' + outName + '</h3>' +
+                    '<audio controls playsinline webkit-playsinline>' +
+                    '<source src="' + url + '" type="audio/wav">' +
+                    'Trình duyệt không hỗ trợ phát âm thanh.</audio><br>' +
+                    '<a href="' + url + '" download="' + outName + '" class="download-btn">⬇️ Tải về</a>';
 
-                audioContext.close();
+                resultSection.classList.add('show');
+                showMsg('✓ Chuyển đổi thành công!', 'success');
+                setTimeout(function() { progressSection.classList.remove('show'); }, 1500);
 
-            } catch (error) {
-                console.error('Lỗi:', error);
-                updateProgress(0, 'Lỗi: ' + error.message, 0);
-                progressBar.style.width = '0%';
-                showMessage('Lỗi khi chuyển đổi: ' + error.message, 'error');
-                setTimeout(() => progressSection.classList.remove('show'), 3000);
+            } catch (err) {
+                console.error('Lỗi chuyển đổi:', err);
+                showMsg('❌ ' + (err.message || 'Lỗi không xác định'), 'error');
+                progressSection.classList.remove('show');
             } finally {
+                if (audioCtx) { try { audioCtx.close(); } catch(e){} }
                 convertBtn.disabled = false;
-                spinner.classList.remove('show');
-                btnText.textContent = 'Chuyển Đổi';
+                spinnerEl.classList.remove('show');
+                btnTextEl.textContent = 'Chuyển Đổi';
             }
-        }
+        })();
+    }
 
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-
-        function encodeWAV(samples, sampleRate) {
-            const buffer = new ArrayBuffer(44 + samples.length * 2);
-            const view = new DataView(buffer);
-
-            const writeString = (offset, string) => {
-                for (let i = 0; i < string.length; i++) {
-                    view.setUint8(offset + i, string.charCodeAt(i));
-                }
-            };
-
-            writeString(0, 'RIFF');
-            view.setUint32(4, 36 + samples.length * 2, true);
-            writeString(8, 'WAVE');
-            writeString(12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, 1, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * 2, true);
-            view.setUint16(32, 2, true);
-            view.setUint16(34, 16, true);
-            writeString(36, 'data');
-            view.setUint32(40, samples.length * 2, true);
-
-            let offset = 44;
-            for (let i = 0; i < samples.length; i++, offset += 2) {
-                const s = Math.max(-1, Math.min(1, samples[i]));
-                view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-            }
-            return buffer;
-        }
-
-        function displayResult(url, format, originalName) {
-            const baseName = originalName.substring(0, originalName.lastIndexOf('.')) || originalName;
-            const newName = `${baseName}_converted.wav`;
-
-            resultAudio.innerHTML = `
-                <h3>File đã chuyển đổi: ${newName}</h3>
-                <audio controls playsinline>
-                    <source src="${url}" type="audio/wav">
-                    Trình duyệt không hỗ trợ phát âm thanh.
-                </audio>
-                <br>
-                <a href="${url}" download="${newName}" class="download-btn">⬇️ Tải về</a>
-            `;
-            resultSection.classList.add('show');
-        }
-
-        function showMessage(text, type) {
-            messageEl.textContent = text;
-            messageEl.className = `message show ${type}`;
-        }
-
-        function hideMessage() {
-            messageEl.classList.remove('show');
-        }
-
-        // Mặc định chọn MP3
-        document.getElementById('mp3').checked = true;
-    </script>
+})();
+</script>
 </body>
 </html>
