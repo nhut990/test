@@ -2,422 +2,773 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Trang Chủ - Minh Nhựt</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Công Cụ Chuyển Đổi Định Dạng Âm Thanh</title>
     <style>
-        /* ---------- Cơ bản & layout ---------- */
-        body { 
-            font-family: Arial, sans-serif; 
-            background: linear-gradient(120deg, #e0eaff 0%, #f7f7f7 100%);
-            margin: 0; 
+        * {
+            margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            animation: bgMove 8s infinite alternate;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
-        @keyframes bgMove {
-            0% { background-position: 0 0; }
-            100% { background-position: 100% 100%; }
-        }
+
         .container {
-            max-width: 480px;
-            margin: 40px auto;
-            background: #fff;
-            box-shadow: 0 8px 32px rgba(44, 108, 223, 0.09), 0 2px 8px rgba(0,0,0,.08);
-            border-radius: 16px;
-            padding: 38px 28px;
-            position: relative;
-            animation: fadeInUp 1.2s cubic-bezier(.42,.65,.27,.99);
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(40px) scale(.97); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        h1 {
-            color: #2d6cdf;
-            text-align: center;
-            margin-bottom: 18px;
-            font-size: 2.1em;
-            letter-spacing: 1px;
-            animation: titlePop .8s;
-        }
-        @keyframes titlePop {
-            from { transform: scale(0.9); opacity: 0.3; }
-            to { transform: scale(1); opacity: 1; }
-        }
-        p {
-            text-align: center;
-            color: #444;
-            margin-bottom: 32px;
-            font-size: 1.08em;
-            animation: fadeIn 1.2s;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-        li {
-            margin: 18px 0;
-            text-align: center;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: listFadeIn 0.6s forwards;
-        }
-        li:nth-child(1) { animation-delay: 0.2s; }
-        li:nth-child(2) { animation-delay: 0.4s; }
-        li:nth-child(3) { animation-delay: 0.6s; }
-        li:nth-child(4) { animation-delay: 0.8s; }
-        li:nth-child(5) { animation-delay: 1.0s; }
-        li:nth-child(6) { animation-delay: 1.2s; }
-        li:nth-child(7) { animation-delay: 1.4s; }
-        li:nth-child(8) { animation-delay: 1.6s; }
-        li:nth-child(9) { animation-delay: 1.8s; }
-        li:nth-child(10) { animation-delay: 2.0s; }
-        li:nth-child(11) { animation-delay: 2.2s; }
-        li:nth-child(12) { animation-delay: 2.4s; }
-        li:nth-child(13) { animation-delay: 2.6s; }
-        li:nth-child(14) { animation-delay: 2.8s; }
-        li:nth-child(15) { animation-delay: 3.0s; }
-        li:nth-child(16) { animation-delay: 3.2s; }
-        @keyframes listFadeIn {
-            to { opacity: 1; transform: translateY(0); }
-        }
-        a {
-            display: inline-block;
-            text-decoration: none;
-            background: linear-gradient(90deg, #2d6cdf 60%, #61a0ff 100%);
-            color: white;
-            padding: 14px 36px;
-            border-radius: 8px;
-            font-size: 1.14em;
-            box-shadow: 0 2px 8px rgba(44,108,223,.10);
-            transition: background 0.23s, box-shadow 0.23s, transform 0.18s;
-        }
-        a:hover {
-            background: linear-gradient(90deg, #174d9c 60%, #3e7fd8 100%);
-            box-shadow: 0 8px 24px rgba(44,108,223,.12);
-            transform: translateY(-2px) scale(1.07);
-        }
-
-        @keyframes colorShift {
-            0% { color: #2d6cdf; }
-            50% { color: #61a0ff; }
-            100% { color: #2d6cdf; }
-        }
-        .footer {
-            margin-top: 44px;
-            text-align: center;
-            color: #888;
-            font-size: 1em;
-            letter-spacing: 0.5px;
-            animation: fadeIn 1.5s;
-        }
-        .footer .name {
-            animation: colorShift 3s infinite ease-in-out;
-        }
-
-        .signature {
-            position: fixed;
-            right: 14px;
-            bottom: 10px;
-            font-size: 0.70em;
-            color: rgba(0,0,0,0.22);
-            pointer-events: none;
-            user-select: none;
-            letter-spacing: 1px;
-            animation: fadeIn 3s;
-        }
-
-        /* ---------- Khung Chúc Mừng Năm Mới (thay thế khung đếm ngược & hoa mai) ---------- */
-        :root { --box-width: 480px; }
-        .newyear-box {
-            position: relative;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
             width: 100%;
-            max-width: var(--box-width);
-            height: 220px;
-            background: linear-gradient(to bottom, #0a0a2e, #16213e, #1a1a3e);
-            border-radius: 14px;
-            overflow: hidden;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 24px rgba(255, 200, 50, 0.08);
-            margin-bottom: 24px;
+            padding: 40px;
         }
-        .newyear-canvas {
-            position: absolute;
-            inset: 0;
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* ===== FIX IOS: Wrapper dùng label thay vì div ===== */
+        .file-input-wrapper {
+            position: relative;
             display: block;
             width: 100%;
-            height: 100%;
-            z-index: 2;
-            pointer-events: auto;
-        }
-        .newyear-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%,-50%);
-            z-index: 10;
-            text-align: center;
-            pointer-events: none;
-            user-select: none;
-            width: 100%;
-        }
-        .newyear-text h3 {
-            margin: 0 0 8px 0;
-            color: #fff;
-            font-size: 1.1rem;
-            letter-spacing: 1px;
-            text-shadow: 0 0 18px rgba(255,100,100,0.35);
-        }
-        .newyear-text h4 {
-            margin: 0;
-            color: #ffd700;
-            font-size: 3.2rem;
-            font-weight: 800;
-            text-shadow: 0 0 30px rgba(255,100,100,0.25), 0 0 50px rgba(255,215,0,0.18);
-        }
-        @media (max-width:420px) {
-            .newyear-text h4 { font-size: 2.2rem; }
-            .newyear-box { height: 180px; }
+            cursor: pointer;
         }
 
-        /* small accessibility hint for decorative canvas */
-        .newyear-box[aria-hidden="true"] .newyear-canvas { display: none; }
+        /* 
+         * FIX IOS CHÍNH:
+         * - Không dùng opacity: 0 trên iOS vì Safari ẩn luôn khả năng tap
+         * - Dùng position absolute + width/height 100% + opacity gần 0 (0.01)
+         * - QUAN TRỌNG: KHÔNG đặt pointer-events: none trên label bên trong
+         */
+        input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.01; /* iOS cần > 0 để nhận tap event */
+            cursor: pointer;
+            z-index: 10;
+            font-size: 16px; /* Ngăn iOS zoom khi focus */
+            -webkit-appearance: none;
+        }
+
+        .file-input-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 28px 20px;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            background-color: #f8f9ff;
+            transition: all 0.3s ease;
+            pointer-events: none; /* visual layer không cản input phía trên */
+            min-height: 90px;
+            text-align: center;
+        }
+
+        .file-input-visual .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .file-input-visual .hint {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .file-input-wrapper:hover .file-input-visual,
+        .file-input-wrapper:active .file-input-visual {
+            background-color: #f0f2ff;
+            border-color: #764ba2;
+        }
+
+        .file-name {
+            color: #667eea;
+            font-weight: 600;
+            margin-top: 8px;
+            font-size: 13px;
+        }
+
+        .format-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .format-item {
+            position: relative;
+        }
+
+        .format-item input[type="radio"] {
+            display: none;
+        }
+
+        .format-item label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0;
+            font-weight: 500;
+            font-size: 13px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .format-item input[type="radio"]:checked + label {
+            background-color: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .format-item label:hover,
+        .format-item label:active {
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn-convert {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-convert:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-convert:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-reset {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-reset:hover {
+            background: #e0e0e0;
+        }
+
+        .progress-section {
+            margin-top: 25px;
+            display: none;
+        }
+
+        .progress-section.show {
+            display: block;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .progress-percentage {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        .progress-text {
+            margin-top: 10px;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .step-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .step.completed .step-icon {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .step.active .step-icon {
+            background-color: #667eea;
+            color: white;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f0;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-audio {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .result-audio h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        audio {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: #764ba2;
+        }
+
+        .message {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .message.show { display: block; }
+        .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .message.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+
+        .info-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        .spinner.show { display: inline-block; }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Badge iOS hint */
+        .ios-note {
+            display: none;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 20px; }
+            h1 { font-size: 24px; }
+            .format-group { grid-template-columns: repeat(2, 1fr); }
+            .button-group { flex-direction: column; }
+            .progress-steps { flex-direction: column; gap: 10px; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Khung chúc mừng năm mới (thay thế vị trí khung đếm ngược + hoa mai) -->
-        <div class="newyear-box" aria-hidden="false">
-            <canvas id="fireworkCanvas" class="newyear-canvas" aria-hidden="false"></canvas>
-            <div class="newyear-text" aria-hidden="true">
-                <h3>Chúc Mừng Năm Mới</h3>
-                <h4>2026</h4>
+        <h1>🎵 Chuyển Đổi Âm Thanh</h1>
+        <p class="subtitle">Chuyển đổi giữa các định dạng âm thanh phổ biến</p>
+
+        <div id="message" class="message"></div>
+
+        <div class="form-group">
+            <label>Chọn File Âm Thanh</label>
+
+            <!-- 
+                FIX iOS: Dùng <label> làm wrapper thay vì <div>
+                để iOS nhận diện vùng tap chính xác hơn.
+                Input KHÔNG có pointer-events: none.
+            -->
+            <label class="file-input-wrapper" id="fileWrapper" for="audioFile">
+                <input
+                    type="file"
+                    id="audioFile"
+                    name="audioFile"
+                    accept=".mp3,.wav,.ogg,.m4a,.flac,.aac,.mp4,.aiff,.wma,audio/*"
+                >
+                <div class="file-input-visual" id="fileLabel">
+                    <div class="icon">📁</div>
+                    <div class="hint">Kéo file vào hoặc nhấn để chọn</div>
+                </div>
+            </label>
+
+            <div class="file-name" id="fileName"></div>
+            <div class="info-text">Hỗ trợ: MP3, WAV, OGG, M4A, FLAC, AAC và nhiều định dạng khác</div>
+            <div class="ios-note" id="iosNote">
+                📱 Trên iOS: Chọn "Browse" → "On My iPhone" hoặc iCloud Drive để tìm file âm thanh.
             </div>
         </div>
 
-        <!-- Nội dung gốc -->
-        <h1>Chào mừng đến với Trang Chủ!</h1>
-        <p>
-            Đây là bộ trang liên kết đến các dịch vụ và ứng dụng do chúng tôi phát triển. Hãy chọn một liên kết bên dưới để khám phá:
-        </p>
-        <ul>
-            <li>
-                <a href="https://nhut990.github.io/audio/">
-                    Audio &amp; Radio
-                </a>
-            </li>
-            <li>
-                <a href="https://nhut990.github.io/color/">
-                    Xem Mã Màu
-                </a>
-            </li>
-            <li>
-                <a href="https://nhut990.github.io/color/lcd/">
-                    TEST Màn Hình
-                </a>
-            </li>
-            <li>
-                <a href="https://nhut990.github.io/camtest/">
-                    TEST Camera - Micro
-                </a>
-            </li>
-            <li>
-                <a href="https://nhut990.github.io/piano/">
-                    Giả Lập Piano
-                </a>
-            </li>
-            <!-- Liên kết mới nằm dưới Giả Lập Piano -->
-            <li>
-                <a href="https://nhut990.github.io/piano/chord/">
-                    🎹 Hợp Âm Piano
-                </a>
-            </li>
-            <li>
-                <a href="https://nhut990.github.io/maps/">
-                    Xem Địa Chỉ Mới Sau Sáp Nhập
-                </a>
-            </li>
-            <li>
-                <a href="https://nhut990.github.io/Windows/">
-                    Windows
-                </a>
-            </li>
-            <li>
-                <a href="https://nhut990.github.io/lich/">
-                    Lịch
-                </a>
-            </li>
-            <li>
-                <a href="https://nhut990.github.io/appcuios/">
-                    Ứng Dụng Phiên Bản Cũ iOS
-                </a>
-            </li>
-            <li>
-                <a href="https://nhut990.github.io/Bundle/">
-                    Tìm Bundle ID App Store
-                </a>
-            </li>
-        </ul>
-        <div class="footer">
-            Created by <span class="name">Minh Nhựt</span><br>
-            &copy; 2025
+        <div class="form-group">
+            <label>Định Dạng Đích</label>
+            <div class="format-group">
+                <div class="format-item">
+                    <input type="radio" id="mp3" name="format" value="mp3">
+                    <label for="mp3">MP3</label>
+                </div>
+                <div class="format-item">
+                    <input type="radio" id="wav" name="format" value="wav">
+                    <label for="wav">WAV</label>
+                </div>
+                <div class="format-item">
+                    <input type="radio" id="ogg" name="format" value="ogg">
+                    <label for="ogg">OGG</label>
+                </div>
+                <div class="format-item">
+                    <input type="radio" id="m4a" name="format" value="m4a">
+                    <label for="m4a">M4A</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-convert" id="convertBtn" disabled>
+                <span class="spinner" id="spinner"></span>
+                <span id="btnText">Chuyển Đổi</span>
+            </button>
+            <button class="btn-reset" id="resetBtn">Đặt Lại</button>
+        </div>
+
+        <div class="progress-section" id="progressSection">
+            <div class="progress-label">
+                <span>Tiến độ chuyển đổi</span>
+                <span class="progress-percentage" id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+            <div class="progress-text" id="progressText">Đang khởi tạo...</div>
+            <div class="progress-steps">
+                <div class="step completed" id="step1">
+                    <div class="step-icon">✓</div>
+                    <div>Tải File</div>
+                </div>
+                <div class="step active" id="step2">
+                    <div class="step-icon">⚙</div>
+                    <div>Xử Lý</div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-icon">📦</div>
+                    <div>Hoàn Thành</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <h2 style="margin-bottom: 20px; color: #333; font-size: 18px;">✓ Kết Quả Chuyển Đổi</h2>
+            <div class="result-audio" id="resultAudio"></div>
         </div>
     </div>
-    <div class="signature">nhut117se4</div>
 
     <script>
-        // ---------- Fireworks cho khung Chúc Mừng Năm Mới ----------
-        (function () {
-            const canvas = document.getElementById('fireworkCanvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d', { alpha: true });
+        const audioFile = document.getElementById('audioFile');
+        const fileWrapper = document.getElementById('fileWrapper');
+        const fileName = document.getElementById('fileName');
+        const convertBtn = document.getElementById('convertBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const resultSection = document.getElementById('resultSection');
+        const resultAudio = document.getElementById('resultAudio');
+        const messageEl = document.getElementById('message');
+        const spinner = document.getElementById('spinner');
+        const btnText = document.getElementById('btnText');
+        const progressSection = document.getElementById('progressSection');
+        const progressBar = document.getElementById('progressBar');
+        const progressPercent = document.getElementById('progressPercent');
+        const progressText = document.getElementById('progressText');
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        const iosNote = document.getElementById('iosNote');
 
-            function resizeCanvas() {
-                const rect = canvas.getBoundingClientRect();
-                const dpr = window.devicePixelRatio || 1;
-                canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-                canvas.height = Math.max(1, Math.floor(rect.height * dpr));
-                canvas.style.width = rect.width + 'px';
-                canvas.style.height = rect.height + 'px';
-                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            }
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
+        let selectedFile = null;
 
-            class Particle {
-                constructor(x, y, color) {
-                    this.x = x;
-                    this.y = y;
-                    this.color = color;
-                    this.radius = Math.random() * 3 + 1;
-                    const speed = Math.random() * 5 + 2;
-                    const angle = Math.random() * Math.PI * 2;
-                    this.velocity = { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
-                    this.gravity = 0.06;
-                    this.friction = 0.995;
-                    this.opacity = 1;
-                    this.fade = Math.random() * 0.015 + 0.008;
-                }
-                update() {
-                    this.velocity.y += this.gravity;
-                    this.velocity.x *= this.friction;
-                    this.velocity.y *= this.friction;
-                    this.x += this.velocity.x;
-                    this.y += this.velocity.y;
-                    this.opacity -= this.fade;
-                }
-                draw(ctx) {
-                    if (this.opacity <= 0) return;
-                    ctx.save();
-                    ctx.globalAlpha = Math.max(0, this.opacity);
-                    ctx.beginPath();
-                    ctx.fillStyle = this.color;
-                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.closePath();
-                    ctx.restore();
-                }
-            }
+        // Phát hiện iOS để hiện hướng dẫn
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS) {
+            iosNote.style.display = 'block';
+        }
 
-            class Firework {
-                constructor(x, y) {
-                    this.x = x;
-                    this.y = y;
-                    this.velocity = { x: (Math.random() - 0.5) * 2, y: - (Math.random() * 6 + 8) };
-                    this.exploded = false;
-                    this.particles = [];
-                    this.color = `hsl(${Math.floor(Math.random() * 360)},100%,55%)`;
-                    this.trail = [];
-                }
-                update(canvasHeight) {
-                    if (!this.exploded) {
-                        this.trail.push({ x: this.x, y: this.y });
-                        if (this.trail.length > 8) this.trail.shift();
-                        this.velocity.y += 0.18;
-                        this.x += this.velocity.x;
-                        this.y += this.velocity.y;
-                        // explode when velocity.y >= 0 (peak) or it reaches upper area
-                        if (this.velocity.y >= 0 || this.y < canvasHeight * 0.15) {
-                            this.explode();
-                        }
-                    } else {
-                        for (let i = this.particles.length - 1; i >= 0; i--) {
-                            this.particles[i].update();
-                            if (this.particles[i].opacity <= 0) this.particles.splice(i, 1);
-                        }
-                    }
-                }
-                explode() {
-                    this.exploded = true;
-                    const count = Math.floor(Math.random() * 80 + 60);
-                    for (let i = 0; i < count; i++) {
-                        this.particles.push(new Particle(this.x, this.y, this.color));
-                    }
-                }
-                draw(ctx) {
-                    if (!this.exploded) {
-                        ctx.beginPath();
-                        ctx.lineWidth = 2;
-                        ctx.strokeStyle = this.color;
-                        for (let i = 0; i < this.trail.length; i++) {
-                            const p = this.trail[i];
-                            if (i === 0) ctx.moveTo(p.x, p.y);
-                            else ctx.lineTo(p.x, p.y);
-                        }
-                        ctx.stroke();
-                        ctx.beginPath();
-                        ctx.fillStyle = this.color;
-                        ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
-                        ctx.fill();
-                    } else {
-                        this.particles.forEach(p => p.draw(ctx));
-                    }
-                }
-            }
-
-            let fireworks = [];
-
-            function createFirework(x) {
-                const startX = (typeof x === 'number') ? x : Math.random() * canvas.clientWidth;
-                const startY = canvas.clientHeight;
-                fireworks.push(new Firework(startX, startY));
-            }
-
-            function animate() {
-                // slight trail by painting a translucent rect
-                ctx.fillStyle = 'rgba(10, 10, 30, 0.18)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                if (Math.random() < 0.06) createFirework();
-
-                for (let i = fireworks.length - 1; i >= 0; i--) {
-                    const fw = fireworks[i];
-                    fw.update(canvas.clientHeight);
-                    fw.draw(ctx);
-                    if (fw.exploded && fw.particles.length === 0) fireworks.splice(i, 1);
-                }
-
-                requestAnimationFrame(animate);
-            }
-
-            // Initial bursts
-            for (let i = 0; i < 3; i++) {
-                setTimeout(() => createFirework(), i * 300);
-            }
-
-            // Click to launch
-            canvas.addEventListener('click', (e) => {
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                createFirework(x);
+        // =============================================
+        // FIX DRAG & DROP (chỉ desktop, không can thiệp iOS)
+        // =============================================
+        if (!isIOS) {
+            fileWrapper.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
             });
 
-            // Start animation
-            animate();
-        })();
+            fileWrapper.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+            });
+
+            fileWrapper.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const files = e.dataTransfer.files;
+                if (files && files.length > 0) {
+                    processFile(files[0]);
+                }
+            });
+        }
+
+        // =============================================
+        // FIX IOS: Lắng nghe sự kiện change trực tiếp
+        // iOS chỉ trigger change khi user thực sự chọn file
+        // =============================================
+        audioFile.addEventListener('change', function(e) {
+            const file = this.files && this.files[0];
+            if (file) {
+                processFile(file);
+            }
+        });
+
+        function processFile(file) {
+            // iOS đôi khi trả về type rỗng → kiểm tra cả extension
+            const name = file.name || '';
+            const ext = name.split('.').pop().toLowerCase();
+            const audioExts = ['mp3','wav','ogg','m4a','flac','aac','aiff','wma','mp4','opus','webm'];
+            const isAudioType = file.type && file.type.startsWith('audio/');
+            const isAudioExt = audioExts.includes(ext);
+
+            if (!isAudioType && !isAudioExt) {
+                showMessage('Vui lòng chọn một file âm thanh hợp lệ! (MP3, WAV, OGG, M4A...)', 'error');
+                audioFile.value = '';
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = `✓ Đã chọn: ${file.name}`;
+            convertBtn.disabled = false;
+            hideMessage();
+            resultSection.classList.remove('show');
+            progressSection.classList.remove('show');
+        }
+
+        convertBtn.addEventListener('click', async () => {
+            if (!selectedFile) {
+                showMessage('Vui lòng chọn một file âm thanh!', 'error');
+                return;
+            }
+            const format = document.querySelector('input[name="format"]:checked');
+            if (!format) {
+                showMessage('Vui lòng chọn định dạng đích!', 'error');
+                return;
+            }
+            convertAudio(selectedFile, format.value);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            audioFile.value = '';
+            selectedFile = null;
+            fileName.textContent = '';
+            convertBtn.disabled = true;
+            resultSection.classList.remove('show');
+            progressSection.classList.remove('show');
+            hideMessage();
+            document.querySelectorAll('input[name="format"]').forEach(r => r.checked = false);
+            document.getElementById('mp3').checked = true;
+        });
+
+        function updateProgress(percentage, text, step) {
+            progressBar.style.width = percentage + '%';
+            progressPercent.textContent = Math.round(percentage) + '%';
+            progressText.textContent = text;
+
+            step1.classList.remove('active', 'completed');
+            step2.classList.remove('active', 'completed');
+            step3.classList.remove('active', 'completed');
+
+            if (step >= 1) step1.classList.add('completed');
+            if (step > 1 && step < 3) step2.classList.add('active');
+            if (step >= 2 && step < 3) step2.classList.add('completed');
+            if (step >= 3) step3.classList.add('active');
+            if (step > 3) {
+                step3.classList.remove('active');
+                step3.classList.add('completed');
+            }
+        }
+
+        async function convertAudio(file, targetFormat) {
+            try {
+                convertBtn.disabled = true;
+                spinner.classList.add('show');
+                btnText.textContent = 'Đang chuyển đổi...';
+                hideMessage();
+                progressSection.classList.add('show');
+                resultSection.classList.remove('show');
+
+                updateProgress(10, 'Đang tải file...', 1);
+                await sleep(500);
+
+                updateProgress(25, 'Đang giải mã âm thanh...', 2);
+                const arrayBuffer = await file.arrayBuffer();
+
+                updateProgress(40, 'Đang xử lý dữ liệu âm thanh...', 2);
+                await sleep(300);
+
+                // FIX IOS: iOS yêu cầu AudioContext được tạo sau user gesture
+                // và cần resume() nếu bị suspended
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) {
+                    throw new Error('Trình duyệt không hỗ trợ Web Audio API');
+                }
+                const audioContext = new AudioCtx();
+
+                // iOS Safari đôi khi suspend context ngay sau khi tạo
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                }
+
+                let audioBuffer;
+                try {
+                    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                } catch (decodeErr) {
+                    // iOS không decode được một số codec → fallback
+                    throw new Error(`Không thể đọc file này trên thiết bị của bạn. Thử file MP3 hoặc WAV thuần túy.`);
+                }
+
+                updateProgress(60, 'Đang chuyển đổi định dạng...', 2);
+                await sleep(400);
+
+                updateProgress(75, 'Đang mã hóa file...', 2);
+                const convertedData = encodeWAV(
+                    audioBuffer.getChannelData(0),
+                    audioBuffer.sampleRate
+                );
+
+                await sleep(300);
+                updateProgress(90, 'Đang hoàn tất...', 3);
+
+                const blob = new Blob([convertedData], { type: 'audio/wav' });
+                const url = URL.createObjectURL(blob);
+
+                updateProgress(100, 'Chuyển đổi thành công!', 4);
+                await sleep(500);
+
+                displayResult(url, targetFormat, file.name);
+                showMessage('✓ Chuyển đổi thành công!', 'success');
+
+                setTimeout(() => progressSection.classList.remove('show'), 2000);
+
+                audioContext.close();
+
+            } catch (error) {
+                console.error('Lỗi:', error);
+                updateProgress(0, 'Lỗi: ' + error.message, 0);
+                progressBar.style.width = '0%';
+                showMessage('Lỗi khi chuyển đổi: ' + error.message, 'error');
+                setTimeout(() => progressSection.classList.remove('show'), 3000);
+            } finally {
+                convertBtn.disabled = false;
+                spinner.classList.remove('show');
+                btnText.textContent = 'Chuyển Đổi';
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function encodeWAV(samples, sampleRate) {
+            const buffer = new ArrayBuffer(44 + samples.length * 2);
+            const view = new DataView(buffer);
+
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + samples.length * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, samples.length * 2, true);
+
+            let offset = 44;
+            for (let i = 0; i < samples.length; i++, offset += 2) {
+                const s = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+            }
+            return buffer;
+        }
+
+        function displayResult(url, format, originalName) {
+            const baseName = originalName.substring(0, originalName.lastIndexOf('.')) || originalName;
+            const newName = `${baseName}_converted.wav`;
+
+            resultAudio.innerHTML = `
+                <h3>File đã chuyển đổi: ${newName}</h3>
+                <audio controls playsinline>
+                    <source src="${url}" type="audio/wav">
+                    Trình duyệt không hỗ trợ phát âm thanh.
+                </audio>
+                <br>
+                <a href="${url}" download="${newName}" class="download-btn">⬇️ Tải về</a>
+            `;
+            resultSection.classList.add('show');
+        }
+
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = `message show ${type}`;
+        }
+
+        function hideMessage() {
+            messageEl.classList.remove('show');
+        }
+
+        // Mặc định chọn MP3
+        document.getElementById('mp3').checked = true;
     </script>
 </body>
 </html>
