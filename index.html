@@ -1,391 +1,638 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Ngựa Chạy</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Công Cụ Chuyển Đổi Định Dạng Âm Thanh</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  body {
-    background: linear-gradient(180deg,
-      #0d1b3e 0%, #1a2f6b 25%, #6b3a7d 50%,
-      #c96b3a 70%, #e8a050 82%, #d4d090 90%, #b8c870 100%
-    );
-    height: 100vh;
-    overflow: hidden;
-  }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
 
-  .sun {
-    position: absolute;
-    top: 80px; right: 180px;
-    width: 80px; height: 80px;
-    background: radial-gradient(circle, #fff6a0, #f0c030);
-    border-radius: 50%;
-    box-shadow: 0 0 60px 20px rgba(240,180,30,0.5);
-  }
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
 
-  .cloud {
-    position: absolute;
-    background: rgba(255,200,120,0.22);
-    border-radius: 50px;
-    filter: blur(10px);
-  }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
+        .form-group { margin-bottom: 25px; }
 
-  .mountains { position: absolute; bottom: 28%; left: 0; right: 0; height: 200px; }
-  .mt { position: absolute; bottom: 0; width: 0; height: 0; border-style: solid; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
 
-  .ground {
-    position: absolute;
-    bottom: 0; left: 0; right: 0; height: 30%;
-    background: linear-gradient(180deg, #6b8c30 0%, #4a6820 40%, #2a3e10 100%);
-  }
-  .grass-line {
-    position: absolute; top: -8px; left: 0; right: 0; height: 20px;
-    background: repeating-linear-gradient(90deg,
-      #7aab35 0px,#7aab35 3px,#5a8a25 3px,#5a8a25 6px,
-      #8abe40 6px,#8abe40 8px,transparent 8px,transparent 14px);
-  }
+        .file-input-wrapper {
+            position: relative;
+            display: block;
+            width: 100%;
+            cursor: pointer;
+        }
 
-  /* ---- NGỰA ---- */
-  .horse-wrap {
-    position: absolute;
-    bottom: 29%;
-    left: -260px;
-    width: 260px; height: 220px;
-    animation: gallop 2.4s linear infinite;
-  }
+        /* iOS fix: opacity 0.01 thay vì 0 */
+        input[type="file"] {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0.01;
+            cursor: pointer;
+            z-index: 10;
+            font-size: 16px;
+            -webkit-appearance: none;
+        }
 
-  @keyframes gallop {
-    0%   { left: -260px; }
-    100% { left: 110%; }
-  }
+        .file-input-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 28px 20px;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            background-color: #f8f9ff;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            min-height: 90px;
+            text-align: center;
+        }
 
-  /* Thân nhún */
-  .g-body { animation: bodyBounce 0.22s ease-in-out infinite; }
-  @keyframes bodyBounce {
-    0%,100% { transform: translateY(0); }
-    50%     { transform: translateY(-7px); }
-  }
+        .file-input-visual .icon { font-size: 32px; margin-bottom: 8px; }
+        .file-input-visual .hint { color: #667eea; font-weight: 600; font-size: 14px; }
+        .file-name { color: #667eea; font-weight: 600; margin-top: 8px; font-size: 13px; }
+        .info-text { font-size: 12px; color: #666; margin-top: 8px; }
 
-  /* Đầu gật */
-  .g-head { animation: headBob 0.44s ease-in-out infinite; transform-origin: 160px 100px; }
-  @keyframes headBob {
-    0%   { transform: rotate(-12deg); }
-    50%  { transform: rotate(7deg); }
-    100% { transform: rotate(-12deg); }
-  }
+        .ios-note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            margin-top: 8px;
+            display: none;
+        }
 
-  /* Đuôi vẫy */
-  .g-tail { animation: tailSwing 0.44s ease-in-out infinite; transform-origin: 28px 88px; }
-  @keyframes tailSwing {
-    0%   { transform: rotate(-22deg); }
-    50%  { transform: rotate(26deg); }
-    100% { transform: rotate(-22deg); }
-  }
+        .format-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+        }
 
-  /* Chân — lệch pha nhau */
-  .g-fl { animation: lFL 0.44s ease-in-out infinite; transform-origin: 165px 128px; }
-  .g-fr { animation: lFR 0.44s ease-in-out infinite; transform-origin: 158px 128px; }
-  .g-bl { animation: lBL 0.44s ease-in-out infinite; transform-origin: 55px 124px; }
-  .g-br { animation: lBR 0.44s ease-in-out infinite; transform-origin: 47px 124px; }
+        .format-item input[type="radio"] { display: none; }
 
-  @keyframes lFL { 0%{transform:rotate(38deg)}  50%{transform:rotate(-32deg)} 100%{transform:rotate(38deg)} }
-  @keyframes lFR { 0%{transform:rotate(-30deg)} 50%{transform:rotate(40deg)}  100%{transform:rotate(-30deg)} }
-  @keyframes lBL { 0%{transform:rotate(-28deg)} 50%{transform:rotate(38deg)}  100%{transform:rotate(-28deg)} }
-  @keyframes lBR { 0%{transform:rotate(32deg)}  50%{transform:rotate(-30deg)} 100%{transform:rotate(32deg)} }
+        .format-item label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0;
+            font-weight: 500;
+            font-size: 13px;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-  /* Bóng */
-  .horse-shadow {
-    position: absolute; bottom: 29.5%; left: -230px;
-    width: 190px; height: 18px;
-    background: rgba(0,0,0,0.22);
-    border-radius: 50%; filter: blur(7px);
-    animation: gallop 2.4s linear infinite;
-  }
+        .format-item input[type="radio"]:checked + label {
+            background-color: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
 
-  /* Bụi */
-  .dust-wrap {
-    position: absolute; bottom: 29%; left: 0; width: 100%; height: 55px;
-    pointer-events: none;
-  }
-  .dp {
-    position: absolute; border-radius: 50%;
-    background: rgba(160,120,60,0.32);
-    animation: dustUp 1s ease-out infinite;
-  }
-  @keyframes dustUp {
-    0%   { transform: scale(0.3) translate(0,0); opacity: 0.7; }
-    100% { transform: scale(2.8) translate(-18px,-28px); opacity: 0; }
-  }
+        .button-group { display: flex; gap: 10px; }
 
-  /* Tiêu đề */
-  .title {
-    position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
-    color: rgba(255,240,180,0.92); font-family: Georgia, serif;
-    font-size: 1.8rem; letter-spacing: 7px;
-    text-shadow: 0 0 24px rgba(255,180,60,0.7), 0 2px 6px #000;
-    white-space: nowrap;
-  }
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-  #stars { position: absolute; top: 0; left: 0; width: 100%; height: 45%; }
-  .star  { position: absolute; background: white; border-radius: 50%; animation: twinkle 2s infinite alternate; }
-  @keyframes twinkle { from{opacity:0.2} to{opacity:1} }
-</style>
+        .btn-convert {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-convert:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102,126,234,0.4);
+        }
+
+        .btn-convert:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-reset { background: #f0f0f0; color: #333; }
+        .btn-reset:hover { background: #e0e0e0; }
+
+        .progress-section { margin-top: 25px; display: none; }
+        .progress-section.show { display: block; }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .progress-percentage { font-weight: 700; color: #667eea; font-size: 16px; }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(102,126,234,0.5);
+        }
+
+        .progress-text { margin-top: 10px; text-align: center; color: #666; font-size: 13px; }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .step { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+
+        .step-icon {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .step.completed .step-icon { background-color: #667eea; color: white; }
+        .step.active .step-icon {
+            background-color: #667eea; color: white;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(102,126,234,0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(102,126,234,0); }
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f0;
+            display: none;
+        }
+        .result-section.show { display: block; }
+
+        .result-audio { background: #f8f9ff; padding: 20px; border-radius: 8px; margin-bottom: 15px; }
+        .result-audio h3 { color: #333; margin-bottom: 10px; font-size: 14px; }
+        audio { width: 100%; margin-bottom: 10px; }
+
+        .download-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .download-btn:hover { background: #764ba2; }
+
+        .message { padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: none; font-size: 14px; }
+        .message.show { display: block; }
+        .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .spinner {
+            display: none;
+            width: 20px; height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        .spinner.show { display: inline-block; }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 20px; }
+            h1 { font-size: 24px; }
+            .button-group { flex-direction: column; }
+            .progress-steps { flex-direction: column; gap: 10px; }
+        }
+    </style>
 </head>
 <body>
+<div class="container">
+    <h1>🎵 Chuyển Đổi Âm Thanh</h1>
+    <p class="subtitle">Chuyển đổi giữa các định dạng âm thanh phổ biến</p>
 
-<div id="stars"></div>
-<div class="sun"></div>
-<div class="cloud" style="width:220px;height:55px;top:130px;left:8%;"></div>
-<div class="cloud" style="width:160px;height:45px;top:115px;left:30%;"></div>
-<div class="cloud" style="width:260px;height:65px;top:110px;right:15%;"></div>
+    <div id="message" class="message"></div>
 
-<div class="title">🐎 NGỰA HOANG PHI NƯỚC ĐẠI</div>
+    <div class="form-group">
+        <label>Chọn File Âm Thanh</label>
+        <label class="file-input-wrapper" for="audioFile">
+            <input
+                type="file"
+                id="audioFile"
+                name="audioFile"
+                accept=".mp3,.wav,.ogg,.m4a,.flac,.aac,.aiff,.wma,audio/*"
+            >
+            <div class="file-input-visual">
+                <div class="icon">📁</div>
+                <div class="hint">Nhấn để chọn file âm thanh</div>
+            </div>
+        </label>
+        <div class="file-name" id="fileName"></div>
+        <div class="info-text">Hỗ trợ: MP3, WAV, OGG, M4A, FLAC, AAC...</div>
+        <div class="ios-note" id="iosNote">
+            📱 iOS: Sau khi nhấn → chọn <strong>Browse</strong> → tìm file trong <strong>Files / iCloud Drive / On My iPhone</strong>
+        </div>
+    </div>
 
-<div class="mountains">
-  <div class="mt" style="left:0;border-width:0 160px 200px 0;border-color:transparent transparent #3a2a5a transparent;"></div>
-  <div class="mt" style="left:240px;border-width:0 200px 170px 0;border-color:transparent transparent #4a3070 transparent;"></div>
-  <div class="mt" style="left:560px;border-width:0 240px 190px 0;border-color:transparent transparent #3a2a5a transparent;"></div>
-  <div class="mt" style="right:80px;border-width:0 220px 180px 0;border-color:transparent transparent #4a3070 transparent;"></div>
-</div>
+    <div class="form-group">
+        <label>Định Dạng Đích</label>
+        <div class="format-group">
+            <div class="format-item">
+                <input type="radio" id="fmt_mp3" name="format" value="mp3">
+                <label for="fmt_mp3">MP3</label>
+            </div>
+            <div class="format-item">
+                <input type="radio" id="fmt_wav" name="format" value="wav" checked>
+                <label for="fmt_wav">WAV</label>
+            </div>
+            <div class="format-item">
+                <input type="radio" id="fmt_ogg" name="format" value="ogg">
+                <label for="fmt_ogg">OGG</label>
+            </div>
+            <div class="format-item">
+                <input type="radio" id="fmt_m4a" name="format" value="m4a">
+                <label for="fmt_m4a">M4A</label>
+            </div>
+        </div>
+    </div>
 
-<div class="ground"><div class="grass-line"></div></div>
+    <div class="button-group">
+        <button class="btn-convert" id="convertBtn" disabled>
+            <span class="spinner" id="spinner"></span>
+            <span id="btnText">Chuyển Đổi</span>
+        </button>
+        <button class="btn-reset" id="resetBtn">Đặt Lại</button>
+    </div>
 
-<div class="horse-shadow"></div>
-<div class="dust-wrap" id="dustWrap"></div>
+    <div class="progress-section" id="progressSection">
+        <div class="progress-label">
+            <span>Tiến độ</span>
+            <span class="progress-percentage" id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">Đang khởi tạo...</div>
+        <div class="progress-steps">
+            <div class="step" id="step1"><div class="step-icon">📂</div><div>Đọc File</div></div>
+            <div class="step" id="step2"><div class="step-icon">⚙️</div><div>Xử Lý</div></div>
+            <div class="step" id="step3"><div class="step-icon">📦</div><div>Hoàn Thành</div></div>
+        </div>
+    </div>
 
-<!-- ====== CON NGỰA SVG ====== -->
-<div class="horse-wrap">
-<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" width="260" height="220">
-<defs>
-  <!-- Gradient thân -->
-  <radialGradient id="gBody" cx="55%" cy="38%" r="52%">
-    <stop offset="0%"   stop-color="#9a6030"/>
-    <stop offset="55%"  stop-color="#6a3c18"/>
-    <stop offset="100%" stop-color="#3e2008"/>
-  </radialGradient>
-  <!-- Gradient chân -->
-  <linearGradient id="gLeg" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%"   stop-color="#5a3010"/>
-    <stop offset="100%" stop-color="#3a1e08"/>
-  </linearGradient>
-  <!-- Gradient đầu -->
-  <radialGradient id="gHead" cx="40%" cy="35%" r="62%">
-    <stop offset="0%"   stop-color="#aa6e38"/>
-    <stop offset="100%" stop-color="#4e2a0e"/>
-  </radialGradient>
-  <!-- Bóng đổ nhẹ -->
-  <filter id="fShadow">
-    <feDropShadow dx="3" dy="5" stdDeviation="3" flood-color="rgba(0,0,0,0.45)"/>
-  </filter>
-  <!-- Lông mượt -->
-  <filter id="fFur">
-    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/>
-    <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
-  </filter>
-</defs>
-
-<g filter="url(#fShadow)">
-
-  <!-- ===== ĐUÔI ===== -->
-  <g class="g-tail">
-    <path d="M32 90 Q8 88 2 112 Q-4 138 6 162 Q12 178 18 195"
-          stroke="#180800" stroke-width="7" fill="none" stroke-linecap="round"/>
-    <path d="M32 90 Q5 96 0 120 Q-4 146 8 170"
-          stroke="#0e0500" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-    <path d="M32 90 Q12 95 9 118 Q5 142 14 165"
-          stroke="#241000" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M32 90 Q20 98 18 122 Q15 146 22 168"
-          stroke="#1a0c00" stroke-width="2" fill="none" stroke-linecap="round"/>
-  </g>
-
-  <!-- ===== THÂN ===== -->
-  <g class="g-body">
-
-    <!-- CHÂN SAU PHẢI (phía sau, tối) -->
-    <g class="g-br">
-      <!-- Đùi sau -->
-      <path d="M52 124 Q46 140 44 158 Q43 170 46 182"
-            stroke="#3a1e08" stroke-width="16" fill="none" stroke-linecap="round"/>
-      <!-- Khớp gối -->
-      <circle cx="44" cy="158" r="8" fill="#2e1806"/>
-      <!-- Ống chân -->
-      <path d="M44 158 Q42 170 44 182 Q45 188 50 192"
-            stroke="#2a1606" stroke-width="11" fill="none" stroke-linecap="round"/>
-      <!-- Khớp cổ chân -->
-      <circle cx="48" cy="188" r="6" fill="#221204"/>
-      <!-- Móng -->
-      <path d="M42 192 Q50 196 58 193" stroke="#111" stroke-width="6" fill="none" stroke-linecap="round"/>
-    </g>
-
-    <!-- CHÂN TRƯỚC PHẢI (phía sau, tối) -->
-    <g class="g-fr">
-      <!-- Đùi trước -->
-      <path d="M163 130 Q166 146 168 162 Q169 173 166 184"
-            stroke="#3a1e08" stroke-width="14" fill="none" stroke-linecap="round"/>
-      <!-- Khớp gối -->
-      <circle cx="168" cy="162" r="7" fill="#2e1806"/>
-      <!-- Ống chân -->
-      <path d="M168 162 Q168 174 165 185 Q163 191 165 196"
-            stroke="#2a1606" stroke-width="10" fill="none" stroke-linecap="round"/>
-      <!-- Khớp cổ chân -->
-      <circle cx="165" cy="190" r="5.5" fill="#221204"/>
-      <!-- Móng -->
-      <path d="M158 196 Q165 200 172 197" stroke="#111" stroke-width="6" fill="none" stroke-linecap="round"/>
-    </g>
-
-    <!-- Thân chính -->
-    <path d="M38 100
-             Q42 72 68 64
-             Q98 54 132 58
-             Q158 62 172 76
-             Q184 88 182 104
-             Q178 122 162 130
-             Q138 140 98 142
-             Q62 142 45 130
-             Q32 118 38 100 Z"
-          fill="url(#gBody)"/>
-
-    <!-- Bụng -->
-    <path d="M52 130 Q78 146 118 146 Q152 145 168 130
-             Q160 152 128 157 Q92 160 58 148 Z"
-          fill="#4e2a0c" opacity="0.9"/>
-
-    <!-- Sống lưng highlight -->
-    <path d="M50 82 Q90 68 132 70 Q160 74 178 90"
-          stroke="rgba(180,120,60,0.28)" stroke-width="10" fill="none" stroke-linecap="round"/>
-
-    <!-- Cơ vai nổi bật -->
-    <ellipse cx="160" cy="96" rx="26" ry="22" fill="rgba(120,72,28,0.35)"/>
-    <!-- Cơ mông nổi bật -->
-    <ellipse cx="52" cy="100" rx="28" ry="24" fill="rgba(90,52,18,0.3)"/>
-
-    <!-- Ức (ngực) -->
-    <path d="M170 90 Q186 96 188 110 Q186 124 172 130"
-          fill="#7a4820" opacity="0.6"/>
-
-    <!-- CHÂN SAU TRÁI (phía trước, sáng) -->
-    <g class="g-bl">
-      <path d="M62 126 Q56 142 54 160 Q53 172 56 184"
-            stroke="#6a3c18" stroke-width="15" fill="none" stroke-linecap="round"/>
-      <circle cx="54" cy="160" r="8" fill="#5a3210"/>
-      <path d="M54 160 Q52 172 54 184 Q55 190 60 194"
-            stroke="#5a3210" stroke-width="11" fill="none" stroke-linecap="round"/>
-      <circle cx="58" cy="190" r="6.5" fill="#4a2808"/>
-      <!-- Tất trắng -->
-      <path d="M51 184 Q58 195 65 192" stroke="rgba(230,220,200,0.75)" stroke-width="11" fill="none" stroke-linecap="round"/>
-      <path d="M51 184 Q58 195 65 192" stroke="#4a2808" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <path d="M48 194 Q58 200 67 196" stroke="#111" stroke-width="6" fill="none" stroke-linecap="round"/>
-    </g>
-
-    <!-- CHÂN TRƯỚC TRÁI (phía trước, sáng) -->
-    <g class="g-fl">
-      <path d="M172 132 Q175 148 177 164 Q178 175 175 186"
-            stroke="#7a4820" stroke-width="13" fill="none" stroke-linecap="round"/>
-      <circle cx="177" cy="164" r="7" fill="#6a3818"/>
-      <path d="M177 164 Q177 176 174 187 Q172 193 174 198"
-            stroke="#6a3818" stroke-width="9" fill="none" stroke-linecap="round"/>
-      <circle cx="173" cy="192" r="5.5" fill="#5a3010"/>
-      <path d="M167 198 Q174 203 181 199" stroke="#111" stroke-width="6" fill="none" stroke-linecap="round"/>
-    </g>
-
-    <!-- Lớp highlight trên thân -->
-    <path d="M60 78 Q95 68 135 72 Q158 76 170 88"
-          stroke="rgba(200,150,80,0.18)" stroke-width="6" fill="none" stroke-linecap="round"/>
-
-    <!-- CỔ -->
-    <path d="M160 88 Q172 70 178 50 Q182 36 178 20"
-          stroke="url(#gBody)" stroke-width="32" fill="none" stroke-linecap="round"/>
-    <!-- Cổ highlight -->
-    <path d="M163 86 Q174 69 180 50 Q184 37 180 23"
-          stroke="rgba(180,120,60,0.22)" stroke-width="14" fill="none" stroke-linecap="round"/>
-
-    <!-- ĐẦU -->
-    <g class="g-head">
-      <!-- Trán & hộp sọ -->
-      <path d="M168 24 Q178 14 192 12 Q208 10 216 20 Q224 30 222 44
-               Q218 56 206 60 Q194 64 184 56 Q172 48 170 36 Z"
-            fill="url(#gHead)"/>
-
-      <!-- Cầu mũi -->
-      <path d="M192 12 Q205 8 218 14 Q228 20 230 32 Q232 44 224 52"
-            fill="#7a4820"/>
-
-      <!-- Mõm / mũi -->
-      <path d="M206 52 Q218 54 228 50 Q236 46 236 38 Q234 30 226 28 Q218 26 212 32"
-            fill="#9a5a28"/>
-      <!-- Lỗ mũi -->
-      <ellipse cx="228" cy="40" rx="5" ry="3.5" fill="#1e0e04" transform="rotate(-8 228 40)"/>
-      <ellipse cx="222" cy="44" rx="3.5" ry="2.5" fill="#140a02" transform="rotate(-8 222 44)"/>
-      <!-- Môi / miệng -->
-      <path d="M224 50 Q230 54 236 51" stroke="#1a0c04" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-      <path d="M218 56 Q228 62 238 58" stroke="#2a1408" stroke-width="2" fill="none" stroke-linecap="round"/>
-
-      <!-- Mắt -->
-      <ellipse cx="186" cy="26" rx="8" ry="7" fill="#0e0800"/>
-      <ellipse cx="186" cy="26" rx="6" ry="5" fill="#080600"/>
-      <!-- Phản chiếu mắt -->
-      <circle cx="183" cy="23" r="2.2" fill="rgba(255,255,255,0.85)"/>
-      <circle cx="188" cy="28" r="1.0" fill="rgba(255,255,255,0.35)"/>
-      <!-- Mi mắt -->
-      <path d="M180 22 Q186 18 192 22" stroke="#1e1000" stroke-width="1.5" fill="none"/>
-
-      <!-- Tai -->
-      <path d="M174 14 Q180 0 188 12 Q182 18 174 14 Z" fill="#3e2008"/>
-      <path d="M176 14 Q181 3 187 12 Q181 17 176 14 Z" fill="#8a5020"/>
-
-      <!-- Tâm tai (trong) -->
-      <path d="M178 13 Q181 6 185 12" stroke="#c08040" stroke-width="1" fill="none"/>
-    </g>
-
-    <!-- BỜM (mane) -->
-    <g class="g-head">
-      <path d="M178 18 Q162 32 155 52 Q150 68 152 86 Q154 100 158 112"
-            stroke="#120800" stroke-width="8" fill="none" stroke-linecap="round"/>
-      <path d="M174 22 Q159 38 152 58 Q147 74 149 92 Q151 106 155 118"
-            stroke="#1e0e00" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <path d="M170 26 Q156 44 150 64 Q145 80 147 98"
-            stroke="#0e0600" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-      <path d="M167 30 Q154 48 148 68 Q144 84 146 102"
-            stroke="#180a00" stroke-width="2" fill="none" stroke-linecap="round"/>
-    </g>
-
-  </g><!-- end g-body -->
-
-</g><!-- end filter -->
-</svg>
+    <div class="result-section" id="resultSection">
+        <h2 style="margin-bottom:20px;color:#333;font-size:18px;">✓ Kết Quả Chuyển Đổi</h2>
+        <div class="result-audio" id="resultAudio"></div>
+    </div>
 </div>
 
 <script>
-  // Sao
-  const starsEl = document.getElementById('stars');
-  for (let i = 0; i < 65; i++) {
-    const s = document.createElement('div');
-    s.className = 'star';
-    const sz = Math.random() * 2.5 + 0.5;
-    s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*2}s;animation-duration:${1.5+Math.random()*2}s`;
-    starsEl.appendChild(s);
-  }
+(function() {
+    'use strict';
 
-  // Bụi theo ngựa
-  const dustWrap = document.getElementById('dustWrap');
-  const horseEl  = document.querySelector('.horse-wrap');
+    var audioFileEl    = document.getElementById('audioFile');
+    var fileNameEl     = document.getElementById('fileName');
+    var convertBtn     = document.getElementById('convertBtn');
+    var resetBtn       = document.getElementById('resetBtn');
+    var resultSection  = document.getElementById('resultSection');
+    var resultAudio    = document.getElementById('resultAudio');
+    var messageEl      = document.getElementById('message');
+    var spinnerEl      = document.getElementById('spinner');
+    var btnTextEl      = document.getElementById('btnText');
+    var progressSection= document.getElementById('progressSection');
+    var progressBarEl  = document.getElementById('progressBar');
+    var progressPctEl  = document.getElementById('progressPercent');
+    var progressTxtEl  = document.getElementById('progressText');
+    var step1El = document.getElementById('step1');
+    var step2El = document.getElementById('step2');
+    var step3El = document.getElementById('step3');
+    var iosNote = document.getElementById('iosNote');
 
-  function spawnDust() {
-    const hr = horseEl.getBoundingClientRect();
-    const wr = dustWrap.getBoundingClientRect();
-    const x  = hr.left - wr.left + 15 + Math.random() * 55;
-    if (x < -60 || x > window.innerWidth + 60) return;
+    var selectedFile = null;
 
-    const d  = document.createElement('div');
-    d.className = 'dp';
-    const sz = 14 + Math.random() * 28;
-    d.style.cssText = `width:${sz}px;height:${sz*0.65}px;left:${x}px;bottom:${Math.random()*12}px;animation-duration:${0.85+Math.random()*0.55}s`;
-    dustWrap.appendChild(d);
-    setTimeout(() => d.remove(), 1500);
-  }
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) iosNote.style.display = 'block';
 
-  setInterval(spawnDust, 110);
+    // Drag & drop — desktop only
+    if (!isIOS) {
+        var wrapper = document.querySelector('.file-input-wrapper');
+        wrapper.addEventListener('dragover', function(e) { e.preventDefault(); });
+        wrapper.addEventListener('drop', function(e) {
+            e.preventDefault();
+            var f = e.dataTransfer.files[0];
+            if (f) processFile(f);
+        });
+    }
+
+    audioFileEl.addEventListener('change', function() {
+        var f = this.files && this.files[0];
+        if (f) processFile(f);
+    });
+
+    function processFile(file) {
+        var ext = ((file.name || '').split('.').pop() || '').toLowerCase();
+        var audioExts = ['mp3','wav','ogg','m4a','flac','aac','aiff','wma','mp4','opus','webm'];
+        var isAudio = (file.type && file.type.startsWith('audio/')) || audioExts.indexOf(ext) !== -1;
+        if (!isAudio) {
+            showMsg('Vui lòng chọn file âm thanh hợp lệ (MP3, WAV, M4A...)', 'error');
+            audioFileEl.value = '';
+            return;
+        }
+        selectedFile = file;
+        fileNameEl.textContent = '✓ Đã chọn: ' + file.name;
+        convertBtn.disabled = false;
+        hideMsg();
+        resultSection.classList.remove('show');
+        progressSection.classList.remove('show');
+    }
+
+    convertBtn.addEventListener('click', function() {
+        if (!selectedFile) { showMsg('Vui lòng chọn file âm thanh!', 'error'); return; }
+        var fmt = document.querySelector('input[name="format"]:checked');
+        if (!fmt) { showMsg('Vui lòng chọn định dạng đích!', 'error'); return; }
+        doConvert(selectedFile, fmt.value);
+    });
+
+    resetBtn.addEventListener('click', function() {
+        audioFileEl.value = '';
+        selectedFile = null;
+        fileNameEl.textContent = '';
+        convertBtn.disabled = true;
+        resultSection.classList.remove('show');
+        progressSection.classList.remove('show');
+        hideMsg();
+        document.getElementById('fmt_wav').checked = true;
+    });
+
+    // ── Helpers ──────────────────────────────────────────────────
+    function setProgress(pct, text, stepN) {
+        progressBarEl.style.width = pct + '%';
+        progressPctEl.textContent = Math.round(pct) + '%';
+        progressTxtEl.textContent = text;
+        var steps = [step1El, step2El, step3El];
+        steps.forEach(function(s, i) {
+            s.classList.remove('active', 'completed');
+            if (stepN === undefined) return;
+            if (i + 1 < stepN)  s.classList.add('completed');
+            if (i + 1 === stepN) s.classList.add('active');
+        });
+    }
+
+    function sleep(ms) {
+        return new Promise(function(r) { setTimeout(r, ms); });
+    }
+
+    function showMsg(text, type) {
+        messageEl.textContent = text;
+        messageEl.className = 'message show ' + (type || '');
+    }
+    function hideMsg() { messageEl.className = 'message'; }
+
+    // ── iOS decodeAudioData FIX (Quan trọng) ───────────────────────
+    // FIX CHỈ CHO iOS: Vấn đề treo ở 30% là do:
+    // 1. decodeAudioData() không có timeout
+    // 2. File lớn + iOS Safari = bộ nhớ bị chặn
+    // Giải pháp:
+    // - Timeout cứng: 30 giây (tăng từ 15s)
+    // - Thêm garbage collection hint
+    // - Xử lý từng chunk âm thanh thay vì cả file
+    // - Giảm sample rate để tiết kiệm bộ nhớ
+    function decodeAudio(ctx, arrayBuffer) {
+        return new Promise(function(resolve, reject) {
+            var done = false;
+            
+            // iOS 15+ cần timeout dài hơn — tăng lên 30 giây
+            var timeoutMs = isIOS ? 30000 : 15000;
+            var timer = setTimeout(function() {
+                if (done) return;
+                done = true;
+                reject(new Error(
+                    'Giải mã quá lâu (>' + (timeoutMs/1000) + 's). ' +
+                    'File quá lớn hoặc codec phức tạp. Vui lòng thử file khác.'
+                ));
+            }, timeoutMs);
+
+            function onSuccess(buf) {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                resolve(buf);
+            }
+
+            function onError(err) {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                reject(new Error('Lỗi giải mã: ' + (err && err.message ? err.message : 'File không hợp lệ')));
+            }
+
+            try {
+                // Giảm sample rate trên iOS để tiết kiệm bộ nhớ
+                var targetSampleRate = isIOS ? 22050 : 44100;
+                
+                // Callback-style hoạt động tốt hơn Promise-style
+                if (ctx.decodeAudioData.length > 2) {
+                    // Support older callback API
+                    ctx.decodeAudioData(arrayBuffer, onSuccess, onError);
+                } else {
+                    // Promise API
+                    ctx.decodeAudioData(arrayBuffer).then(onSuccess).catch(onError);
+                }
+            } catch (e) {
+                clearTimeout(timer);
+                reject(e);
+            }
+        });
+    }
+
+    // ── Encode PCM → WAV ─────────────────────────────────────────
+    function encodeWAV(samples, sampleRate) {
+        var len = samples.length;
+        var buf = new ArrayBuffer(44 + len * 2);
+        var v   = new DataView(buf);
+
+        function w(off, s) {
+            for (var i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i));
+        }
+
+        w(0, 'RIFF');
+        v.setUint32(4,  36 + len * 2, true);
+        w(8, 'WAVE'); w(12, 'fmt ');
+        v.setUint32(16, 16, true);
+        v.setUint16(20, 1,  true);   // PCM
+        v.setUint16(22, 1,  true);   // mono
+        v.setUint32(24, sampleRate,     true);
+        v.setUint32(28, sampleRate * 2, true);
+        v.setUint16(32, 2,  true);
+        v.setUint16(34, 16, true);
+        w(36, 'data');
+        v.setUint32(40, len * 2, true);
+
+        var off = 44;
+        for (var i = 0; i < len; i++, off += 2) {
+            var x = Math.max(-1, Math.min(1, samples[i]));
+            v.setInt16(off, x < 0 ? x * 0x8000 : x * 0x7FFF, true);
+        }
+        return buf;
+    }
+
+    // ── Main convert ──────────────────────────────────────────────
+    function doConvert(file, targetFmt) {
+        convertBtn.disabled = true;
+        spinnerEl.classList.add('show');
+        btnTextEl.textContent = 'Đang chuyển đổi...';
+        hideMsg();
+        progressSection.classList.add('show');
+        resultSection.classList.remove('show');
+
+        var audioCtx = null;
+
+        (async function() {
+            try {
+                setProgress(5, 'Đang đọc file...', 1);
+                
+                // QUAN TRỌNG: Delay để UI cập nhật trên iOS
+                await new Promise(function(r) { setTimeout(r, 100); });
+
+                // Kiểm tra kích thước file — iOS có giới hạn bộ nhớ
+                if (isIOS && file.size > 50 * 1024 * 1024) {
+                    throw new Error('File quá lớn (>50MB). iOS không thể xử lý. Vui lòng chọn file nhỏ hơn.');
+                }
+
+                var arrayBuffer = await file.arrayBuffer();
+                setProgress(20, 'Đã tải file (' + Math.round(arrayBuffer.byteLength / 1024 / 1024 * 10) / 10 + ' MB)', 1);
+
+                await sleep(300);
+
+                setProgress(25, 'Khởi tạo bộ giải mã...', 2);
+                var AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) throw new Error('Trình duyệt không hỗ trợ Web Audio API');
+
+                // iOS: Giảm sample rate để tiết kiệm bộ nhớ
+                var initSampleRate = isIOS ? 22050 : 44100;
+                audioCtx = new AudioCtx({ sampleRate: initSampleRate });
+
+                if (audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
+
+                setProgress(30, 'Đang giải mã âm thanh... (có thể mất vài giây)', 2);
+                await sleep(200);
+
+                // FIX CHÍNH: Gọi decodeAudio với timeout
+                var audioBuf = await decodeAudio(audioCtx, arrayBuffer);
+
+                setProgress(65, 'Đang mã hoá WAV...', 2);
+                await sleep(300);
+
+                var wavData = encodeWAV(audioBuf.getChannelData(0), audioBuf.sampleRate);
+
+                setProgress(85, 'Đang tạo file kết quả...', 3);
+                await sleep(200);
+
+                // Force garbage collection hint (iOS Safari)
+                arrayBuffer = null;
+                audioBuf = null;
+
+                var blob = new Blob([wavData], { type: 'audio/wav' });
+                var url  = URL.createObjectURL(blob);
+
+                setProgress(100, 'Hoàn thành!');
+                step1El.classList.add('completed');
+                step2El.classList.add('completed');
+                step3El.classList.remove('active');
+                step3El.classList.add('completed');
+
+                await sleep(600);
+
+                // Hiển thị kết quả
+                var base = file.name.lastIndexOf('.') > 0
+                         ? file.name.substring(0, file.name.lastIndexOf('.'))
+                         : file.name;
+                var outName = base + '_converted.wav';
+
+                resultAudio.innerHTML =
+                    '<h3>File: ' + outName + '</h3>' +
+                    '<audio controls playsinline webkit-playsinline>' +
+                    '<source src="' + url + '" type="audio/wav">' +
+                    'Trình duyệt không hỗ trợ phát âm thanh.</audio><br>' +
+                    '<a href="' + url + '" download="' + outName + '" class="download-btn">⬇️ Tải về</a>';
+
+                resultSection.classList.add('show');
+                showMsg('✓ Chuyển đổi thành công!', 'success');
+                setTimeout(function() { progressSection.classList.remove('show'); }, 1500);
+
+            } catch (err) {
+                console.error('Lỗi chuyển đổi:', err);
+                showMsg('❌ ' + (err.message || 'Lỗi không xác định'), 'error');
+                progressSection.classList.remove('show');
+            } finally {
+                if (audioCtx) { try { audioCtx.close(); } catch(e){} }
+                convertBtn.disabled = false;
+                spinnerEl.classList.remove('show');
+                btnTextEl.textContent = 'Chuyển Đổi';
+            }
+        })();
+    }
+
+})();
 </script>
 </body>
 </html>
