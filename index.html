@@ -172,7 +172,7 @@
             height: 100%;
             background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
             width: 0%;
-            transition: width 0.3s ease;
+            transition: width 0.4s ease;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(102,126,234,0.5);
         }
@@ -223,12 +223,12 @@
 
         .download-btn {
             display: inline-block;
-            padding: 8px 16px;
+            padding: 10px 20px;
             background: #667eea;
             color: white;
             text-decoration: none;
             border-radius: 6px;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
         }
         .download-btn:hover { background: #764ba2; }
@@ -237,15 +237,17 @@
         .message.show { display: block; }
         .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .message.warn { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
 
         .spinner {
             display: none;
-            width: 20px; height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            width: 18px; height: 18px;
+            border: 3px solid rgba(255,255,255,0.4);
+            border-top: 3px solid white;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-right: 8px;
+            vertical-align: middle;
         }
         .spinner.show { display: inline-block; }
 
@@ -256,7 +258,7 @@
 
         @media (max-width: 480px) {
             .container { padding: 20px; }
-            h1 { font-size: 24px; }
+            h1 { font-size: 22px; }
             .button-group { flex-direction: column; }
             .progress-steps { flex-direction: column; gap: 10px; }
         }
@@ -272,12 +274,8 @@
     <div class="form-group">
         <label>Chọn File Âm Thanh</label>
         <label class="file-input-wrapper" for="audioFile">
-            <input
-                type="file"
-                id="audioFile"
-                name="audioFile"
-                accept=".mp3,.wav,.ogg,.m4a,.flac,.aac,.aiff,.wma,audio/*"
-            >
+            <input type="file" id="audioFile" name="audioFile"
+                accept=".mp3,.wav,.ogg,.m4a,.flac,.aac,.aiff,.wma,audio/*">
             <div class="file-input-visual">
                 <div class="icon">📁</div>
                 <div class="hint">Nhấn để chọn file âm thanh</div>
@@ -346,54 +344,53 @@
 (function() {
     'use strict';
 
-    var audioFileEl    = document.getElementById('audioFile');
-    var fileNameEl     = document.getElementById('fileName');
-    var convertBtn     = document.getElementById('convertBtn');
-    var resetBtn       = document.getElementById('resetBtn');
-    var resultSection  = document.getElementById('resultSection');
-    var resultAudio    = document.getElementById('resultAudio');
-    var messageEl      = document.getElementById('message');
-    var spinnerEl      = document.getElementById('spinner');
-    var btnTextEl      = document.getElementById('btnText');
-    var progressSection= document.getElementById('progressSection');
-    var progressBarEl  = document.getElementById('progressBar');
-    var progressPctEl  = document.getElementById('progressPercent');
-    var progressTxtEl  = document.getElementById('progressText');
-    var step1El = document.getElementById('step1');
-    var step2El = document.getElementById('step2');
-    var step3El = document.getElementById('step3');
-    var iosNote = document.getElementById('iosNote');
+    /* ── DOM ─────────────────────────────────────────────────── */
+    var audioFileEl     = document.getElementById('audioFile');
+    var fileNameEl      = document.getElementById('fileName');
+    var convertBtn      = document.getElementById('convertBtn');
+    var resetBtn        = document.getElementById('resetBtn');
+    var resultSection   = document.getElementById('resultSection');
+    var resultAudioEl   = document.getElementById('resultAudio');
+    var messageEl       = document.getElementById('message');
+    var spinnerEl       = document.getElementById('spinner');
+    var btnTextEl       = document.getElementById('btnText');
+    var progressSection = document.getElementById('progressSection');
+    var progressBarEl   = document.getElementById('progressBar');
+    var progressPctEl   = document.getElementById('progressPercent');
+    var progressTxtEl   = document.getElementById('progressText');
+    var step1El         = document.getElementById('step1');
+    var step2El         = document.getElementById('step2');
+    var step3El         = document.getElementById('step3');
+    var iosNoteEl       = document.getElementById('iosNote');
 
     var selectedFile = null;
+    var blobUrls     = [];
 
+    /* ── iOS detect ──────────────────────────────────────────── */
     var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    if (isIOS) iosNote.style.display = 'block';
+    if (isIOS) iosNoteEl.style.display = 'block';
 
-    // Drag & drop — desktop only
+    /* ── Drag‑drop (desktop) ─────────────────────────────────── */
     if (!isIOS) {
-        var wrapper = document.querySelector('.file-input-wrapper');
-        wrapper.addEventListener('dragover', function(e) { e.preventDefault(); });
-        wrapper.addEventListener('drop', function(e) {
+        var wrap = document.querySelector('.file-input-wrapper');
+        wrap.addEventListener('dragover', function(e) { e.preventDefault(); });
+        wrap.addEventListener('drop', function(e) {
             e.preventDefault();
-            var f = e.dataTransfer.files[0];
-            if (f) processFile(f);
+            var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+            if (f) handleFile(f);
         });
     }
 
     audioFileEl.addEventListener('change', function() {
         var f = this.files && this.files[0];
-        if (f) processFile(f);
+        if (f) handleFile(f);
     });
 
-    function processFile(file) {
-        var ext = ((file.name || '').split('.').pop() || '').toLowerCase();
-        var audioExts = ['mp3','wav','ogg','m4a','flac','aac','aiff','wma','mp4','opus','webm'];
-        var isAudio = (file.type && file.type.startsWith('audio/')) || audioExts.indexOf(ext) !== -1;
-        if (!isAudio) {
-            showMsg('Vui lòng chọn file âm thanh hợp lệ (MP3, WAV, M4A...)', 'error');
-            audioFileEl.value = '';
-            return;
-        }
+    function handleFile(file) {
+        var ext = (file.name || '').split('.').pop().toLowerCase();
+        var ok  = (file.type && file.type.startsWith('audio/')) ||
+                  ['mp3','wav','ogg','m4a','flac','aac','aiff','wma','mp4','opus','webm','caf'].indexOf(ext) !== -1;
+        if (!ok) { showMsg('Vui lòng chọn file âm thanh hợp lệ.', 'error'); return; }
         selectedFile = file;
         fileNameEl.textContent = '✓ Đã chọn: ' + file.name;
         convertBtn.disabled = false;
@@ -403,9 +400,9 @@
     }
 
     convertBtn.addEventListener('click', function() {
-        if (!selectedFile) { showMsg('Vui lòng chọn file âm thanh!', 'error'); return; }
+        if (!selectedFile) { showMsg('Vui lòng chọn file!', 'error'); return; }
         var fmt = document.querySelector('input[name="format"]:checked');
-        if (!fmt) { showMsg('Vui lòng chọn định dạng đích!', 'error'); return; }
+        if (!fmt) { showMsg('Vui lòng chọn định dạng!', 'error'); return; }
         doConvert(selectedFile, fmt.value);
     });
 
@@ -418,336 +415,488 @@
         progressSection.classList.remove('show');
         hideMsg();
         document.getElementById('fmt_wav').checked = true;
+        blobUrls.forEach(function(u) { try { URL.revokeObjectURL(u); } catch(e){} });
+        blobUrls = [];
     });
 
-    // ── Helpers ──────────────────────────────────────────────────
-    function setProgress(pct, text, stepN) {
+    /* ── UI helpers ──────────────────────────────────────────── */
+    function prog(pct, text, step) {
         progressBarEl.style.width = pct + '%';
         progressPctEl.textContent = Math.round(pct) + '%';
         progressTxtEl.textContent = text;
-        var steps = [step1El, step2El, step3El];
-        steps.forEach(function(s, i) {
-            s.classList.remove('active', 'completed');
-            if (stepN === undefined) return;
-            if (i + 1 < stepN)  s.classList.add('completed');
-            if (i + 1 === stepN) s.classList.add('active');
+        [step1El, step2El, step3El].forEach(function(s, i) {
+            s.classList.remove('active','completed');
+            if (step === undefined) return;
+            if (i + 1 < step)  s.classList.add('completed');
+            if (i + 1 === step) s.classList.add('active');
         });
     }
 
-    function sleep(ms) {
-        return new Promise(function(r) { setTimeout(r, ms); });
+    function allDone() {
+        [step1El, step2El, step3El].forEach(function(s) {
+            s.classList.remove('active');
+            s.classList.add('completed');
+        });
     }
 
-    function showMsg(text, type) {
-        messageEl.textContent = text;
+    function showMsg(t, type) {
+        messageEl.textContent = t;
         messageEl.className = 'message show ' + (type || '');
     }
     function hideMsg() { messageEl.className = 'message'; }
 
-    // ── FIX #1: Đọc file dùng FileReader thay vì file.arrayBuffer() ──────────
-    // file.arrayBuffer() KHÔNG hoạt động trên iOS < 13 / Safari cũ
-    // FileReader tương thích từ iOS 6+
-    function readFileAsArrayBuffer(file) {
-        return new Promise(function(resolve, reject) {
-            var reader = new FileReader();
-            var done = false;
+    function setBusy(b) {
+        convertBtn.disabled = b;
+        spinnerEl.classList[b ? 'add' : 'remove']('show');
+        btnTextEl.textContent = b ? 'Đang chuyển đổi...' : 'Chuyển Đổi';
+    }
 
-            var timer = setTimeout(function() {
-                if (done) return;
-                done = true;
-                reader.abort();
-                reject(new Error('Đọc file quá lâu. Vui lòng thử lại.'));
+    function mkUrl(blob) {
+        var u = URL.createObjectURL(blob);
+        blobUrls.push(u);
+        return u;
+    }
+
+    /* ── Encode PCM → WAV ────────────────────────────────────── */
+    function encodeWav(audioBuf) {
+        var numCh = audioBuf.numberOfChannels;
+        var sr    = audioBuf.sampleRate;
+        var len   = audioBuf.length;
+
+        /* mix to mono */
+        var out = new Float32Array(len);
+        for (var c = 0; c < numCh; c++) {
+            var ch = audioBuf.getChannelData(c);
+            for (var i = 0; i < len; i++) out[i] += ch[i];
+        }
+        if (numCh > 1) for (var j = 0; j < len; j++) out[j] /= numCh;
+
+        var ab = new ArrayBuffer(44 + len * 2);
+        var dv = new DataView(ab);
+        function s(o, v) { for (var k = 0; k < v.length; k++) dv.setUint8(o + k, v.charCodeAt(k)); }
+
+        s(0,'RIFF'); dv.setUint32(4,36+len*2,true);
+        s(8,'WAVE'); s(12,'fmt ');
+        dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true);
+        dv.setUint32(24,sr,true); dv.setUint32(28,sr*2,true);
+        dv.setUint16(32,2,true);  dv.setUint16(34,16,true);
+        s(36,'data'); dv.setUint32(40,len*2,true);
+
+        var off = 44;
+        for (var n = 0; n < len; n++, off += 2) {
+            var x = Math.max(-1, Math.min(1, out[n]));
+            dv.setInt16(off, x < 0 ? x * 0x8000 : x * 0x7FFF, true);
+        }
+        return ab;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
+       PIPELINE CHÍNH
+       Vấn đề cốt lõi trên iOS cũ: decodeAudioData() KHÔNG BAO GIỜ
+       resolve hoặc reject với nhiều codec (FLAC, OGG, VBR MP3...).
+
+       Giải pháp: thử song song 2 phương pháp, lấy kết quả nào về trước.
+
+       Phương pháp A — FileReader + decodeAudioData (callback-style)
+         Hoạt động tốt trên iOS 10+ với MP3/AAC/WAV chuẩn.
+
+       Phương pháp B — AudioElement + MediaElementSource + OfflineAudioContext
+         Dùng <audio> để browser tự decode (iOS Safari xử lý codec riêng),
+         sau đó capture PCM qua OfflineAudioContext.
+         Không phụ thuộc vào decodeAudioData → bypass hoàn toàn điểm treo.
+
+       Nếu cả 2 thất bại → trả file gốc + thông báo cho user.
+    ───────────────────────────────────────────────────────────────── */
+
+    /* ── Phương pháp A: FileReader → decodeAudioData ─────────── */
+    function methodA(file) {
+        return new Promise(function(resolve, reject) {
+            /* Bước A1: đọc file */
+            var reader = new FileReader();
+            var dead = false;
+
+            var t1 = setTimeout(function() {
+                if (dead) return; dead = true;
+                try { reader.abort(); } catch(e) {}
+                reject(new Error('A:timeout-read'));
             }, 30000);
 
-            reader.onload = function(e) {
-                if (done) return;
-                done = true;
-                clearTimeout(timer);
-                resolve(e.target.result);
-            };
-
             reader.onerror = function() {
-                if (done) return;
-                done = true;
-                clearTimeout(timer);
-                reject(new Error('Không thể đọc file. Vui lòng thử file khác.'));
+                if (dead) return; dead = true;
+                clearTimeout(t1);
+                reject(new Error('A:read-error'));
             };
 
-            reader.onabort = function() {
-                if (done) return;
-                done = true;
-                clearTimeout(timer);
-                reject(new Error('Đọc file bị hủy.'));
+            reader.onload = function(e) {
+                if (dead) return;
+                clearTimeout(t1);
+                var ab = e.target.result;
+
+                /* Bước A2: decodeAudioData */
+                var AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) { dead = true; reject(new Error('A:no-api')); return; }
+
+                var ctx;
+                try { ctx = new AudioCtx(); } catch(ex) {
+                    dead = true; reject(new Error('A:ctx-fail')); return;
+                }
+
+                var t2 = setTimeout(function() {
+                    if (dead) return; dead = true;
+                    try { ctx.close(); } catch(e) {}
+                    /* ĐIỂM TREO CHÍNH — timeout sau 25s nếu iOS không phản hồi */
+                    reject(new Error('A:timeout-decode'));
+                }, 25000);
+
+                function ok(buf) {
+                    if (dead) return; dead = true;
+                    clearTimeout(t2);
+                    try { ctx.close(); } catch(e) {}
+                    resolve(buf);
+                }
+                function err() {
+                    if (dead) return; dead = true;
+                    clearTimeout(t2);
+                    try { ctx.close(); } catch(e) {}
+                    reject(new Error('A:decode-error'));
+                }
+
+                var resume = (ctx.state === 'suspended' && ctx.resume)
+                           ? ctx.resume() : Promise.resolve();
+
+                resume['catch'](function(){}).then(function() {
+                    try {
+                        var buf2 = ab.slice ? ab.slice(0) : ab;
+                        var p = ctx.decodeAudioData(buf2, ok, err);
+                        if (p && p.then) p.then(function(b){ if(!dead) ok(b); })['catch'](function(){ if(!dead) err(); });
+                    } catch(ex) {
+                        if (!dead) { dead = true; clearTimeout(t2); reject(ex); }
+                    }
+                });
             };
 
-            try {
-                reader.readAsArrayBuffer(file);
-            } catch(e) {
-                clearTimeout(timer);
-                reject(e);
-            }
+            reader.readAsArrayBuffer(file);
         });
     }
 
-    // ── FIX #2: decodeAudioData dùng callback-style + timeout ────────────────
-    // iOS Safari cũ đôi khi treo vô thời hạn với Promise-style
-    function decodeAudio(ctx, arrayBuffer) {
-        return new Promise(function(resolve, reject) {
-            var done = false;
+    /* ── Phương pháp B: AudioElement → OfflineAudioContext ───── */
+    /*
+       Nguyên lý:
+       1. Tạo object URL từ file → gán vào <audio>
+       2. Chờ metadata load để biết duration
+       3. Tạo OfflineAudioContext(1 channel, duration*sr, sr)
+       4. Tạo AudioContext + createMediaElementSource(<audio>)
+       5. Connect source → offlineCtx destination (KHÔNG được, khác context)
+          → Thay bằng: dùng liveCtx.createBufferSource sau khi decode
+          → Thực ra: dùng fetch + decodeAudioData trên liveCtx... vòng lại A.
+          → Giải pháp thực: ScriptProcessorNode capture real-time.
 
-            // FIX #3: Clone arrayBuffer trước khi decode
-            // iOS Safari đôi khi "tiêu thụ" buffer khi truyền vào,
-            // dùng slice(0) để đảm bảo buffer còn nguyên vẹn
-            var bufferToUse;
-            try {
-                bufferToUse = arrayBuffer.slice(0);
-            } catch(e) {
-                bufferToUse = arrayBuffer;
+       Cách đơn giản hơn (iOS-safe):
+       - Tạo <audio> với src = objectURL
+       - audio.play() trong OfflineAudioContext listener
+       - Dùng createMediaElementSource + connect tới offlineCtx
+         (iOS 14.5+ hỗ trợ, iOS cũ hơn thì không — nhưng lúc đó A đã chạy được rồi)
+
+       Tóm lại: B dùng ScriptProcessorNode capture để tương thích iOS 9+
+    */
+    function methodB(file) {
+        return new Promise(function(resolve, reject) {
+            var AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) { reject(new Error('B:no-api')); return; }
+
+            var objUrl = URL.createObjectURL(file);
+            blobUrls.push(objUrl);
+
+            var audio = document.createElement('audio');
+            audio.preload = 'auto';
+            /* iOS yêu cầu playsinline để phát trong web */
+            audio.setAttribute('playsinline', '');
+            audio.setAttribute('webkit-playsinline', '');
+
+            var dead   = false;
+            var liveCtx, processor, source;
+            var chunks = [];
+            var sampleRate = 44100;
+
+            var masterTimer = setTimeout(function() {
+                if (dead) return; dead = true;
+                cleanup();
+                reject(new Error('B:timeout'));
+            }, 60000);
+
+            function cleanup() {
+                clearTimeout(masterTimer);
+                try { audio.pause(); audio.src = ''; } catch(e) {}
+                try { if (processor) processor.disconnect(); } catch(e) {}
+                try { if (source)    source.disconnect();    } catch(e) {}
+                try { if (liveCtx)   liveCtx.close();        } catch(e) {}
             }
 
-            var timer = setTimeout(function() {
-                if (done) return;
-                done = true;
-                reject(new Error(
-                    'Giải mã quá lâu (>30s). File có thể quá lớn hoặc codec không được hỗ trợ. ' +
-                    'Hãy thử file MP3 hoặc WAV tiêu chuẩn.'
-                ));
-            }, 30000);
+            /* Bước B1: Chờ metadata để biết duration */
+            audio.addEventListener('error', function() {
+                if (dead) return; dead = true;
+                cleanup();
+                reject(new Error('B:audio-error'));
+            });
 
-            function onSuccess(buf) {
-                if (done) return;
-                done = true;
-                clearTimeout(timer);
+            audio.addEventListener('loadedmetadata', function() {
+                var duration = audio.duration;
+                if (!isFinite(duration) || duration <= 0) {
+                    /* Thử canplaythrough thay thế */
+                    return;
+                }
+                startCapture(duration);
+            });
+
+            /* Fallback: canplaythrough nếu metadata không có duration */
+            audio.addEventListener('canplaythrough', function() {
+                if (dead) return;
+                var dur = audio.duration;
+                if (!isFinite(dur) || dur <= 0) dur = 300; /* Giả định 5 phút nếu không biết */
+                startCapture(dur);
+            });
+
+            function startCapture(duration) {
+                if (dead) return;
+                /* Chỉ start một lần */
+                audio.removeEventListener('canplaythrough', arguments.callee);
+
+                try {
+                    liveCtx = new AudioCtx({ sampleRate: sampleRate });
+                } catch(e1) {
+                    try { liveCtx = new AudioCtx(); sampleRate = liveCtx.sampleRate; } catch(e2) {
+                        if (!dead) { dead = true; cleanup(); reject(new Error('B:ctx-fail')); }
+                        return;
+                    }
+                }
+
+                /* ScriptProcessorNode để capture PCM */
+                var bufSize = 4096;
+                try {
+                    processor = liveCtx.createScriptProcessor(bufSize, 1, 1);
+                } catch(e) {
+                    if (!dead) { dead = true; cleanup(); reject(new Error('B:processor-fail')); }
+                    return;
+                }
+
+                var totalExpected = Math.ceil(duration * liveCtx.sampleRate);
+                var captured = 0;
+
+                processor.onaudioprocess = function(e) {
+                    if (dead) return;
+                    var inputData = e.inputBuffer.getChannelData(0);
+                    var copy = new Float32Array(inputData.length);
+                    copy.set(inputData);
+                    chunks.push(copy);
+                    captured += inputData.length;
+
+                    /* Progress update */
+                    var pct = Math.min(90, 40 + Math.round((captured / totalExpected) * 50));
+                    prog(pct, 'Đang xử lý âm thanh... ' + Math.round(captured / liveCtx.sampleRate) + 's', 2);
+
+                    if (captured >= totalExpected) {
+                        finishCapture();
+                    }
+                };
+
+                try {
+                    source = liveCtx.createMediaElementSource(audio);
+                    source.connect(processor);
+                    processor.connect(liveCtx.destination);
+                } catch(e) {
+                    if (!dead) { dead = true; cleanup(); reject(new Error('B:source-fail:' + e.message)); }
+                    return;
+                }
+
+                /* Resume context (iOS) rồi play */
+                var rp = (liveCtx.state === 'suspended' && liveCtx.resume)
+                       ? liveCtx.resume() : Promise.resolve();
+
+                rp['catch'](function(){}).then(function() {
+                    try { audio.play(); } catch(e) {
+                        if (!dead) { dead = true; cleanup(); reject(new Error('B:play-fail')); }
+                    }
+                });
+
+                /* Khi audio kết thúc */
+                audio.addEventListener('ended', finishCapture);
+            }
+
+            var finished = false;
+            function finishCapture() {
+                if (dead || finished) return;
+                finished = true;
+                dead = true;
+                cleanup();
+
+                /* Ghép tất cả chunks */
+                var totalLen = 0;
+                for (var i = 0; i < chunks.length; i++) totalLen += chunks[i].length;
+
+                if (totalLen === 0) {
+                    reject(new Error('B:empty-capture'));
+                    return;
+                }
+
+                var merged = new Float32Array(totalLen);
+                var pos = 0;
+                for (var j = 0; j < chunks.length; j++) {
+                    merged.set(chunks[j], pos);
+                    pos += chunks[j].length;
+                }
+
+                /* Tạo AudioBuffer giả để dùng encodeWav */
+                var fakeBuf = {
+                    numberOfChannels: 1,
+                    sampleRate: sampleRate,
+                    length: totalLen,
+                    getChannelData: function() { return merged; }
+                };
+
+                resolve(fakeBuf);
+            }
+
+            audio.src = objUrl;
+            audio.load();
+        });
+    }
+
+    /* ── Chạy A và B song song, lấy kết quả đầu tiên ─────────── */
+    function decodeRace(file) {
+        return new Promise(function(resolve, reject) {
+            var won = false;
+            var errs = [];
+
+            function onWin(buf) {
+                if (won) return;
+                won = true;
                 resolve(buf);
             }
 
-            function onError(err) {
-                if (done) return;
-                done = true;
-                clearTimeout(timer);
-                var msg = 'Không giải mã được file âm thanh.';
-                if (err && err.message) msg += ' (' + err.message + ')';
-                msg += ' Hãy thử file MP3 hoặc WAV thuần túy.';
-                reject(new Error(msg));
-            }
-
-            try {
-                // Callback-style: ctx.decodeAudioData(buffer, successCb, errorCb)
-                // tương thích hơn Promise-style trên iOS cũ
-                var result = ctx.decodeAudioData(bufferToUse, onSuccess, onError);
-
-                // Một số browser hiện đại trả về Promise — xử lý cả hai
-                if (result && typeof result.then === 'function') {
-                    result.then(onSuccess).catch(onError);
+            function onFail(err) {
+                errs.push(err && err.message ? err.message : String(err));
+                if (errs.length >= 2 && !won) {
+                    reject(new Error('Cả hai phương pháp thất bại: ' + errs.join(' | ')));
                 }
-            } catch (e) {
-                clearTimeout(timer);
-                reject(e);
             }
+
+            methodA(file).then(onWin)['catch'](function(e) {
+                console.warn('Method A failed:', e && e.message);
+                onFail(e);
+            });
+
+            methodB(file).then(onWin)['catch'](function(e) {
+                console.warn('Method B failed:', e && e.message);
+                onFail(e);
+            });
         });
     }
 
-    // ── FIX #4: Tạo AudioContext đúng cách cho iOS ───────────────────────────
-    // iOS yêu cầu AudioContext được tạo trong user gesture handler
-    // và phải resume() trước khi dùng
-    function createAudioContext() {
-        return new Promise(function(resolve, reject) {
-            var AudioCtx = window.AudioContext || window.webkitAudioContext;
-            if (!AudioCtx) {
-                reject(new Error('Trình duyệt không hỗ trợ Web Audio API. Hãy dùng Safari hoặc Chrome mới hơn.'));
-                return;
-            }
-
-            var ctx;
-            try {
-                // iOS Safari cũ không hỗ trợ options object trong constructor
-                // → thử không có options trước
-                ctx = new AudioCtx();
-            } catch(e) {
-                reject(new Error('Không thể khởi tạo Audio Context: ' + e.message));
-                return;
-            }
-
-            // iOS Safari tự suspend context ngay sau khi tạo
-            // phải resume() để có thể decode
-            if (ctx.state === 'suspended') {
-                ctx.resume().then(function() {
-                    resolve(ctx);
-                }).catch(function() {
-                    // resume() thất bại nhưng vẫn thử tiếp
-                    resolve(ctx);
-                });
-            } else {
-                resolve(ctx);
-            }
-        });
-    }
-
-    // ── Encode PCM → WAV ─────────────────────────────────────────────────────
-    // FIX #5: Hỗ trợ cả mono và stereo (mix xuống mono nếu cần)
-    function encodeWAV(audioBuf) {
-        var numChannels = audioBuf.numberOfChannels;
-        var sampleRate  = audioBuf.sampleRate;
-        var length      = audioBuf.length;
-
-        // Lấy dữ liệu từ tất cả channels
-        var channels = [];
-        for (var c = 0; c < numChannels; c++) {
-            channels.push(audioBuf.getChannelData(c));
-        }
-
-        // Mix xuống mono
-        var samples = new Float32Array(length);
-        for (var i = 0; i < length; i++) {
-            var sum = 0;
-            for (var c2 = 0; c2 < numChannels; c2++) {
-                sum += channels[c2][i];
-            }
-            samples[i] = sum / numChannels;
-        }
-
-        var buf = new ArrayBuffer(44 + length * 2);
-        var v   = new DataView(buf);
-
-        function writeStr(off, s) {
-            for (var i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i));
-        }
-
-        writeStr(0,  'RIFF');
-        v.setUint32(4,  36 + length * 2, true);
-        writeStr(8,  'WAVE');
-        writeStr(12, 'fmt ');
-        v.setUint32(16, 16,         true);  // chunk size
-        v.setUint16(20, 1,          true);  // PCM
-        v.setUint16(22, 1,          true);  // mono
-        v.setUint32(24, sampleRate, true);
-        v.setUint32(28, sampleRate * 2, true); // byte rate
-        v.setUint16(32, 2,          true);  // block align
-        v.setUint16(34, 16,         true);  // bits per sample
-        writeStr(36, 'data');
-        v.setUint32(40, length * 2, true);
-
-        var off = 44;
-        for (var i2 = 0; i2 < length; i2++, off += 2) {
-            var x = Math.max(-1, Math.min(1, samples[i2]));
-            v.setInt16(off, x < 0 ? x * 0x8000 : x * 0x7FFF, true);
-        }
-
-        return buf;
-    }
-
-    // ── Main convert ──────────────────────────────────────────────────────────
+    /* ── Main convert ─────────────────────────────────────────── */
     function doConvert(file, targetFmt) {
-        convertBtn.disabled = true;
-        spinnerEl.classList.add('show');
-        btnTextEl.textContent = 'Đang chuyển đổi...';
+        setBusy(true);
         hideMsg();
         progressSection.classList.add('show');
         resultSection.classList.remove('show');
+        prog(5, 'Chuẩn bị...', 1);
 
-        var audioCtx = null;
+        var base = file.name.lastIndexOf('.') > 0
+                 ? file.name.substring(0, file.name.lastIndexOf('.'))
+                 : file.name;
+        var outName = base + '_converted.wav';
 
-        // Dùng Promise chain thay vì async/await để tương thích iOS cũ hơn
-        // (một số iOS 9/10 không hỗ trợ async/await kể cả qua transpiler)
-
-        setProgress(10, 'Đang đọc file...', 1);
-
-        // Tạo AudioContext sớm (trong user gesture) — quan trọng với iOS
-        var AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (AudioCtx) {
-            try { audioCtx = new AudioCtx(); } catch(e) {}
-        }
-
+        /* Delay nhỏ để iOS vẽ UI xong trước khi xử lý nặng */
         setTimeout(function() {
 
-        readFileAsArrayBuffer(file)
+        prog(10, 'Đang đọc file...', 1);
 
-        .then(function(arrayBuffer) {
-            setProgress(35, 'Đang khởi tạo bộ giải mã...', 2);
-
-            if (!audioCtx) {
-                var AudioCtxCls = window.AudioContext || window.webkitAudioContext;
-                if (!AudioCtxCls) throw new Error('Trình duyệt không hỗ trợ Web Audio API');
-                audioCtx = new AudioCtxCls();
+        /* Hiển thị progress giả trong lúc chờ decode */
+        var fakePct  = 15;
+        var fakeStep = 1;
+        var fakeTimer = setInterval(function() {
+            if (fakePct < 38) {
+                fakePct++;
+                prog(fakePct, fakePct < 30 ? 'Đang đọc file...' : 'Đang giải mã âm thanh...', fakePct < 30 ? 1 : 2);
+                if (fakePct === 30) fakeStep = 2;
             }
+        }, 300);
 
-            // Resume nếu bị suspend (iOS hay làm vậy)
-            var resumePromise;
-            if (audioCtx.state === 'suspended' && typeof audioCtx.resume === 'function') {
-                resumePromise = audioCtx.resume();
-            } else {
-                resumePromise = Promise.resolve();
-            }
-
-            return resumePromise.then(function() {
-                setProgress(45, 'Đang giải mã âm thanh... (có thể mất vài giây)', 2);
-                return decodeAudio(audioCtx, arrayBuffer);
-            });
-        })
+        decodeRace(file)
 
         .then(function(audioBuf) {
-            setProgress(72, 'Đang mã hoá WAV...', 2);
+            clearInterval(fakeTimer);
+            prog(72, 'Đang mã hoá WAV...', 2);
 
-            return new Promise(function(resolve) {
+            return new Promise(function(res) {
                 setTimeout(function() {
-                    var wavData = encodeWAV(audioBuf);
-                    resolve(wavData);
-                }, 50); // Nhường thread cho UI update
+                    var wavData = encodeWav(audioBuf);
+                    res(wavData);
+                }, 30);
             });
         })
 
         .then(function(wavData) {
-            setProgress(90, 'Đang tạo file kết quả...', 3);
+            prog(92, 'Đang tạo file...', 3);
+            var blob = new Blob([wavData], { type: 'audio/wav' });
+            var url  = mkUrl(blob);
 
-            return new Promise(function(resolve) {
-                setTimeout(function() {
-                    var blob = new Blob([wavData], { type: 'audio/wav' });
-                    var url  = URL.createObjectURL(blob);
-                    resolve(url);
-                }, 100);
-            });
-        })
+            prog(100, 'Hoàn thành!');
+            allDone();
 
-        .then(function(url) {
-            setProgress(100, 'Hoàn thành!');
-            step1El.classList.add('completed');
-            step2El.classList.add('completed');
-            step3El.classList.remove('active');
-            step3El.classList.add('completed');
-
-            var base = file.name.lastIndexOf('.') > 0
-                     ? file.name.substring(0, file.name.lastIndexOf('.'))
-                     : file.name;
-            var outName = base + '_converted.wav';
-
-            resultAudio.innerHTML =
-                '<h3>File: ' + outName + '</h3>' +
-                '<audio controls playsinline webkit-playsinline>' +
+            resultAudioEl.innerHTML =
+                '<h3>📄 ' + outName + '</h3>' +
+                '<audio controls playsinline webkit-playsinline style="width:100%;margin:10px 0">' +
                 '<source src="' + url + '" type="audio/wav">' +
-                'Trình duyệt không hỗ trợ phát âm thanh.</audio><br>' +
+                '</audio><br>' +
                 '<a href="' + url + '" download="' + outName + '" class="download-btn">⬇️ Tải về</a>';
 
             resultSection.classList.add('show');
-            showMsg('✓ Chuyển đổi thành công!', 'success');
-
-            setTimeout(function() { progressSection.classList.remove('show'); }, 1500);
+            showMsg('✅ Chuyển đổi thành công!', 'success');
+            setTimeout(function() { progressSection.classList.remove('show'); }, 1800);
         })
 
         .catch(function(err) {
-            console.error('Lỗi chuyển đổi:', err);
-            showMsg('❌ ' + (err && err.message ? err.message : 'Lỗi không xác định'), 'error');
-            progressSection.classList.remove('show');
+            clearInterval(fakeTimer);
+            console.error('Convert error:', err);
+
+            /* Fallback cuối: trả file gốc để user ít nhất nghe được */
+            prog(95, 'Đang thử chế độ tương thích...', 3);
+
+            var rdr = new FileReader();
+            rdr.onload = function(e) {
+                var blob = new Blob([e.target.result], { type: file.type || 'audio/mpeg' });
+                var url  = mkUrl(blob);
+                allDone();
+
+                resultAudioEl.innerHTML =
+                    '<p style="background:#fff3cd;color:#856404;padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:12px;">' +
+                    '⚠️ Thiết bị iOS này không giải mã được codec của file. File trả về là BẢN GỐC (chưa đổi định dạng).<br>' +
+                    'Gợi ý: Chuyển file sang <b>MP3 128kbps</b> trên máy tính trước, rồi thử lại.</p>' +
+                    '<h3>📄 ' + file.name + ' (gốc)</h3>' +
+                    '<audio controls playsinline webkit-playsinline style="width:100%;margin:10px 0">' +
+                    '<source src="' + url + '" type="' + (file.type || 'audio/mpeg') + '">' +
+                    '</audio><br>' +
+                    '<a href="' + url + '" download="' + file.name + '" class="download-btn">⬇️ Tải về bản gốc</a>';
+
+                resultSection.classList.add('show');
+                showMsg('⚠️ Codec không được hỗ trợ trên thiết bị này. Xem chi tiết bên dưới.', 'warn');
+                progressSection.classList.remove('show');
+                setBusy(false);
+            };
+            rdr.onerror = function() {
+                showMsg('❌ Không thể xử lý file này trên thiết bị. Hãy thử file MP3 hoặc WAV khác.', 'error');
+                progressSection.classList.remove('show');
+                setBusy(false);
+            };
+            rdr.readAsArrayBuffer(file);
+            return; /* setBusy sẽ gọi trong callback trên */
         })
 
         .then(function() {
-            // finally block (always runs)
-            if (audioCtx) { try { audioCtx.close(); } catch(e) {} audioCtx = null; }
-            convertBtn.disabled = false;
-            spinnerEl.classList.remove('show');
-            btnTextEl.textContent = 'Chuyển Đổi';
+            setBusy(false);
         });
 
-        }, 100); // Delay nhỏ để iOS render UI trước khi bắt đầu xử lý nặng
+        }, 200);
     }
 
 })();
