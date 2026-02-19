@@ -1,1047 +1,756 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SoundShift — Chuyển Đổi Âm Thanh</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface2: #1c1c28;
-    --border: #2a2a3a;
-    --accent: #7c6fff;
-    --accent2: #ff6fa3;
-    --accent3: #4dffc8;
-    --text: #f0f0ff;
-    --text-dim: #7878a0;
-    --text-muted: #44445a;
-    --radius: 16px;
-    --radius-sm: 10px;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-  html, body {
-    height: 100%;
-    font-family: 'Syne', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    overflow-x: hidden;
-  }
-
-  body {
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
-  }
-
-  /* Background grid */
-  .bg-grid {
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(124,111,255,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(124,111,255,0.04) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .bg-glow {
-    position: fixed;
-    width: 600px; height: 600px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(124,111,255,0.12) 0%, transparent 70%);
-    top: -200px; left: 50%;
-    transform: translateX(-50%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .container {
-    position: relative;
-    z-index: 1;
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 24px 16px 60px;
-  }
-
-  /* Header */
-  header {
-    text-align: center;
-    padding: 32px 0 40px;
-  }
-
-  .logo-mark {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
-  }
-
-  .logo-icon {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-  }
-
-  .logo-text {
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  header p {
-    font-size: 14px;
-    color: var(--text-dim);
-    font-weight: 400;
-    letter-spacing: 0.3px;
-  }
-
-  /* Drop zone */
-  .drop-zone {
-    border: 2px dashed var(--border);
-    border-radius: var(--radius);
-    padding: 40px 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    background: var(--surface);
-    position: relative;
-    overflow: hidden;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-
-  .drop-zone::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(124,111,255,0.06), rgba(255,111,163,0.04));
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .drop-zone.dragover, .drop-zone:active {
-    border-color: var(--accent);
-    background: var(--surface2);
-  }
-
-  .drop-zone.dragover::before { opacity: 1; }
-
-  .drop-zone-icon {
-    font-size: 48px;
-    margin-bottom: 14px;
-    display: block;
-    line-height: 1;
-  }
-
-  .drop-zone h3 {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 6px;
-    letter-spacing: -0.3px;
-  }
-
-  .drop-zone p {
-    font-size: 13px;
-    color: var(--text-dim);
-    margin-bottom: 18px;
-  }
-
-  .btn-browse {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: linear-gradient(135deg, var(--accent), #9b8fff);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius-sm);
-    padding: 11px 22px;
-    font-size: 14px;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s;
-    letter-spacing: 0.3px;
-    -webkit-appearance: none;
-    touch-action: manipulation;
-  }
-
-  .btn-browse:active { transform: scale(0.97); }
-
-  .formats-hint {
-    margin-top: 16px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    justify-content: center;
-  }
-
-  .fmt-tag {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    font-size: 11px;
-    font-family: 'DM Mono', monospace;
-    padding: 3px 8px;
-    border-radius: 6px;
-    letter-spacing: 0.5px;
-    font-weight: 500;
-  }
-
-  /* File list */
-  #file-list { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
-
-  .file-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    animation: slideIn 0.3s ease;
-  }
-
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .file-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-
-  .file-icon {
-    width: 42px; height: 42px;
-    background: linear-gradient(135deg, var(--surface2), var(--border));
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-    flex-shrink: 0;
-  }
-
-  .file-info { flex: 1; min-width: 0; }
-
-  .file-name {
-    font-size: 14px;
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 3px;
-    letter-spacing: -0.2px;
-  }
-
-  .file-meta {
-    font-size: 12px;
-    color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
-  }
-
-  .btn-remove {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-size: 18px;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 6px;
-    transition: color 0.2s, background 0.2s;
-    flex-shrink: 0;
-    -webkit-appearance: none;
-    touch-action: manipulation;
-    line-height: 1;
-  }
-
-  .btn-remove:active { color: var(--accent2); background: rgba(255,111,163,0.1); }
-
-  /* Format selector */
-  .format-selector {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    align-items: center;
-  }
-
-  .select-wrap {
-    position: relative;
-  }
-
-  .select-wrap label {
-    display: block;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-
-  .select-wrap select {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: var(--radius-sm);
-    padding: 10px 34px 10px 12px;
-    font-size: 14px;
-    font-family: 'DM Mono', monospace;
-    font-weight: 500;
-    -webkit-appearance: none;
-    appearance: none;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    outline: none;
-    letter-spacing: 0.5px;
-  }
-
-  .select-wrap select:focus { border-color: var(--accent); }
-
-  .select-arrow {
-    position: absolute;
-    right: 10px;
-    bottom: 11px;
-    color: var(--text-dim);
-    pointer-events: none;
-    font-size: 12px;
-  }
-
-  .btn-convert {
-    background: linear-gradient(135deg, var(--accent3) 0%, #00d4a0 100%);
-    color: #0a0a0f;
-    border: none;
-    border-radius: var(--radius-sm);
-    padding: 10px 14px;
-    font-size: 13px;
-    font-weight: 800;
-    font-family: inherit;
-    cursor: pointer;
-    transition: transform 0.15s, opacity 0.2s;
-    white-space: nowrap;
-    -webkit-appearance: none;
-    touch-action: manipulation;
-    letter-spacing: 0.3px;
-    align-self: flex-end;
-  }
-
-  .btn-convert:active { transform: scale(0.96); }
-  .btn-convert:disabled { opacity: 0.45; cursor: not-allowed; }
-
-  /* Progress */
-  .progress-wrap {
-    margin-top: 14px;
-    display: none;
-  }
-
-  .progress-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-bottom: 6px;
-    font-family: 'DM Mono', monospace;
-  }
-
-  .progress-bar {
-    height: 6px;
-    background: var(--surface2);
-    border-radius: 99px;
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    border-radius: 99px;
-    width: 0%;
-    transition: width 0.2s ease;
-  }
-
-  /* Status */
-  .status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 99px;
-    margin-top: 10px;
-    letter-spacing: 0.3px;
-    display: none;
-  }
-
-  .status-badge.done {
-    background: rgba(77,255,200,0.1);
-    color: var(--accent3);
-    border: 1px solid rgba(77,255,200,0.25);
-    display: inline-flex;
-  }
-
-  .status-badge.error {
-    background: rgba(255,111,163,0.1);
-    color: var(--accent2);
-    border: 1px solid rgba(255,111,163,0.25);
-    display: inline-flex;
-  }
-
-  /* Download button */
-  .btn-download {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    background: var(--surface2);
-    border: 1px solid var(--accent3);
-    color: var(--accent3);
-    border-radius: var(--radius-sm);
-    padding: 9px 16px;
-    font-size: 13px;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.15s;
-    text-decoration: none;
-    margin-top: 10px;
-    -webkit-appearance: none;
-    touch-action: manipulation;
-    letter-spacing: 0.3px;
-  }
-
-  .btn-download:active { transform: scale(0.96); background: rgba(77,255,200,0.1); }
-
-  /* Info panel */
-  .info-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px;
-    margin-top: 28px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .info-panel::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: linear-gradient(180deg, var(--accent), var(--accent2));
-    border-radius: 99px;
-  }
-
-  .info-panel h4 {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 10px;
-  }
-
-  .info-panel p {
-    font-size: 13px;
-    color: var(--text-dim);
-    line-height: 1.65;
-  }
-
-  /* iOS Warning */
-  .ios-note {
-    background: rgba(124,111,255,0.08);
-    border: 1px solid rgba(124,111,255,0.2);
-    border-radius: var(--radius-sm);
-    padding: 12px 14px;
-    font-size: 12.5px;
-    color: var(--text-dim);
-    line-height: 1.6;
-    margin-top: 14px;
-    display: none;
-  }
-
-  .ios-note.visible { display: block; }
-
-  /* Quaalitybar */
-  .quality-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-  }
-
-  .quality-row label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  .quality-row input[type=range] {
-    flex: 1;
-    -webkit-appearance: none;
-    appearance: none;
-    height: 4px;
-    background: var(--surface2);
-    border-radius: 99px;
-    outline: none;
-    cursor: pointer;
-  }
-
-  .quality-row input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    cursor: pointer;
-    border: 2px solid var(--bg);
-    box-shadow: 0 0 0 1px var(--accent);
-  }
-
-  .quality-val {
-    font-size: 12px;
-    font-family: 'DM Mono', monospace;
-    color: var(--accent);
-    min-width: 30px;
-    text-align: right;
-    font-weight: 500;
-  }
-
-  /* Divider */
-  .section-divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 28px 0 20px;
-  }
-
-  .section-divider span {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    white-space: nowrap;
-  }
-
-  .section-divider::before,
-  .section-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  /* Empty state */
-  #empty-state {
-    text-align: center;
-    padding: 32px;
-    color: var(--text-muted);
-    font-size: 13px;
-    display: none;
-  }
-
-  /* Responsive */
-  @media (max-width: 480px) {
-    header { padding: 20px 0 28px; }
-    .drop-zone { padding: 28px 16px; }
-    .drop-zone-icon { font-size: 38px; }
-    .format-selector { grid-template-columns: 1fr; }
-    .btn-convert { align-self: stretch; padding: 12px; }
-    .container { padding: 16px 12px 60px; }
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Công Cụ Chuyển Đổi Định Dạng Âm Thanh</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 { text-align: center; color: #333; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
+        .form-group { margin-bottom: 25px; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: block;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        input[type="file"] {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0.01;
+            cursor: pointer;
+            z-index: 10;
+            font-size: 16px;
+            -webkit-appearance: none;
+        }
+
+        .file-input-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 28px 20px;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            background-color: #f8f9ff;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            min-height: 90px;
+            text-align: center;
+        }
+
+        .file-input-visual .icon { font-size: 32px; margin-bottom: 8px; }
+        .file-input-visual .hint { color: #667eea; font-weight: 600; font-size: 14px; }
+        .file-name { color: #667eea; font-weight: 600; margin-top: 8px; font-size: 13px; }
+        .info-text { font-size: 12px; color: #666; margin-top: 8px; }
+
+        .ios-note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .format-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .format-item input[type="radio"] { display: none; }
+
+        .format-item label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0;
+            font-weight: 500;
+            font-size: 13px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .format-item input[type="radio"]:checked + label {
+            background-color: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .button-group { display: flex; gap: 10px; }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn-convert {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-convert:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102,126,234,0.4);
+        }
+
+        .btn-convert:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-reset { background: #f0f0f0; color: #333; }
+        .btn-reset:hover { background: #e0e0e0; }
+
+        .progress-section { margin-top: 25px; display: none; }
+        .progress-section.show { display: block; }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .progress-percentage { font-weight: 700; color: #667eea; font-size: 16px; }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(102,126,234,0.5);
+        }
+
+        .progress-text { margin-top: 10px; text-align: center; color: #666; font-size: 13px; }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .step { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+
+        .step-icon {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .step.completed .step-icon { background-color: #667eea; color: white; }
+        .step.active .step-icon {
+            background-color: #667eea; color: white;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(102,126,234,0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(102,126,234,0); }
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f0;
+            display: none;
+        }
+        .result-section.show { display: block; }
+
+        .result-audio { background: #f8f9ff; padding: 20px; border-radius: 8px; margin-bottom: 15px; }
+        .result-audio h3 { color: #333; margin-bottom: 10px; font-size: 14px; }
+        audio { width: 100%; margin-bottom: 10px; }
+
+        .download-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .download-btn:hover { background: #764ba2; }
+
+        .message { padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: none; font-size: 14px; }
+        .message.show { display: block; }
+        .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .spinner {
+            display: none;
+            width: 20px; height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        .spinner.show { display: inline-block; }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 20px; }
+            h1 { font-size: 24px; }
+            .button-group { flex-direction: column; }
+            .progress-steps { flex-direction: column; gap: 10px; }
+        }
+    </style>
 </head>
 <body>
-
-<div class="bg-grid"></div>
-<div class="bg-glow"></div>
-
 <div class="container">
-  <header>
-    <div class="logo-mark">
-      <div class="logo-icon">🎵</div>
-      <span class="logo-text">SoundShift</span>
+    <h1>🎵 Chuyển Đổi Âm Thanh</h1>
+    <p class="subtitle">Chuyển đổi giữa các định dạng âm thanh phổ biến</p>
+
+    <div id="message" class="message"></div>
+
+    <div class="form-group">
+        <label>Chọn File Âm Thanh</label>
+        <label class="file-input-wrapper" for="audioFile">
+            <input
+                type="file"
+                id="audioFile"
+                name="audioFile"
+                accept=".mp3,.wav,.ogg,.m4a,.flac,.aac,.aiff,.wma,audio/*"
+            >
+            <div class="file-input-visual">
+                <div class="icon">📁</div>
+                <div class="hint">Nhấn để chọn file âm thanh</div>
+            </div>
+        </label>
+        <div class="file-name" id="fileName"></div>
+        <div class="info-text">Hỗ trợ: MP3, WAV, OGG, M4A, FLAC, AAC...</div>
+        <div class="ios-note" id="iosNote">
+            📱 iOS: Sau khi nhấn → chọn <strong>Browse</strong> → tìm file trong <strong>Files / iCloud Drive / On My iPhone</strong>
+        </div>
     </div>
-    <p>Chuyển đổi âm thanh ngay trên trình duyệt — không cần upload lên server</p>
-  </header>
 
-  <!-- Drop Zone -->
-  <div class="drop-zone" id="dropZone">
-    <span class="drop-zone-icon">🎧</span>
-    <h3>Kéo & thả file âm thanh vào đây</h3>
-    <p>hoặc nhấn nút bên dưới để chọn file</p>
-    <button class="btn-browse" onclick="document.getElementById('fileInput').click()">
-      📁 Chọn File
-    </button>
-    <input type="file" id="fileInput" accept="audio/*" multiple style="display:none">
-    <div class="formats-hint">
-      <span class="fmt-tag">MP3</span>
-      <span class="fmt-tag">WAV</span>
-      <span class="fmt-tag">AAC</span>
-      <span class="fmt-tag">OGG</span>
-      <span class="fmt-tag">FLAC</span>
-      <span class="fmt-tag">M4A</span>
-      <span class="fmt-tag">WEBM</span>
-      <span class="fmt-tag">OPUS</span>
+    <div class="form-group">
+        <label>Định Dạng Đích</label>
+        <div class="format-group">
+            <div class="format-item">
+                <input type="radio" id="fmt_mp3" name="format" value="mp3">
+                <label for="fmt_mp3">MP3</label>
+            </div>
+            <div class="format-item">
+                <input type="radio" id="fmt_wav" name="format" value="wav" checked>
+                <label for="fmt_wav">WAV</label>
+            </div>
+            <div class="format-item">
+                <input type="radio" id="fmt_ogg" name="format" value="ogg">
+                <label for="fmt_ogg">OGG</label>
+            </div>
+            <div class="format-item">
+                <input type="radio" id="fmt_m4a" name="format" value="m4a">
+                <label for="fmt_m4a">M4A</label>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <div id="ios-note-global" class="ios-note">
-    ⚠️ <strong>iOS:</strong> Do giới hạn trình duyệt Safari, một số định dạng (OGG, FLAC, OPUS) có thể không hỗ trợ xuất. Khuyên dùng <strong>WAV</strong> hoặc <strong>MP3</strong> khi dùng iPhone/iPad. File WAV luôn hoạt động tốt nhất trên iOS đời thấp.
-  </div>
+    <div class="button-group">
+        <button class="btn-convert" id="convertBtn" disabled>
+            <span class="spinner" id="spinner"></span>
+            <span id="btnText">Chuyển Đổi</span>
+        </button>
+        <button class="btn-reset" id="resetBtn">Đặt Lại</button>
+    </div>
 
-  <!-- File list -->
-  <div id="file-section" style="display:none">
-    <div class="section-divider"><span>Danh sách file</span></div>
-    <div id="file-list"></div>
-  </div>
+    <div class="progress-section" id="progressSection">
+        <div class="progress-label">
+            <span>Tiến độ</span>
+            <span class="progress-percentage" id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">Đang khởi tạo...</div>
+        <div class="progress-steps">
+            <div class="step" id="step1"><div class="step-icon">📂</div><div>Đọc File</div></div>
+            <div class="step" id="step2"><div class="step-icon">⚙️</div><div>Xử Lý</div></div>
+            <div class="step" id="step3"><div class="step-icon">📦</div><div>Hoàn Thành</div></div>
+        </div>
+    </div>
 
-  <!-- Info -->
-  <div class="info-panel" style="margin-top: 32px;">
-    <h4>ℹ️ Cách hoạt động</h4>
-    <p>Toàn bộ quá trình xử lý diễn ra <strong style="color: var(--text)">100% trên thiết bị của bạn</strong>, không có dữ liệu nào được gửi lên internet. Sử dụng Web Audio API và AudioBuffer để giải mã, sau đó mã hóa lại sang định dạng đích bằng MediaRecorder.</p>
-  </div>
+    <div class="result-section" id="resultSection">
+        <h2 style="margin-bottom:20px;color:#333;font-size:18px;">✓ Kết Quả Chuyển Đổi</h2>
+        <div class="result-audio" id="resultAudio"></div>
+    </div>
 </div>
 
 <script>
-// ============================================
-// Detect iOS
-// ============================================
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+(function() {
+    'use strict';
 
-const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    var audioFileEl    = document.getElementById('audioFile');
+    var fileNameEl     = document.getElementById('fileName');
+    var convertBtn     = document.getElementById('convertBtn');
+    var resetBtn       = document.getElementById('resetBtn');
+    var resultSection  = document.getElementById('resultSection');
+    var resultAudio    = document.getElementById('resultAudio');
+    var messageEl      = document.getElementById('message');
+    var spinnerEl      = document.getElementById('spinner');
+    var btnTextEl      = document.getElementById('btnText');
+    var progressSection= document.getElementById('progressSection');
+    var progressBarEl  = document.getElementById('progressBar');
+    var progressPctEl  = document.getElementById('progressPercent');
+    var progressTxtEl  = document.getElementById('progressText');
+    var step1El = document.getElementById('step1');
+    var step2El = document.getElementById('step2');
+    var step3El = document.getElementById('step3');
+    var iosNote = document.getElementById('iosNote');
 
-if (isIOS || isSafari) {
-  document.getElementById('ios-note-global').classList.add('visible');
-}
+    var selectedFile = null;
 
-// Supported output formats per browser
-function getSupportedFormats() {
-  const all = [
-    { value: 'wav',  label: 'WAV', mime: 'audio/wav' },
-    { value: 'mp3',  label: 'MP3', mime: 'audio/mpeg' },
-    { value: 'ogg',  label: 'OGG', mime: 'audio/ogg; codecs=vorbis' },
-    { value: 'webm', label: 'WEBM',mime: 'audio/webm; codecs=opus' },
-    { value: 'opus', label: 'OPUS',mime: 'audio/ogg; codecs=opus' },
-    { value: 'm4a',  label: 'M4A', mime: 'audio/mp4' },
-  ];
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) iosNote.style.display = 'block';
 
-  // WAV is always supported via our custom encoder
-  // Others depend on MediaRecorder
-  const supported = [{ value: 'wav', label: 'WAV (Khuyên dùng iOS)', mime: 'audio/wav' }];
+    // Drag & drop — desktop only
+    if (!isIOS) {
+        var wrapper = document.querySelector('.file-input-wrapper');
+        wrapper.addEventListener('dragover', function(e) { e.preventDefault(); });
+        wrapper.addEventListener('drop', function(e) {
+            e.preventDefault();
+            var f = e.dataTransfer.files[0];
+            if (f) processFile(f);
+        });
+    }
 
-  if (!isIOS && !isSafari) {
-    // Check MediaRecorder support
-    all.slice(1).forEach(f => {
-      try {
-        if (window.MediaRecorder && MediaRecorder.isTypeSupported(f.mime)) {
-          supported.push(f);
+    audioFileEl.addEventListener('change', function() {
+        var f = this.files && this.files[0];
+        if (f) processFile(f);
+    });
+
+    function processFile(file) {
+        var ext = ((file.name || '').split('.').pop() || '').toLowerCase();
+        var audioExts = ['mp3','wav','ogg','m4a','flac','aac','aiff','wma','mp4','opus','webm'];
+        var isAudio = (file.type && file.type.startsWith('audio/')) || audioExts.indexOf(ext) !== -1;
+        if (!isAudio) {
+            showMsg('Vui lòng chọn file âm thanh hợp lệ (MP3, WAV, M4A...)', 'error');
+            audioFileEl.value = '';
+            return;
         }
-      } catch(e) {}
-    });
-  } else {
-    // iOS Safari may support mp4/m4a
-    try {
-      if (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/mp4')) {
-        supported.push({ value: 'm4a', label: 'M4A / AAC', mime: 'audio/mp4' });
-      }
-    } catch(e) {}
-  }
-
-  // Always add common ones as attempt
-  if (!supported.find(f => f.value === 'mp3')) {
-    supported.push({ value: 'mp3', label: 'MP3*', mime: 'audio/mpeg' });
-  }
-
-  return supported;
-}
-
-const SUPPORTED_OUT = getSupportedFormats();
-
-// ============================================
-// Drag and Drop
-// ============================================
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-
-dropZone.addEventListener('dragover', e => {
-  e.preventDefault();
-  dropZone.classList.add('dragover');
-});
-
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('dragover');
-  handleFiles(e.dataTransfer.files);
-});
-
-fileInput.addEventListener('change', e => handleFiles(e.target.files));
-
-// Touch friendly tap on drop zone
-dropZone.addEventListener('click', e => {
-  if (e.target.tagName !== 'BUTTON') {
-    fileInput.click();
-  }
-});
-
-// ============================================
-// File handling
-// ============================================
-let fileItems = [];
-
-function handleFiles(fileList) {
-  const arr = Array.from(fileList).filter(f => f.type.startsWith('audio/') || isAudioByExt(f.name));
-  if (!arr.length) return;
-  arr.forEach(f => addFile(f));
-  document.getElementById('file-section').style.display = 'block';
-}
-
-function isAudioByExt(name) {
-  return /\.(mp3|wav|ogg|flac|m4a|aac|opus|webm|wma|aiff|au)$/i.test(name);
-}
-
-function formatBytes(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
-  return (bytes/(1024*1024)).toFixed(2) + ' MB';
-}
-
-function getExt(name) {
-  return name.split('.').pop().toUpperCase();
-}
-
-function addFile(file) {
-  const id = 'fi_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-  fileItems.push({ id, file });
-
-  const el = document.createElement('div');
-  el.className = 'file-item';
-  el.id = id;
-
-  const optionsHtml = SUPPORTED_OUT.map(f =>
-    `<option value="${f.value}" data-mime="${f.mime}">${f.label}</option>`
-  ).join('');
-
-  el.innerHTML = `
-    <div class="file-header">
-      <div class="file-icon">🎵</div>
-      <div class="file-info">
-        <div class="file-name" title="${file.name}">${file.name}</div>
-        <div class="file-meta">${getExt(file.name)} · ${formatBytes(file.size)}</div>
-      </div>
-      <button class="btn-remove" onclick="removeFile('${id}')" title="Xóa">✕</button>
-    </div>
-    <div class="format-selector">
-      <div class="select-wrap">
-        <label>Chuyển sang</label>
-        <select id="fmt_${id}">
-          ${optionsHtml}
-        </select>
-        <span class="select-arrow">▾</span>
-      </div>
-      <div class="select-wrap">
-        <label>Sample Rate</label>
-        <select id="sr_${id}">
-          <option value="44100">44100 Hz</option>
-          <option value="22050">22050 Hz</option>
-          <option value="48000">48000 Hz</option>
-          <option value="16000">16000 Hz (nhỏ)</option>
-          <option value="8000">8000 Hz (điện thoại)</option>
-        </select>
-        <span class="select-arrow">▾</span>
-      </div>
-      <button class="btn-convert" id="btn_${id}" onclick="convertFile('${id}')">
-        ⚡ Chuyển đổi
-      </button>
-    </div>
-    <div class="quality-row">
-      <label>Chất lượng</label>
-      <input type="range" id="q_${id}" min="0.1" max="1" step="0.05" value="0.9"
-        oninput="document.getElementById('qv_${id}').textContent=Math.round(this.value*100)+'%'">
-      <span class="quality-val" id="qv_${id}">90%</span>
-    </div>
-    <div class="progress-wrap" id="prog_${id}">
-      <div class="progress-label">
-        <span id="prog_label_${id}">Đang xử lý...</span>
-        <span id="prog_pct_${id}">0%</span>
-      </div>
-      <div class="progress-bar"><div class="progress-fill" id="prog_fill_${id}"></div></div>
-    </div>
-    <div id="result_${id}"></div>
-  `;
-
-  document.getElementById('file-list').appendChild(el);
-}
-
-function removeFile(id) {
-  fileItems = fileItems.filter(f => f.id !== id);
-  const el = document.getElementById(id);
-  if (el) el.remove();
-  if (fileItems.length === 0) {
-    document.getElementById('file-section').style.display = 'none';
-  }
-}
-
-// ============================================
-// WAV Encoder (pure JS, works everywhere)
-// ============================================
-function audioBufferToWav(buffer, targetSampleRate) {
-  const numChannels = Math.min(buffer.numberOfChannels, 2);
-  const sampleRate = targetSampleRate || buffer.sampleRate;
-  const format = 1; // PCM
-  const bitDepth = 16;
-
-  // Resample if needed
-  let channelData = [];
-  for (let c = 0; c < numChannels; c++) {
-    channelData.push(resample(buffer.getChannelData(c), buffer.sampleRate, sampleRate));
-  }
-
-  const numSamples = channelData[0].length;
-  const byteRate = sampleRate * numChannels * bitDepth / 8;
-  const dataSize = numSamples * numChannels * bitDepth / 8;
-  const headerSize = 44;
-  const ab = new ArrayBuffer(headerSize + dataSize);
-  const view = new DataView(ab);
-
-  function writeStr(o, s) { for (let i=0; i<s.length; i++) view.setUint8(o+i, s.charCodeAt(i)); }
-
-  writeStr(0, 'RIFF');
-  view.setUint32(4, 36 + dataSize, true);
-  writeStr(8, 'WAVE');
-  writeStr(12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, format, true);
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, byteRate, true);
-  view.setUint16(32, numChannels * bitDepth / 8, true);
-  view.setUint16(34, bitDepth, true);
-  writeStr(36, 'data');
-  view.setUint32(40, dataSize, true);
-
-  let offset = 44;
-  for (let i = 0; i < numSamples; i++) {
-    for (let c = 0; c < numChannels; c++) {
-      const s = Math.max(-1, Math.min(1, channelData[c][i]));
-      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-      offset += 2;
+        selectedFile = file;
+        fileNameEl.textContent = '✓ Đã chọn: ' + file.name;
+        convertBtn.disabled = false;
+        hideMsg();
+        resultSection.classList.remove('show');
+        progressSection.classList.remove('show');
     }
-  }
 
-  return ab;
-}
-
-function resample(samples, fromRate, toRate) {
-  if (fromRate === toRate) return samples;
-  const ratio = fromRate / toRate;
-  const length = Math.round(samples.length / ratio);
-  const result = new Float32Array(length);
-  for (let i = 0; i < length; i++) {
-    const pos = i * ratio;
-    const idx = Math.floor(pos);
-    const frac = pos - idx;
-    const s0 = samples[idx] || 0;
-    const s1 = samples[Math.min(idx + 1, samples.length - 1)] || 0;
-    result[i] = s0 + (s1 - s0) * frac;
-  }
-  return result;
-}
-
-// ============================================
-// Main Convert Function
-// ============================================
-async function convertFile(id) {
-  const item = fileItems.find(f => f.id === id);
-  if (!item) return;
-
-  const btn = document.getElementById('btn_' + id);
-  const progWrap = document.getElementById('prog_' + id);
-  const progFill = document.getElementById('prog_fill_' + id);
-  const progLabel = document.getElementById('prog_label_' + id);
-  const progPct = document.getElementById('prog_pct_' + id);
-  const result = document.getElementById('result_' + id);
-  const fmtSel = document.getElementById('fmt_' + id);
-  const srSel = document.getElementById('sr_' + id);
-  const quality = parseFloat(document.getElementById('q_' + id).value);
-
-  const outFmt = fmtSel.value;
-  const outMime = fmtSel.selectedOptions[0].dataset.mime;
-  const targetSR = parseInt(srSel.value);
-
-  btn.disabled = true;
-  result.innerHTML = '';
-  progWrap.style.display = 'block';
-
-  function setProgress(pct, label) {
-    progFill.style.width = pct + '%';
-    progPct.textContent = pct + '%';
-    if (label) progLabel.textContent = label;
-  }
-
-  try {
-    setProgress(5, 'Đọc file...');
-
-    // Read file as ArrayBuffer
-    const arrayBuf = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = e => resolve(e.target.result);
-      reader.onerror = reject;
-      reader.readAsArrayBuffer(item.file);
+    convertBtn.addEventListener('click', function() {
+        if (!selectedFile) { showMsg('Vui lòng chọn file âm thanh!', 'error'); return; }
+        var fmt = document.querySelector('input[name="format"]:checked');
+        if (!fmt) { showMsg('Vui lòng chọn định dạng đích!', 'error'); return; }
+        doConvert(selectedFile, fmt.value);
     });
 
-    setProgress(20, 'Giải mã âm thanh...');
+    resetBtn.addEventListener('click', function() {
+        audioFileEl.value = '';
+        selectedFile = null;
+        fileNameEl.textContent = '';
+        convertBtn.disabled = true;
+        resultSection.classList.remove('show');
+        progressSection.classList.remove('show');
+        hideMsg();
+        document.getElementById('fmt_wav').checked = true;
+    });
 
-    // Decode audio
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) throw new Error('Trình duyệt không hỗ trợ Web Audio API');
-
-    const ctx = new AudioCtx();
-    let audioBuffer;
-    try {
-      audioBuffer = await ctx.decodeAudioData(arrayBuf.slice(0));
-    } catch(e) {
-      throw new Error('Không thể giải mã file. Định dạng nguồn có thể không được hỗ trợ trên thiết bị này.');
+    // ── Helpers ──────────────────────────────────────────────────
+    function setProgress(pct, text, stepN) {
+        progressBarEl.style.width = pct + '%';
+        progressPctEl.textContent = Math.round(pct) + '%';
+        progressTxtEl.textContent = text;
+        var steps = [step1El, step2El, step3El];
+        steps.forEach(function(s, i) {
+            s.classList.remove('active', 'completed');
+            if (stepN === undefined) return;
+            if (i + 1 < stepN)  s.classList.add('completed');
+            if (i + 1 === stepN) s.classList.add('active');
+        });
     }
 
-    setProgress(45, 'Đang mã hóa...');
-
-    let blob;
-
-    if (outFmt === 'wav') {
-      // Use our pure-JS WAV encoder
-      setProgress(60, 'Tạo file WAV...');
-      const wavBuf = audioBufferToWav(audioBuffer, targetSR);
-      blob = new Blob([wavBuf], { type: 'audio/wav' });
-      setProgress(95, 'Hoàn thành!');
-
-    } else {
-      // Try MediaRecorder approach
-      blob = await encodeWithMediaRecorder(audioBuffer, outMime, targetSR, quality, setProgress);
+    function sleep(ms) {
+        return new Promise(function(r) { setTimeout(r, ms); });
     }
 
-    await ctx.close();
-    setProgress(100, 'Xong!');
-
-    const ext = outFmt;
-    const baseName = item.file.name.replace(/\.[^.]+$/, '');
-    const outName = baseName + '.' + ext;
-    const url = URL.createObjectURL(blob);
-
-    result.innerHTML = `
-      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:10px;">
-        <span class="status-badge done">✓ Chuyển đổi thành công · ${formatBytes(blob.size)}</span>
-      </div>
-      <a class="btn-download" href="${url}" download="${outName}">
-        ⬇ Tải về ${outName}
-      </a>
-    `;
-
-    // Also show audio player for preview
-    const audio = document.createElement('audio');
-    audio.controls = true;
-    audio.src = url;
-    audio.style.cssText = 'display:block; margin-top:12px; width:100%; max-width:100%; border-radius:8px;';
-    result.appendChild(audio);
-
-  } catch(err) {
-    setProgress(0, 'Lỗi!');
-    result.innerHTML = `<span class="status-badge error">✗ ${err.message || 'Lỗi không xác định'}</span>`;
-    if (outFmt === 'wav') {
-      result.innerHTML += `<br><small style="color:var(--text-dim);font-size:12px;display:block;margin-top:6px;">Thử chọn định dạng WAV — đây là định dạng tương thích nhất với mọi thiết bị.</small>`;
+    function showMsg(text, type) {
+        messageEl.textContent = text;
+        messageEl.className = 'message show ' + (type || '');
     }
-  } finally {
-    btn.disabled = false;
-  }
-}
+    function hideMsg() { messageEl.className = 'message'; }
 
-async function encodeWithMediaRecorder(audioBuffer, mime, targetSR, quality, setProgress) {
-  return new Promise((resolve, reject) => {
-    if (!window.MediaRecorder) {
-      reject(new Error('MediaRecorder không được hỗ trợ. Vui lòng chọn định dạng WAV.'));
-      return;
+    // ── FIX #1: Đọc file dùng FileReader thay vì file.arrayBuffer() ──────────
+    // file.arrayBuffer() KHÔNG hoạt động trên iOS < 13 / Safari cũ
+    // FileReader tương thích từ iOS 6+
+    function readFileAsArrayBuffer(file) {
+        return new Promise(function(resolve, reject) {
+            var reader = new FileReader();
+            var done = false;
+
+            var timer = setTimeout(function() {
+                if (done) return;
+                done = true;
+                reader.abort();
+                reject(new Error('Đọc file quá lâu. Vui lòng thử lại.'));
+            }, 30000);
+
+            reader.onload = function(e) {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                resolve(e.target.result);
+            };
+
+            reader.onerror = function() {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                reject(new Error('Không thể đọc file. Vui lòng thử file khác.'));
+            };
+
+            reader.onabort = function() {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                reject(new Error('Đọc file bị hủy.'));
+            };
+
+            try {
+                reader.readAsArrayBuffer(file);
+            } catch(e) {
+                clearTimeout(timer);
+                reject(e);
+            }
+        });
     }
 
-    if (!MediaRecorder.isTypeSupported(mime)) {
-      // Fallback: try without codec spec
-      const baseMime = mime.split(';')[0];
-      if (!MediaRecorder.isTypeSupported(baseMime)) {
-        reject(new Error(`Định dạng ${mime.split('/')[1]} không được hỗ trợ trên thiết bị này. Vui lòng chọn WAV.`));
-        return;
-      }
-      mime = baseMime;
+    // ── FIX #2: decodeAudioData dùng callback-style + timeout ────────────────
+    // iOS Safari cũ đôi khi treo vô thời hạn với Promise-style
+    function decodeAudio(ctx, arrayBuffer) {
+        return new Promise(function(resolve, reject) {
+            var done = false;
+
+            // FIX #3: Clone arrayBuffer trước khi decode
+            // iOS Safari đôi khi "tiêu thụ" buffer khi truyền vào,
+            // dùng slice(0) để đảm bảo buffer còn nguyên vẹn
+            var bufferToUse;
+            try {
+                bufferToUse = arrayBuffer.slice(0);
+            } catch(e) {
+                bufferToUse = arrayBuffer;
+            }
+
+            var timer = setTimeout(function() {
+                if (done) return;
+                done = true;
+                reject(new Error(
+                    'Giải mã quá lâu (>30s). File có thể quá lớn hoặc codec không được hỗ trợ. ' +
+                    'Hãy thử file MP3 hoặc WAV tiêu chuẩn.'
+                ));
+            }, 30000);
+
+            function onSuccess(buf) {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                resolve(buf);
+            }
+
+            function onError(err) {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                var msg = 'Không giải mã được file âm thanh.';
+                if (err && err.message) msg += ' (' + err.message + ')';
+                msg += ' Hãy thử file MP3 hoặc WAV thuần túy.';
+                reject(new Error(msg));
+            }
+
+            try {
+                // Callback-style: ctx.decodeAudioData(buffer, successCb, errorCb)
+                // tương thích hơn Promise-style trên iOS cũ
+                var result = ctx.decodeAudioData(bufferToUse, onSuccess, onError);
+
+                // Một số browser hiện đại trả về Promise — xử lý cả hai
+                if (result && typeof result.then === 'function') {
+                    result.then(onSuccess).catch(onError);
+                }
+            } catch (e) {
+                clearTimeout(timer);
+                reject(e);
+            }
+        });
     }
 
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    const offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
-      audioBuffer.numberOfChannels,
-      Math.round(audioBuffer.duration * targetSR),
-      targetSR
-    );
+    // ── FIX #4: Tạo AudioContext đúng cách cho iOS ───────────────────────────
+    // iOS yêu cầu AudioContext được tạo trong user gesture handler
+    // và phải resume() trước khi dùng
+    function createAudioContext() {
+        return new Promise(function(resolve, reject) {
+            var AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) {
+                reject(new Error('Trình duyệt không hỗ trợ Web Audio API. Hãy dùng Safari hoặc Chrome mới hơn.'));
+                return;
+            }
 
-    const src = offlineCtx.createBufferSource();
-    src.buffer = audioBuffer;
-    src.connect(offlineCtx.destination);
-    src.start(0);
+            var ctx;
+            try {
+                // iOS Safari cũ không hỗ trợ options object trong constructor
+                // → thử không có options trước
+                ctx = new AudioCtx();
+            } catch(e) {
+                reject(new Error('Không thể khởi tạo Audio Context: ' + e.message));
+                return;
+            }
 
-    offlineCtx.startRendering().then(rendered => {
-      setProgress(65, 'Ghi âm thanh...');
+            // iOS Safari tự suspend context ngay sau khi tạo
+            // phải resume() để có thể decode
+            if (ctx.state === 'suspended') {
+                ctx.resume().then(function() {
+                    resolve(ctx);
+                }).catch(function() {
+                    // resume() thất bại nhưng vẫn thử tiếp
+                    resolve(ctx);
+                });
+            } else {
+                resolve(ctx);
+            }
+        });
+    }
 
-      const dest = new AudioContext().createMediaStreamDestination();
-      const ctx2 = dest.context;
-      const src2 = ctx2.createBufferSource();
-      src2.buffer = rendered;
-      src2.connect(dest);
-      src2.start(0);
+    // ── Encode PCM → WAV ─────────────────────────────────────────────────────
+    // FIX #5: Hỗ trợ cả mono và stereo (mix xuống mono nếu cần)
+    function encodeWAV(audioBuf) {
+        var numChannels = audioBuf.numberOfChannels;
+        var sampleRate  = audioBuf.sampleRate;
+        var length      = audioBuf.length;
 
-      const recorder = new MediaRecorder(dest.stream, {
-        mimeType: mime,
-        audioBitsPerSecond: Math.round(quality * 320000)
-      });
+        // Lấy dữ liệu từ tất cả channels
+        var channels = [];
+        for (var c = 0; c < numChannels; c++) {
+            channels.push(audioBuf.getChannelData(c));
+        }
 
-      const chunks = [];
-      recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: mime });
-        resolve(blob);
-      };
-      recorder.onerror = e => reject(new Error('MediaRecorder lỗi: ' + e.error));
+        // Mix xuống mono
+        var samples = new Float32Array(length);
+        for (var i = 0; i < length; i++) {
+            var sum = 0;
+            for (var c2 = 0; c2 < numChannels; c2++) {
+                sum += channels[c2][i];
+            }
+            samples[i] = sum / numChannels;
+        }
 
-      recorder.start(100);
+        var buf = new ArrayBuffer(44 + length * 2);
+        var v   = new DataView(buf);
 
-      const duration = rendered.duration * 1000;
-      const startTime = Date.now();
+        function writeStr(off, s) {
+            for (var i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i));
+        }
 
-      const ticker = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const pct = Math.min(95, 65 + Math.round((elapsed / duration) * 30));
-        setProgress(pct, 'Đang xử lý...');
-      }, 200);
+        writeStr(0,  'RIFF');
+        v.setUint32(4,  36 + length * 2, true);
+        writeStr(8,  'WAVE');
+        writeStr(12, 'fmt ');
+        v.setUint32(16, 16,         true);  // chunk size
+        v.setUint16(20, 1,          true);  // PCM
+        v.setUint16(22, 1,          true);  // mono
+        v.setUint32(24, sampleRate, true);
+        v.setUint32(28, sampleRate * 2, true); // byte rate
+        v.setUint16(32, 2,          true);  // block align
+        v.setUint16(34, 16,         true);  // bits per sample
+        writeStr(36, 'data');
+        v.setUint32(40, length * 2, true);
 
-      setTimeout(() => {
-        clearInterval(ticker);
-        try { recorder.stop(); } catch(e) {}
-      }, duration + 200);
+        var off = 44;
+        for (var i2 = 0; i2 < length; i2++, off += 2) {
+            var x = Math.max(-1, Math.min(1, samples[i2]));
+            v.setInt16(off, x < 0 ? x * 0x8000 : x * 0x7FFF, true);
+        }
 
-    }).catch(err => reject(new Error('Lỗi OfflineAudioContext: ' + err.message)));
-  });
-}
+        return buf;
+    }
+
+    // ── Main convert ──────────────────────────────────────────────────────────
+    function doConvert(file, targetFmt) {
+        convertBtn.disabled = true;
+        spinnerEl.classList.add('show');
+        btnTextEl.textContent = 'Đang chuyển đổi...';
+        hideMsg();
+        progressSection.classList.add('show');
+        resultSection.classList.remove('show');
+
+        var audioCtx = null;
+
+        // Dùng Promise chain thay vì async/await để tương thích iOS cũ hơn
+        // (một số iOS 9/10 không hỗ trợ async/await kể cả qua transpiler)
+
+        setProgress(10, 'Đang đọc file...', 1);
+
+        // Tạo AudioContext sớm (trong user gesture) — quan trọng với iOS
+        var AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+            try { audioCtx = new AudioCtx(); } catch(e) {}
+        }
+
+        setTimeout(function() {
+
+        readFileAsArrayBuffer(file)
+
+        .then(function(arrayBuffer) {
+            setProgress(35, 'Đang khởi tạo bộ giải mã...', 2);
+
+            if (!audioCtx) {
+                var AudioCtxCls = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtxCls) throw new Error('Trình duyệt không hỗ trợ Web Audio API');
+                audioCtx = new AudioCtxCls();
+            }
+
+            // Resume nếu bị suspend (iOS hay làm vậy)
+            var resumePromise;
+            if (audioCtx.state === 'suspended' && typeof audioCtx.resume === 'function') {
+                resumePromise = audioCtx.resume();
+            } else {
+                resumePromise = Promise.resolve();
+            }
+
+            return resumePromise.then(function() {
+                setProgress(45, 'Đang giải mã âm thanh... (có thể mất vài giây)', 2);
+                return decodeAudio(audioCtx, arrayBuffer);
+            });
+        })
+
+        .then(function(audioBuf) {
+            setProgress(72, 'Đang mã hoá WAV...', 2);
+
+            return new Promise(function(resolve) {
+                setTimeout(function() {
+                    var wavData = encodeWAV(audioBuf);
+                    resolve(wavData);
+                }, 50); // Nhường thread cho UI update
+            });
+        })
+
+        .then(function(wavData) {
+            setProgress(90, 'Đang tạo file kết quả...', 3);
+
+            return new Promise(function(resolve) {
+                setTimeout(function() {
+                    var blob = new Blob([wavData], { type: 'audio/wav' });
+                    var url  = URL.createObjectURL(blob);
+                    resolve(url);
+                }, 100);
+            });
+        })
+
+        .then(function(url) {
+            setProgress(100, 'Hoàn thành!');
+            step1El.classList.add('completed');
+            step2El.classList.add('completed');
+            step3El.classList.remove('active');
+            step3El.classList.add('completed');
+
+            var base = file.name.lastIndexOf('.') > 0
+                     ? file.name.substring(0, file.name.lastIndexOf('.'))
+                     : file.name;
+            var outName = base + '_converted.wav';
+
+            resultAudio.innerHTML =
+                '<h3>File: ' + outName + '</h3>' +
+                '<audio controls playsinline webkit-playsinline>' +
+                '<source src="' + url + '" type="audio/wav">' +
+                'Trình duyệt không hỗ trợ phát âm thanh.</audio><br>' +
+                '<a href="' + url + '" download="' + outName + '" class="download-btn">⬇️ Tải về</a>';
+
+            resultSection.classList.add('show');
+            showMsg('✓ Chuyển đổi thành công!', 'success');
+
+            setTimeout(function() { progressSection.classList.remove('show'); }, 1500);
+        })
+
+        .catch(function(err) {
+            console.error('Lỗi chuyển đổi:', err);
+            showMsg('❌ ' + (err && err.message ? err.message : 'Lỗi không xác định'), 'error');
+            progressSection.classList.remove('show');
+        })
+
+        .then(function() {
+            // finally block (always runs)
+            if (audioCtx) { try { audioCtx.close(); } catch(e) {} audioCtx = null; }
+            convertBtn.disabled = false;
+            spinnerEl.classList.remove('show');
+            btnTextEl.textContent = 'Chuyển Đổi';
+        });
+
+        }, 100); // Delay nhỏ để iOS render UI trước khi bắt đầu xử lý nặng
+    }
+
+})();
 </script>
 </body>
 </html>
