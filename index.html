@@ -3,901 +3,813 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Công Cụ Chuyển Đổi Định Dạng Âm Thanh</title>
+    <title>Chuyển Đổi Âm Thanh</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             padding: 20px;
         }
-
         .container {
             background: white;
             border-radius: 15px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             max-width: 600px;
             width: 100%;
-            padding: 40px;
+            padding: 30px;
+            margin: 20px auto;
         }
+        h1 { text-align: center; color: #333; margin-bottom: 8px; font-size: 24px; }
+        .subtitle { text-align: center; color: #888; margin-bottom: 24px; font-size: 13px; }
 
-        h1 { text-align: center; color: #333; margin-bottom: 10px; font-size: 28px; }
-        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
-        .form-group { margin-bottom: 25px; }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            display: block;
-            width: 100%;
-            cursor: pointer;
-        }
-
+        /* File picker */
+        .file-input-wrapper { position: relative; display: block; cursor: pointer; margin-bottom: 8px; }
         input[type="file"] {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            opacity: 0.01;
-            cursor: pointer;
-            z-index: 10;
-            font-size: 16px;
-            -webkit-appearance: none;
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            opacity: 0.01; cursor: pointer; z-index: 10; font-size: 16px;
         }
-
         .file-input-visual {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 28px 20px;
-            border: 2px dashed #667eea;
-            border-radius: 8px;
-            background-color: #f8f9ff;
-            transition: all 0.3s ease;
-            pointer-events: none;
-            min-height: 90px;
-            text-align: center;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 24px 16px; border: 2px dashed #667eea; border-radius: 8px;
+            background: #f8f9ff; pointer-events: none; text-align: center;
         }
-
-        .file-input-visual .icon { font-size: 32px; margin-bottom: 8px; }
+        .file-input-visual .icon { font-size: 28px; margin-bottom: 6px; }
         .file-input-visual .hint { color: #667eea; font-weight: 600; font-size: 14px; }
-        .file-name { color: #667eea; font-weight: 600; margin-top: 8px; font-size: 13px; }
-        .info-text { font-size: 12px; color: #666; margin-top: 8px; }
-
+        #fileName { color: #667eea; font-size: 13px; margin-top: 6px; font-weight: 600; }
+        .info-text { font-size: 11px; color: #999; margin-top: 4px; }
         .ios-note {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            color: #856404;
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 12px;
-            margin-top: 8px;
-            display: none;
+            background: #fff3cd; border: 1px solid #ffc107; color: #856404;
+            border-radius: 6px; padding: 8px 12px; font-size: 12px; margin-top: 8px; display: none;
         }
 
+        /* Format */
         .format-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 25px;
+            display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin: 16px 0;
         }
-
         .format-item input[type="radio"] { display: none; }
-
         .format-item label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 0;
-            font-weight: 500;
-            font-size: 13px;
-            -webkit-tap-highlight-color: transparent;
+            display: flex; align-items: center; justify-content: center;
+            padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;
+            cursor: pointer; font-weight: 500; font-size: 13px;
+            transition: all 0.2s; margin: 0;
         }
+        .format-item input:checked + label { background: #667eea; color: white; border-color: #667eea; }
 
-        .format-item input[type="radio"]:checked + label {
-            background-color: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .button-group { display: flex; gap: 10px; }
-
+        /* Buttons */
+        .button-group { display: flex; gap: 10px; margin-top: 4px; }
         button {
-            flex: 1;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            -webkit-tap-highlight-color: transparent;
+            flex: 1; padding: 12px; border: none; border-radius: 8px;
+            font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
         }
-
-        .btn-convert {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-convert:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102,126,234,0.4);
-        }
-
+        .btn-convert { background: linear-gradient(135deg,#667eea,#764ba2); color: white; }
         .btn-convert:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-reset { background: #f0f0f0; color: #333; }
-        .btn-reset:hover { background: #e0e0e0; }
-
-        .progress-section { margin-top: 25px; display: none; }
-        .progress-section.show { display: block; }
-
-        .progress-label {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            font-size: 14px;
-            color: #333;
-        }
-
-        .progress-percentage { font-weight: 700; color: #667eea; font-size: 16px; }
-
-        .progress-bar-container {
-            width: 100%;
-            height: 10px;
-            background-color: #e0e0e0;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            width: 0%;
-            transition: width 0.4s ease;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(102,126,234,0.5);
-        }
-
-        .progress-text { margin-top: 10px; text-align: center; color: #666; font-size: 13px; }
-
-        .progress-steps {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 15px;
-            font-size: 12px;
-            color: #999;
-        }
-
-        .step { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-
-        .step-icon {
-            width: 30px; height: 30px;
-            border-radius: 50%;
-            background-color: #f0f0f0;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .step.completed .step-icon { background-color: #667eea; color: white; }
-        .step.active .step-icon {
-            background-color: #667eea; color: white;
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(102,126,234,0.7); }
-            50% { box-shadow: 0 0 0 10px rgba(102,126,234,0); }
-        }
-
-        .result-section {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 2px solid #f0f0f0;
-            display: none;
-        }
-        .result-section.show { display: block; }
-
-        .result-audio { background: #f8f9ff; padding: 20px; border-radius: 8px; margin-bottom: 15px; }
-        .result-audio h3 { color: #333; margin-bottom: 10px; font-size: 14px; }
-        audio { width: 100%; margin-bottom: 10px; }
-
-        .download-btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background: #667eea;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .download-btn:hover { background: #764ba2; }
-
-        .message { padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: none; font-size: 14px; }
-        .message.show { display: block; }
-        .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .message.warn { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
-
         .spinner {
-            display: none;
-            width: 18px; height: 18px;
-            border: 3px solid rgba(255,255,255,0.4);
-            border-top: 3px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
+            display: none; width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.4); border-top-color: white;
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            margin-right: 6px; vertical-align: middle;
         }
-        .spinner.show { display: inline-block; }
+        .spinner.on { display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* Progress */
+        .progress-section { display: none; margin-top: 20px; }
+        .progress-section.show { display: block; }
+        .prog-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+        .prog-pct { font-weight: 700; color: #667eea; }
+        .prog-bar-bg { background: #eee; border-radius: 10px; height: 9px; overflow: hidden; }
+        .prog-bar-fill {
+            height: 100%; width: 0%; border-radius: 10px;
+            background: linear-gradient(90deg,#667eea,#764ba2);
+            transition: width 0.35s ease;
+        }
+        .prog-text { text-align: center; font-size: 12px; color: #666; margin-top: 8px; }
+        .steps {
+            display: flex; justify-content: space-around;
+            margin-top: 14px; font-size: 11px; color: #aaa;
+        }
+        .step { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .step-dot {
+            width: 28px; height: 28px; border-radius: 50%; background: #f0f0f0;
+            display: flex; align-items: center; justify-content: center; font-size: 13px;
+            transition: all 0.3s;
+        }
+        .step.done .step-dot { background: #667eea; color: white; }
+        .step.active .step-dot {
+            background: #667eea; color: white;
+            animation: pulse 1.4s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(102,126,234,.6); }
+            50% { box-shadow: 0 0 0 8px rgba(102,126,234,0); }
+        }
+
+        /* Result */
+        .result-section { display: none; margin-top: 24px; padding-top: 24px; border-top: 2px solid #f0f0f0; }
+        .result-section.show { display: block; }
+        .result-box { background: #f8f9ff; padding: 16px; border-radius: 8px; }
+        audio { width: 100%; margin: 10px 0; }
+        .dl-btn {
+            display: inline-block; padding: 9px 18px; background: #667eea;
+            color: white; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600;
+        }
+
+        /* Messages */
+        .msg { display: none; padding: 11px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 13px; }
+        .msg.show { display: block; }
+        .msg.ok   { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .msg.err  { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .msg.warn { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+
+        /* ── DEBUG PANEL ─────────────────────────────────────── */
+        .debug-toggle {
+            display: block; text-align: center; margin-top: 20px;
+            font-size: 12px; color: #aaa; cursor: pointer; text-decoration: underline;
+        }
+        .debug-panel {
+            display: none; margin-top: 12px; background: #1a1a2e;
+            border-radius: 8px; padding: 12px; font-size: 11px;
+            color: #a0e0a0; font-family: monospace; max-height: 260px; overflow-y: auto;
+        }
+        .debug-panel.show { display: block; }
+        .debug-panel .d-line { border-bottom: 1px solid #2a2a4a; padding: 2px 0; }
+        .debug-panel .d-ok  { color: #6aff6a; }
+        .debug-panel .d-err { color: #ff6a6a; }
+        .debug-panel .d-warn{ color: #ffd700; }
+        .debug-panel .d-info{ color: #6adfff; }
+        .diag-btn {
+            display: block; width: 100%; margin-top: 8px; padding: 8px;
+            background: #2a2a4a; color: #a0e0a0; border: 1px solid #444;
+            border-radius: 6px; font-size: 12px; cursor: pointer; font-family: monospace;
         }
 
         @media (max-width: 480px) {
-            .container { padding: 20px; }
-            h1 { font-size: 22px; }
+            .container { padding: 16px; }
             .button-group { flex-direction: column; }
-            .progress-steps { flex-direction: column; gap: 10px; }
+            .steps { gap: 8px; }
         }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>🎵 Chuyển Đổi Âm Thanh</h1>
-    <p class="subtitle">Chuyển đổi giữa các định dạng âm thanh phổ biến</p>
+    <p class="subtitle">Tương thích iOS Safari đời thấp</p>
 
-    <div id="message" class="message"></div>
+    <div id="msg" class="msg"></div>
 
-    <div class="form-group">
-        <label>Chọn File Âm Thanh</label>
-        <label class="file-input-wrapper" for="audioFile">
-            <input type="file" id="audioFile" name="audioFile"
-                accept=".mp3,.wav,.ogg,.m4a,.flac,.aac,.aiff,.wma,audio/*">
-            <div class="file-input-visual">
-                <div class="icon">📁</div>
-                <div class="hint">Nhấn để chọn file âm thanh</div>
-            </div>
-        </label>
-        <div class="file-name" id="fileName"></div>
-        <div class="info-text">Hỗ trợ: MP3, WAV, OGG, M4A, FLAC, AAC...</div>
-        <div class="ios-note" id="iosNote">
-            📱 iOS: Sau khi nhấn → chọn <strong>Browse</strong> → tìm file trong <strong>Files / iCloud Drive / On My iPhone</strong>
+    <div class="file-input-wrapper">
+        <input type="file" id="audioFile"
+            accept=".mp3,.wav,.ogg,.m4a,.flac,.aac,.aiff,.wma,audio/*">
+        <div class="file-input-visual">
+            <div class="icon">📁</div>
+            <div class="hint">Nhấn để chọn file âm thanh</div>
         </div>
     </div>
+    <div id="fileName"></div>
+    <div class="info-text">MP3, WAV, M4A, AAC, FLAC...</div>
+    <div class="ios-note" id="iosNote">
+        📱 iOS: Nhấn → <strong>Browse</strong> → chọn file trong <strong>Files</strong>
+    </div>
 
-    <div class="form-group">
-        <label>Định Dạng Đích</label>
-        <div class="format-group">
-            <div class="format-item">
-                <input type="radio" id="fmt_mp3" name="format" value="mp3">
-                <label for="fmt_mp3">MP3</label>
-            </div>
-            <div class="format-item">
-                <input type="radio" id="fmt_wav" name="format" value="wav" checked>
-                <label for="fmt_wav">WAV</label>
-            </div>
-            <div class="format-item">
-                <input type="radio" id="fmt_ogg" name="format" value="ogg">
-                <label for="fmt_ogg">OGG</label>
-            </div>
-            <div class="format-item">
-                <input type="radio" id="fmt_m4a" name="format" value="m4a">
-                <label for="fmt_m4a">M4A</label>
-            </div>
+    <div class="format-group" style="margin-top:16px;">
+        <div class="format-item">
+            <input type="radio" id="f_mp3" name="fmt" value="mp3">
+            <label for="f_mp3">MP3</label>
+        </div>
+        <div class="format-item">
+            <input type="radio" id="f_wav" name="fmt" value="wav" checked>
+            <label for="f_wav">WAV</label>
+        </div>
+        <div class="format-item">
+            <input type="radio" id="f_ogg" name="fmt" value="ogg">
+            <label for="f_ogg">OGG</label>
+        </div>
+        <div class="format-item">
+            <input type="radio" id="f_m4a" name="fmt" value="m4a">
+            <label for="f_m4a">M4A</label>
         </div>
     </div>
 
     <div class="button-group">
         <button class="btn-convert" id="convertBtn" disabled>
             <span class="spinner" id="spinner"></span>
-            <span id="btnText">Chuyển Đổi</span>
+            <span id="btnTxt">Chuyển Đổi</span>
         </button>
         <button class="btn-reset" id="resetBtn">Đặt Lại</button>
     </div>
 
-    <div class="progress-section" id="progressSection">
-        <div class="progress-label">
+    <div class="progress-section" id="progSection">
+        <div class="prog-header">
             <span>Tiến độ</span>
-            <span class="progress-percentage" id="progressPercent">0%</span>
+            <span class="prog-pct" id="progPct">0%</span>
         </div>
-        <div class="progress-bar-container">
-            <div class="progress-bar-fill" id="progressBar"></div>
-        </div>
-        <div class="progress-text" id="progressText">Đang khởi tạo...</div>
-        <div class="progress-steps">
-            <div class="step" id="step1"><div class="step-icon">📂</div><div>Đọc File</div></div>
-            <div class="step" id="step2"><div class="step-icon">⚙️</div><div>Xử Lý</div></div>
-            <div class="step" id="step3"><div class="step-icon">📦</div><div>Hoàn Thành</div></div>
+        <div class="prog-bar-bg"><div class="prog-bar-fill" id="progBar"></div></div>
+        <div class="prog-text" id="progTxt">...</div>
+        <div class="steps">
+            <div class="step" id="s1"><div class="step-dot">📂</div><div>Đọc</div></div>
+            <div class="step" id="s2"><div class="step-dot">⚙️</div><div>Giải mã</div></div>
+            <div class="step" id="s3"><div class="step-dot">📦</div><div>Xong</div></div>
         </div>
     </div>
 
     <div class="result-section" id="resultSection">
-        <h2 style="margin-bottom:20px;color:#333;font-size:18px;">✓ Kết Quả Chuyển Đổi</h2>
-        <div class="result-audio" id="resultAudio"></div>
+        <h2 style="font-size:16px;color:#333;margin-bottom:14px;">✓ Kết Quả</h2>
+        <div class="result-box" id="resultBox"></div>
+    </div>
+
+    <!-- DEBUG PANEL -->
+    <span class="debug-toggle" id="debugToggle">🔧 Hiện log debug</span>
+    <div class="debug-panel" id="debugPanel">
+        <div id="debugLog"></div>
+        <button class="diag-btn" id="diagBtn">▶ Chạy kiểm tra thiết bị</button>
     </div>
 </div>
 
 <script>
-(function() {
-    'use strict';
+(function(){
+'use strict';
 
-    /* ── DOM ─────────────────────────────────────────────────── */
-    var audioFileEl     = document.getElementById('audioFile');
-    var fileNameEl      = document.getElementById('fileName');
-    var convertBtn      = document.getElementById('convertBtn');
-    var resetBtn        = document.getElementById('resetBtn');
-    var resultSection   = document.getElementById('resultSection');
-    var resultAudioEl   = document.getElementById('resultAudio');
-    var messageEl       = document.getElementById('message');
-    var spinnerEl       = document.getElementById('spinner');
-    var btnTextEl       = document.getElementById('btnText');
-    var progressSection = document.getElementById('progressSection');
-    var progressBarEl   = document.getElementById('progressBar');
-    var progressPctEl   = document.getElementById('progressPercent');
-    var progressTxtEl   = document.getElementById('progressText');
-    var step1El         = document.getElementById('step1');
-    var step2El         = document.getElementById('step2');
-    var step3El         = document.getElementById('step3');
-    var iosNoteEl       = document.getElementById('iosNote');
+/* ── DOM ── */
+var fileInput   = document.getElementById('audioFile');
+var fileNameEl  = document.getElementById('fileName');
+var convertBtn  = document.getElementById('convertBtn');
+var resetBtn    = document.getElementById('resetBtn');
+var spinner     = document.getElementById('spinner');
+var btnTxt      = document.getElementById('btnTxt');
+var msgEl       = document.getElementById('msg');
+var progSection = document.getElementById('progSection');
+var progBar     = document.getElementById('progBar');
+var progPct     = document.getElementById('progPct');
+var progTxt     = document.getElementById('progTxt');
+var s1          = document.getElementById('s1');
+var s2          = document.getElementById('s2');
+var s3          = document.getElementById('s3');
+var resultSec   = document.getElementById('resultSection');
+var resultBox   = document.getElementById('resultBox');
+var iosNote     = document.getElementById('iosNote');
+var debugToggle = document.getElementById('debugToggle');
+var debugPanel  = document.getElementById('debugPanel');
+var debugLog    = document.getElementById('debugLog');
+var diagBtn     = document.getElementById('diagBtn');
 
-    var selectedFile = null;
-    var blobUrls     = [];
+var selectedFile = null;
+var blobUrls = [];
+var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+if (isIOS) iosNote.style.display = 'block';
 
-    /* ── iOS detect ──────────────────────────────────────────── */
-    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    if (isIOS) iosNoteEl.style.display = 'block';
+/* ── Debug helpers ── */
+function dlog(text, type) {
+    var line = document.createElement('div');
+    line.className = 'd-line ' + (type ? 'd-' + type : 'd-info');
+    var t = new Date();
+    var ts = t.getHours() + ':' + pad2(t.getMinutes()) + ':' + pad2(t.getSeconds()) + '.' + String(t.getMilliseconds()).padStart(3,'0');
+    line.textContent = '[' + ts + '] ' + text;
+    debugLog.appendChild(line);
+    debugPanel.scrollTop = debugPanel.scrollHeight;
+    console.log('[DBG]', text);
+}
+function pad2(n){ return n < 10 ? '0'+n : n; }
 
-    /* ── Drag‑drop (desktop) ─────────────────────────────────── */
-    if (!isIOS) {
-        var wrap = document.querySelector('.file-input-wrapper');
-        wrap.addEventListener('dragover', function(e) { e.preventDefault(); });
-        wrap.addEventListener('drop', function(e) {
-            e.preventDefault();
-            var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-            if (f) handleFile(f);
-        });
-    }
+debugToggle.addEventListener('click', function(){
+    debugPanel.classList.toggle('show');
+    debugToggle.textContent = debugPanel.classList.contains('show') ? '🔧 Ẩn log debug' : '🔧 Hiện log debug';
+});
 
-    audioFileEl.addEventListener('change', function() {
-        var f = this.files && this.files[0];
-        if (f) handleFile(f);
-    });
+/* ── Device diagnostics ── */
+diagBtn.addEventListener('click', function(){
+    dlog('=== BẮT ĐẦU KIỂM TRA THIẾT BỊ ===', 'info');
+    dlog('UserAgent: ' + navigator.userAgent, 'info');
+    dlog('iOS detected: ' + isIOS, isIOS ? 'warn' : 'ok');
 
-    function handleFile(file) {
-        var ext = (file.name || '').split('.').pop().toLowerCase();
-        var ok  = (file.type && file.type.startsWith('audio/')) ||
-                  ['mp3','wav','ogg','m4a','flac','aac','aiff','wma','mp4','opus','webm','caf'].indexOf(ext) !== -1;
-        if (!ok) { showMsg('Vui lòng chọn file âm thanh hợp lệ.', 'error'); return; }
-        selectedFile = file;
-        fileNameEl.textContent = '✓ Đã chọn: ' + file.name;
-        convertBtn.disabled = false;
-        hideMsg();
-        resultSection.classList.remove('show');
-        progressSection.classList.remove('show');
-    }
+    var AudioCtx = window.AudioContext || window.webkitAudioContext;
+    dlog('AudioContext: ' + (AudioCtx ? 'CÓ' : 'KHÔNG'), AudioCtx ? 'ok' : 'err');
 
-    convertBtn.addEventListener('click', function() {
-        if (!selectedFile) { showMsg('Vui lòng chọn file!', 'error'); return; }
-        var fmt = document.querySelector('input[name="format"]:checked');
-        if (!fmt) { showMsg('Vui lòng chọn định dạng!', 'error'); return; }
-        doConvert(selectedFile, fmt.value);
-    });
+    var OffCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    dlog('OfflineAudioContext: ' + (OffCtx ? 'CÓ' : 'KHÔNG'), OffCtx ? 'ok' : 'err');
 
-    resetBtn.addEventListener('click', function() {
-        audioFileEl.value = '';
-        selectedFile = null;
-        fileNameEl.textContent = '';
-        convertBtn.disabled = true;
-        resultSection.classList.remove('show');
-        progressSection.classList.remove('show');
-        hideMsg();
-        document.getElementById('fmt_wav').checked = true;
-        blobUrls.forEach(function(u) { try { URL.revokeObjectURL(u); } catch(e){} });
-        blobUrls = [];
-    });
+    dlog('FileReader: ' + (window.FileReader ? 'CÓ' : 'KHÔNG'), window.FileReader ? 'ok' : 'err');
+    dlog('URL.createObjectURL: ' + (URL && URL.createObjectURL ? 'CÓ' : 'KHÔNG'), 'ok');
+    dlog('Blob: ' + (window.Blob ? 'CÓ' : 'KHÔNG'), window.Blob ? 'ok' : 'err');
+    dlog('DataView: ' + (window.DataView ? 'CÓ' : 'KHÔNG'), window.DataView ? 'ok' : 'err');
+    dlog('Float32Array: ' + (window.Float32Array ? 'CÓ' : 'KHÔNG'), window.Float32Array ? 'ok' : 'err');
+    dlog('Promise: ' + (window.Promise ? 'CÓ' : 'KHÔNG'), window.Promise ? 'ok' : 'err');
+    dlog('ArrayBuffer.slice: ' + (ArrayBuffer && ArrayBuffer.prototype && ArrayBuffer.prototype.slice ? 'CÓ' : 'KHÔNG'), 'info');
+    dlog('File.prototype.arrayBuffer: ' + (File && File.prototype && File.prototype.arrayBuffer ? 'CÓ' : 'KHÔNG (iOS < 14)'), 'warn');
 
-    /* ── UI helpers ──────────────────────────────────────────── */
-    function prog(pct, text, step) {
-        progressBarEl.style.width = pct + '%';
-        progressPctEl.textContent = Math.round(pct) + '%';
-        progressTxtEl.textContent = text;
-        [step1El, step2El, step3El].forEach(function(s, i) {
-            s.classList.remove('active','completed');
-            if (step === undefined) return;
-            if (i + 1 < step)  s.classList.add('completed');
-            if (i + 1 === step) s.classList.add('active');
-        });
-    }
-
-    function allDone() {
-        [step1El, step2El, step3El].forEach(function(s) {
-            s.classList.remove('active');
-            s.classList.add('completed');
-        });
-    }
-
-    function showMsg(t, type) {
-        messageEl.textContent = t;
-        messageEl.className = 'message show ' + (type || '');
-    }
-    function hideMsg() { messageEl.className = 'message'; }
-
-    function setBusy(b) {
-        convertBtn.disabled = b;
-        spinnerEl.classList[b ? 'add' : 'remove']('show');
-        btnTextEl.textContent = b ? 'Đang chuyển đổi...' : 'Chuyển Đổi';
-    }
-
-    function mkUrl(blob) {
-        var u = URL.createObjectURL(blob);
-        blobUrls.push(u);
-        return u;
-    }
-
-    /* ── Encode PCM → WAV ────────────────────────────────────── */
-    function encodeWav(audioBuf) {
-        var numCh = audioBuf.numberOfChannels;
-        var sr    = audioBuf.sampleRate;
-        var len   = audioBuf.length;
-
-        /* mix to mono */
-        var out = new Float32Array(len);
-        for (var c = 0; c < numCh; c++) {
-            var ch = audioBuf.getChannelData(c);
-            for (var i = 0; i < len; i++) out[i] += ch[i];
+    /* Thử tạo AudioContext thực */
+    if (AudioCtx) {
+        try {
+            var ctx = new AudioCtx();
+            dlog('new AudioContext() → OK, state=' + ctx.state + ', sr=' + ctx.sampleRate, 'ok');
+            dlog('createScriptProcessor: ' + (typeof ctx.createScriptProcessor === 'function' ? 'CÓ' : 'KHÔNG'), 'info');
+            dlog('createMediaElementSource: ' + (typeof ctx.createMediaElementSource === 'function' ? 'CÓ' : 'KHÔNG'), 'info');
+            ctx.close();
+        } catch(e) {
+            dlog('new AudioContext() → LỖI: ' + e.message, 'err');
         }
-        if (numCh > 1) for (var j = 0; j < len; j++) out[j] /= numCh;
-
-        var ab = new ArrayBuffer(44 + len * 2);
-        var dv = new DataView(ab);
-        function s(o, v) { for (var k = 0; k < v.length; k++) dv.setUint8(o + k, v.charCodeAt(k)); }
-
-        s(0,'RIFF'); dv.setUint32(4,36+len*2,true);
-        s(8,'WAVE'); s(12,'fmt ');
-        dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true);
-        dv.setUint32(24,sr,true); dv.setUint32(28,sr*2,true);
-        dv.setUint16(32,2,true);  dv.setUint16(34,16,true);
-        s(36,'data'); dv.setUint32(40,len*2,true);
-
-        var off = 44;
-        for (var n = 0; n < len; n++, off += 2) {
-            var x = Math.max(-1, Math.min(1, out[n]));
-            dv.setInt16(off, x < 0 ? x * 0x8000 : x * 0x7FFF, true);
-        }
-        return ab;
     }
 
-    /* ─────────────────────────────────────────────────────────────────
-       PIPELINE CHÍNH
-       Vấn đề cốt lõi trên iOS cũ: decodeAudioData() KHÔNG BAO GIỜ
-       resolve hoặc reject với nhiều codec (FLAC, OGG, VBR MP3...).
-
-       Giải pháp: thử song song 2 phương pháp, lấy kết quả nào về trước.
-
-       Phương pháp A — FileReader + decodeAudioData (callback-style)
-         Hoạt động tốt trên iOS 10+ với MP3/AAC/WAV chuẩn.
-
-       Phương pháp B — AudioElement + MediaElementSource + OfflineAudioContext
-         Dùng <audio> để browser tự decode (iOS Safari xử lý codec riêng),
-         sau đó capture PCM qua OfflineAudioContext.
-         Không phụ thuộc vào decodeAudioData → bypass hoàn toàn điểm treo.
-
-       Nếu cả 2 thất bại → trả file gốc + thông báo cho user.
-    ───────────────────────────────────────────────────────────────── */
-
-    /* ── Phương pháp A: FileReader → decodeAudioData ─────────── */
-    function methodA(file) {
-        return new Promise(function(resolve, reject) {
-            /* Bước A1: đọc file */
-            var reader = new FileReader();
-            var dead = false;
-
-            var t1 = setTimeout(function() {
-                if (dead) return; dead = true;
-                try { reader.abort(); } catch(e) {}
-                reject(new Error('A:timeout-read'));
+    /* Thử decode file dummy (1 byte WAV) */
+    if (AudioCtx) {
+        dlog('Thử decodeAudioData với WAV giả...', 'info');
+        var ctx2;
+        try { ctx2 = new AudioCtx(); } catch(e) {}
+        if (ctx2) {
+            /* WAV 44 byte hợp lệ (mono, 1 sample, 44100Hz) */
+            var wav = new Uint8Array([
+                82,73,70,70,36,0,0,0,87,65,86,69,
+                102,109,116,32,16,0,0,0,1,0,1,0,68,172,0,0,136,88,1,0,2,0,16,0,
+                100,97,116,97,2,0,0,0,0,0
+            ]);
+            var ab = wav.buffer.slice(0);
+            var done2 = false;
+            var t = setTimeout(function(){
+                if (done2) return; done2 = true;
+                dlog('decodeAudioData WAV giả → TIMEOUT (30s) — đây là vấn đề!', 'err');
+                try { ctx2.close(); } catch(e) {}
             }, 30000);
+            var resume = ctx2.state === 'suspended' && ctx2.resume ? ctx2.resume() : Promise.resolve();
+            resume['catch'](function(){}).then(function(){
+                try {
+                    ctx2.decodeAudioData(ab, function(buf){
+                        if (done2) return; done2 = true;
+                        clearTimeout(t);
+                        dlog('decodeAudioData WAV giả → OK (' + buf.length + ' samples, sr=' + buf.sampleRate + ')', 'ok');
+                        try { ctx2.close(); } catch(e) {}
+                    }, function(e){
+                        if (done2) return; done2 = true;
+                        clearTimeout(t);
+                        dlog('decodeAudioData WAV giả → lỗi callback: ' + (e&&e.message||e), 'err');
+                        try { ctx2.close(); } catch(e2) {}
+                    });
+                } catch(ex) {
+                    clearTimeout(t);
+                    dlog('decodeAudioData throw: ' + ex.message, 'err');
+                }
+            });
+        }
+    }
 
-            reader.onerror = function() {
-                if (dead) return; dead = true;
-                clearTimeout(t1);
-                reject(new Error('A:read-error'));
+    dlog('=== KIỂM TRA XONG (decodeAudioData đang chạy nền) ===', 'info');
+});
+
+/* ── File handling ── */
+fileInput.addEventListener('change', function(){
+    var f = this.files && this.files[0];
+    if (!f) return;
+    var ext = (f.name||'').split('.').pop().toLowerCase();
+    var ok = (f.type && f.type.startsWith('audio/')) ||
+             ['mp3','wav','ogg','m4a','flac','aac','aiff','wma'].indexOf(ext) !== -1;
+    if (!ok) { showMsg('Chọn file âm thanh hợp lệ.', 'err'); return; }
+    selectedFile = f;
+    fileNameEl.textContent = '✓ ' + f.name + ' (' + (f.size/1024).toFixed(0) + ' KB)';
+    convertBtn.disabled = false;
+    hideMsg();
+    resultSec.classList.remove('show');
+    progSection.classList.remove('show');
+    dlog('File chọn: ' + f.name + ' | type=' + f.type + ' | size=' + f.size + ' bytes', 'info');
+});
+
+convertBtn.addEventListener('click', function(){
+    if (!selectedFile) return;
+    var fmt = document.querySelector('input[name="fmt"]:checked');
+    doConvert(selectedFile, fmt ? fmt.value : 'wav');
+});
+
+resetBtn.addEventListener('click', function(){
+    fileInput.value = '';
+    selectedFile = null;
+    fileNameEl.textContent = '';
+    convertBtn.disabled = true;
+    resultSec.classList.remove('show');
+    progSection.classList.remove('show');
+    hideMsg();
+    blobUrls.forEach(function(u){ try { URL.revokeObjectURL(u); } catch(e){} });
+    blobUrls = [];
+});
+
+/* ── UI ── */
+function setP(pct, text, step){
+    progBar.style.width = pct + '%';
+    progPct.textContent = Math.round(pct) + '%';
+    progTxt.textContent = text;
+    [s1,s2,s3].forEach(function(s,i){
+        s.classList.remove('active','done');
+        if (step === undefined) return;
+        if (i+1 < step) s.classList.add('done');
+        if (i+1 === step) s.classList.add('active');
+    });
+}
+function doneAll(){ [s1,s2,s3].forEach(function(s){ s.classList.remove('active'); s.classList.add('done'); }); }
+function showMsg(t,type){ msgEl.textContent = t; msgEl.className = 'msg show ' + type; }
+function hideMsg(){ msgEl.className = 'msg'; }
+function setBusy(b){
+    convertBtn.disabled = b;
+    spinner.className = 'spinner' + (b ? ' on' : '');
+    btnTxt.textContent = b ? 'Đang xử lý...' : 'Chuyển Đổi';
+}
+function mkUrl(blob){ var u = URL.createObjectURL(blob); blobUrls.push(u); return u; }
+
+/* ─────────────────────────────────────────────────────────────
+   CORE: FileReader (tương thích iOS 9+)
+───────────────────────────────────────────────────────────── */
+function readAsArrayBuffer(file){
+    return new Promise(function(resolve, reject){
+        dlog('FileReader.readAsArrayBuffer bắt đầu...', 'info');
+        var reader = new FileReader();
+        var dead = false;
+        var timer = setTimeout(function(){
+            if (dead) return; dead = true;
+            try { reader.abort(); } catch(e) {}
+            dlog('FileReader TIMEOUT', 'err');
+            reject(new Error('Đọc file timeout'));
+        }, 30000);
+
+        reader.onprogress = function(e){
+            if (e.lengthComputable)
+                dlog('Đọc: ' + Math.round(e.loaded/e.total*100) + '% (' + e.loaded + '/' + e.total + ')', 'info');
+        };
+        reader.onload = function(e){
+            if (dead) return; dead = true;
+            clearTimeout(timer);
+            dlog('FileReader OK, kích thước buffer: ' + e.target.result.byteLength, 'ok');
+            resolve(e.target.result);
+        };
+        reader.onerror = function(){
+            if (dead) return; dead = true;
+            clearTimeout(timer);
+            dlog('FileReader lỗi: ' + (reader.error && reader.error.message), 'err');
+            reject(new Error('FileReader lỗi: ' + (reader.error && reader.error.message)));
+        };
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CORE: decodeAudioData
+   Sử dụng callback-style để tương thích iOS Safari cũ.
+   Timeout 25s — nếu iOS treo → báo cụ thể.
+───────────────────────────────────────────────────────────── */
+function decodeArrayBuffer(arrayBuffer){
+    return new Promise(function(resolve, reject){
+        var AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx){ reject(new Error('Không có AudioContext')); return; }
+
+        var ctx;
+        try { ctx = new AudioCtx(); }
+        catch(e){ reject(new Error('Tạo AudioContext thất bại: ' + e.message)); return; }
+
+        dlog('AudioContext state=' + ctx.state + ' sr=' + ctx.sampleRate, 'info');
+
+        var dead = false;
+        /* Fake-progress trong khi decode */
+        var fakePct = 42;
+        var fakeTimer = setInterval(function(){
+            if (dead || fakePct >= 68) return;
+            fakePct += 1;
+            setP(fakePct, 'Đang giải mã âm thanh... (iOS có thể mất lâu)', 2);
+        }, 600);
+
+        var decodeTimer = setTimeout(function(){
+            if (dead) return; dead = true;
+            clearInterval(fakeTimer);
+            try { ctx.close(); } catch(e) {}
+            dlog('decodeAudioData TIMEOUT 25s — iOS treo! Thử phương pháp B.', 'err');
+            reject(new Error('DECODE_TIMEOUT'));
+        }, 25000);
+
+        function ok(buf){
+            if (dead) return; dead = true;
+            clearInterval(fakeTimer);
+            clearTimeout(decodeTimer);
+            try { ctx.close(); } catch(e) {}
+            dlog('decodeAudioData OK: ' + buf.length + ' samples, ' + buf.numberOfChannels + 'ch, sr=' + buf.sampleRate, 'ok');
+            resolve(buf);
+        }
+        function fail(e){
+            if (dead) return; dead = true;
+            clearInterval(fakeTimer);
+            clearTimeout(decodeTimer);
+            try { ctx.close(); } catch(e2) {}
+            dlog('decodeAudioData lỗi callback: ' + (e&&e.message||e), 'err');
+            reject(new Error('DECODE_ERROR: ' + (e&&e.message||e)));
+        }
+
+        var resume = (ctx.state === 'suspended' && typeof ctx.resume === 'function')
+                   ? ctx.resume() : Promise.resolve();
+        resume['catch'](function(){ dlog('ctx.resume() thất bại (tiếp tục thử)', 'warn'); }).then(function(){
+            try {
+                dlog('Gọi decodeAudioData...', 'info');
+                var buf2 = arrayBuffer.slice ? arrayBuffer.slice(0) : arrayBuffer;
+                var ret = ctx.decodeAudioData(buf2, ok, fail);
+                if (ret && typeof ret.then === 'function'){
+                    ret.then(function(b){ if (!dead) ok(b); })['catch'](function(e){ if (!dead) fail(e); });
+                }
+            } catch(ex){
+                if (!dead){ dead = true; clearInterval(fakeTimer); clearTimeout(decodeTimer); reject(ex); }
+            }
+        });
+    });
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PHƯƠNG PHÁP B: <audio> element + ScriptProcessorNode
+   Bypass decodeAudioData hoàn toàn.
+   iOS Safari dùng native decoder khi phát qua <audio>.
+   Capture PCM real-time qua ScriptProcessor.
+───────────────────────────────────────────────────────────── */
+function captureViaAudioElement(file){
+    return new Promise(function(resolve, reject){
+        dlog('Phương pháp B: AudioElement capture bắt đầu', 'info');
+
+        var AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx){ reject(new Error('B: Không có AudioContext')); return; }
+
+        var objUrl = URL.createObjectURL(file);
+        blobUrls.push(objUrl);
+
+        var audio = new Audio();
+        audio.setAttribute('playsinline', '');
+        audio.setAttribute('webkit-playsinline', '');
+        audio.crossOrigin = 'anonymous';
+        audio.preload = 'auto';
+
+        var liveCtx, source, processor;
+        var chunks = [];
+        var captured = 0;
+        var sr = 44100;
+        var dead = false;
+        var started = false;
+
+        var masterTimer = setTimeout(function(){
+            if (dead) return; dead = true;
+            cleanup();
+            dlog('Phương pháp B TIMEOUT 90s', 'err');
+            reject(new Error('B: Timeout'));
+        }, 90000);
+
+        function cleanup(){
+            clearTimeout(masterTimer);
+            try { audio.pause(); audio.src = ''; } catch(e) {}
+            try { if (processor) processor.disconnect(); } catch(e) {}
+            try { if (source) source.disconnect(); } catch(e) {}
+            try { if (liveCtx) liveCtx.close(); } catch(e) {}
+        }
+
+        audio.addEventListener('error', function(){
+            if (dead || started) return; dead = true;
+            cleanup();
+            var code = audio.error ? audio.error.code : '?';
+            dlog('B: audio error code=' + code, 'err');
+            reject(new Error('B: audio lỗi code=' + code));
+        });
+
+        function beginCapture(duration){
+            if (dead || started) return;
+            started = true;
+            dlog('B: duration=' + duration + 's, bắt đầu capture', 'info');
+
+            try { liveCtx = new AudioCtx(); sr = liveCtx.sampleRate; }
+            catch(e){ if (!dead){ dead=true; cleanup(); reject(new Error('B: ctx fail')); } return; }
+
+            try { processor = liveCtx.createScriptProcessor(4096, 1, 1); }
+            catch(e){ if (!dead){ dead=true; cleanup(); reject(new Error('B: processor fail')); } return; }
+
+            var totalSamples = Math.ceil(duration * sr);
+            var lastLogAt = 0;
+
+            processor.onaudioprocess = function(e){
+                if (dead) return;
+                var data = e.inputBuffer.getChannelData(0);
+                var copy = new Float32Array(data.length);
+                copy.set(data);
+                chunks.push(copy);
+                captured += data.length;
+
+                if (captured - lastLogAt > sr * 5){
+                    lastLogAt = captured;
+                    dlog('B: captured ' + (captured/sr).toFixed(1) + 's / ' + duration.toFixed(1) + 's', 'info');
+                }
+
+                var pct = 42 + Math.min(48, Math.round(captured / totalSamples * 48));
+                setP(pct, 'Đang ghi âm thanh: ' + (captured/sr).toFixed(0) + 's / ' + duration.toFixed(0) + 's', 2);
+
+                if (captured >= totalSamples) finish();
             };
 
-            reader.onload = function(e) {
-                if (dead) return;
-                clearTimeout(t1);
-                var ab = e.target.result;
+            try {
+                source = liveCtx.createMediaElementSource(audio);
+                source.connect(processor);
+                processor.connect(liveCtx.destination);
+                dlog('B: MediaElementSource OK', 'ok');
+            } catch(e){
+                if (!dead){ dead=true; cleanup(); reject(new Error('B: source fail: ' + e.message)); }
+                return;
+            }
 
-                /* Bước A2: decodeAudioData */
-                var AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (!AudioCtx) { dead = true; reject(new Error('A:no-api')); return; }
-
-                var ctx;
-                try { ctx = new AudioCtx(); } catch(ex) {
-                    dead = true; reject(new Error('A:ctx-fail')); return;
-                }
-
-                var t2 = setTimeout(function() {
-                    if (dead) return; dead = true;
-                    try { ctx.close(); } catch(e) {}
-                    /* ĐIỂM TREO CHÍNH — timeout sau 25s nếu iOS không phản hồi */
-                    reject(new Error('A:timeout-decode'));
-                }, 25000);
-
-                function ok(buf) {
-                    if (dead) return; dead = true;
-                    clearTimeout(t2);
-                    try { ctx.close(); } catch(e) {}
-                    resolve(buf);
-                }
-                function err() {
-                    if (dead) return; dead = true;
-                    clearTimeout(t2);
-                    try { ctx.close(); } catch(e) {}
-                    reject(new Error('A:decode-error'));
-                }
-
-                var resume = (ctx.state === 'suspended' && ctx.resume)
-                           ? ctx.resume() : Promise.resolve();
-
-                resume['catch'](function(){}).then(function() {
-                    try {
-                        var buf2 = ab.slice ? ab.slice(0) : ab;
-                        var p = ctx.decodeAudioData(buf2, ok, err);
-                        if (p && p.then) p.then(function(b){ if(!dead) ok(b); })['catch'](function(){ if(!dead) err(); });
-                    } catch(ex) {
-                        if (!dead) { dead = true; clearTimeout(t2); reject(ex); }
-                    }
+            var rp = (liveCtx.state === 'suspended' && liveCtx.resume) ? liveCtx.resume() : Promise.resolve();
+            rp['catch'](function(){}).then(function(){
+                audio.play()['catch'](function(e){
+                    dlog('B: play() rejected: ' + e.message, 'err');
+                    if (!dead){ dead=true; cleanup(); reject(new Error('B: play fail: ' + e.message)); }
                 });
-            };
+            });
+        }
 
-            reader.readAsArrayBuffer(file);
+        function finish(){
+            if (dead) return; dead = true;
+            cleanup();
+
+            if (chunks.length === 0){ reject(new Error('B: không capture được dữ liệu')); return; }
+
+            var total = 0;
+            for (var i=0;i<chunks.length;i++) total += chunks[i].length;
+            dlog('B: hoàn tất, tổng ' + (total/sr).toFixed(1) + 's (' + total + ' samples)', 'ok');
+
+            var merged = new Float32Array(total);
+            var pos = 0;
+            for (var j=0;j<chunks.length;j++){ merged.set(chunks[j],pos); pos+=chunks[j].length; }
+
+            resolve({ numberOfChannels:1, sampleRate:sr, length:total,
+                      getChannelData: function(){ return merged; } });
+        }
+
+        audio.addEventListener('ended', function(){ if (!dead && started) finish(); });
+        audio.addEventListener('loadedmetadata', function(){
+            var dur = audio.duration;
+            dlog('B: loadedmetadata duration=' + dur, 'info');
+            if (isFinite(dur) && dur > 0) beginCapture(dur);
         });
-    }
-
-    /* ── Phương pháp B: AudioElement → OfflineAudioContext ───── */
-    /*
-       Nguyên lý:
-       1. Tạo object URL từ file → gán vào <audio>
-       2. Chờ metadata load để biết duration
-       3. Tạo OfflineAudioContext(1 channel, duration*sr, sr)
-       4. Tạo AudioContext + createMediaElementSource(<audio>)
-       5. Connect source → offlineCtx destination (KHÔNG được, khác context)
-          → Thay bằng: dùng liveCtx.createBufferSource sau khi decode
-          → Thực ra: dùng fetch + decodeAudioData trên liveCtx... vòng lại A.
-          → Giải pháp thực: ScriptProcessorNode capture real-time.
-
-       Cách đơn giản hơn (iOS-safe):
-       - Tạo <audio> với src = objectURL
-       - audio.play() trong OfflineAudioContext listener
-       - Dùng createMediaElementSource + connect tới offlineCtx
-         (iOS 14.5+ hỗ trợ, iOS cũ hơn thì không — nhưng lúc đó A đã chạy được rồi)
-
-       Tóm lại: B dùng ScriptProcessorNode capture để tương thích iOS 9+
-    */
-    function methodB(file) {
-        return new Promise(function(resolve, reject) {
-            var AudioCtx = window.AudioContext || window.webkitAudioContext;
-            if (!AudioCtx) { reject(new Error('B:no-api')); return; }
-
-            var objUrl = URL.createObjectURL(file);
-            blobUrls.push(objUrl);
-
-            var audio = document.createElement('audio');
-            audio.preload = 'auto';
-            /* iOS yêu cầu playsinline để phát trong web */
-            audio.setAttribute('playsinline', '');
-            audio.setAttribute('webkit-playsinline', '');
-
-            var dead   = false;
-            var liveCtx, processor, source;
-            var chunks = [];
-            var sampleRate = 44100;
-
-            var masterTimer = setTimeout(function() {
-                if (dead) return; dead = true;
-                cleanup();
-                reject(new Error('B:timeout'));
-            }, 60000);
-
-            function cleanup() {
-                clearTimeout(masterTimer);
-                try { audio.pause(); audio.src = ''; } catch(e) {}
-                try { if (processor) processor.disconnect(); } catch(e) {}
-                try { if (source)    source.disconnect();    } catch(e) {}
-                try { if (liveCtx)   liveCtx.close();        } catch(e) {}
-            }
-
-            /* Bước B1: Chờ metadata để biết duration */
-            audio.addEventListener('error', function() {
-                if (dead) return; dead = true;
-                cleanup();
-                reject(new Error('B:audio-error'));
-            });
-
-            audio.addEventListener('loadedmetadata', function() {
-                var duration = audio.duration;
-                if (!isFinite(duration) || duration <= 0) {
-                    /* Thử canplaythrough thay thế */
-                    return;
-                }
-                startCapture(duration);
-            });
-
-            /* Fallback: canplaythrough nếu metadata không có duration */
-            audio.addEventListener('canplaythrough', function() {
-                if (dead) return;
-                var dur = audio.duration;
-                if (!isFinite(dur) || dur <= 0) dur = 300; /* Giả định 5 phút nếu không biết */
-                startCapture(dur);
-            });
-
-            function startCapture(duration) {
-                if (dead) return;
-                /* Chỉ start một lần */
-                audio.removeEventListener('canplaythrough', arguments.callee);
-
-                try {
-                    liveCtx = new AudioCtx({ sampleRate: sampleRate });
-                } catch(e1) {
-                    try { liveCtx = new AudioCtx(); sampleRate = liveCtx.sampleRate; } catch(e2) {
-                        if (!dead) { dead = true; cleanup(); reject(new Error('B:ctx-fail')); }
-                        return;
-                    }
-                }
-
-                /* ScriptProcessorNode để capture PCM */
-                var bufSize = 4096;
-                try {
-                    processor = liveCtx.createScriptProcessor(bufSize, 1, 1);
-                } catch(e) {
-                    if (!dead) { dead = true; cleanup(); reject(new Error('B:processor-fail')); }
-                    return;
-                }
-
-                var totalExpected = Math.ceil(duration * liveCtx.sampleRate);
-                var captured = 0;
-
-                processor.onaudioprocess = function(e) {
-                    if (dead) return;
-                    var inputData = e.inputBuffer.getChannelData(0);
-                    var copy = new Float32Array(inputData.length);
-                    copy.set(inputData);
-                    chunks.push(copy);
-                    captured += inputData.length;
-
-                    /* Progress update */
-                    var pct = Math.min(90, 40 + Math.round((captured / totalExpected) * 50));
-                    prog(pct, 'Đang xử lý âm thanh... ' + Math.round(captured / liveCtx.sampleRate) + 's', 2);
-
-                    if (captured >= totalExpected) {
-                        finishCapture();
-                    }
-                };
-
-                try {
-                    source = liveCtx.createMediaElementSource(audio);
-                    source.connect(processor);
-                    processor.connect(liveCtx.destination);
-                } catch(e) {
-                    if (!dead) { dead = true; cleanup(); reject(new Error('B:source-fail:' + e.message)); }
-                    return;
-                }
-
-                /* Resume context (iOS) rồi play */
-                var rp = (liveCtx.state === 'suspended' && liveCtx.resume)
-                       ? liveCtx.resume() : Promise.resolve();
-
-                rp['catch'](function(){}).then(function() {
-                    try { audio.play(); } catch(e) {
-                        if (!dead) { dead = true; cleanup(); reject(new Error('B:play-fail')); }
-                    }
-                });
-
-                /* Khi audio kết thúc */
-                audio.addEventListener('ended', finishCapture);
-            }
-
-            var finished = false;
-            function finishCapture() {
-                if (dead || finished) return;
-                finished = true;
-                dead = true;
-                cleanup();
-
-                /* Ghép tất cả chunks */
-                var totalLen = 0;
-                for (var i = 0; i < chunks.length; i++) totalLen += chunks[i].length;
-
-                if (totalLen === 0) {
-                    reject(new Error('B:empty-capture'));
-                    return;
-                }
-
-                var merged = new Float32Array(totalLen);
-                var pos = 0;
-                for (var j = 0; j < chunks.length; j++) {
-                    merged.set(chunks[j], pos);
-                    pos += chunks[j].length;
-                }
-
-                /* Tạo AudioBuffer giả để dùng encodeWav */
-                var fakeBuf = {
-                    numberOfChannels: 1,
-                    sampleRate: sampleRate,
-                    length: totalLen,
-                    getChannelData: function() { return merged; }
-                };
-
-                resolve(fakeBuf);
-            }
-
-            audio.src = objUrl;
-            audio.load();
+        audio.addEventListener('canplay', function(){
+            var dur = audio.duration;
+            dlog('B: canplay duration=' + dur, 'info');
+            if (!started && isFinite(dur) && dur > 0) beginCapture(dur);
+            else if (!started) beginCapture(600); /* fallback 10 phút */
         });
+
+        dlog('B: gán src và load...', 'info');
+        audio.src = objUrl;
+        audio.load();
+    });
+}
+
+/* ── Encode WAV ── */
+function encodeWav(buf){
+    var numCh = buf.numberOfChannels, sr = buf.sampleRate, len = buf.length;
+    var out = new Float32Array(len);
+    for (var c=0;c<numCh;c++){
+        var ch = buf.getChannelData(c);
+        for (var i=0;i<len;i++) out[i] += ch[i];
     }
+    if (numCh>1) for (var j=0;j<len;j++) out[j] /= numCh;
+    var ab = new ArrayBuffer(44+len*2), dv = new DataView(ab);
+    function str(o,v){ for(var k=0;k<v.length;k++) dv.setUint8(o+k,v.charCodeAt(k)); }
+    str(0,'RIFF'); dv.setUint32(4,36+len*2,true); str(8,'WAVE'); str(12,'fmt ');
+    dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true);
+    dv.setUint32(24,sr,true); dv.setUint32(28,sr*2,true);
+    dv.setUint16(32,2,true); dv.setUint16(34,16,true); str(36,'data'); dv.setUint32(40,len*2,true);
+    var off=44;
+    for (var n=0;n<len;n++,off+=2){
+        var x=Math.max(-1,Math.min(1,out[n]));
+        dv.setInt16(off,x<0?x*0x8000:x*0x7FFF,true);
+    }
+    dlog('encodeWav OK: ' + (ab.byteLength/1024).toFixed(0) + ' KB', 'ok');
+    return ab;
+}
 
-    /* ── Chạy A và B song song, lấy kết quả đầu tiên ─────────── */
-    function decodeRace(file) {
-        return new Promise(function(resolve, reject) {
-            var won = false;
-            var errs = [];
+/* ── Fallback: trả nguyên file gốc ── */
+function passThroughFallback(file, outName){
+    return new Promise(function(resolve, reject){
+        dlog('FALLBACK: trả file gốc', 'warn');
+        var r = new FileReader();
+        r.onload = function(e){
+            var blob = new Blob([e.target.result], { type: file.type || 'audio/mpeg' });
+            resolve({ url: mkUrl(blob), name: file.name, fallback: true });
+        };
+        r.onerror = function(){ reject(new Error('Fallback đọc file thất bại')); };
+        r.readAsArrayBuffer(file);
+    });
+}
 
-            function onWin(buf) {
-                if (won) return;
-                won = true;
-                resolve(buf);
-            }
+/* ── MAIN ── */
+function doConvert(file, fmt){
+    setBusy(true); hideMsg();
+    progSection.classList.add('show');
+    resultSec.classList.remove('show');
+    setP(5, 'Chuẩn bị...', 1);
 
-            function onFail(err) {
-                errs.push(err && err.message ? err.message : String(err));
-                if (errs.length >= 2 && !won) {
-                    reject(new Error('Cả hai phương pháp thất bại: ' + errs.join(' | ')));
-                }
-            }
+    /* Mở debug panel tự động để user thấy log */
+    debugPanel.classList.add('show');
+    debugToggle.textContent = '🔧 Ẩn log debug';
 
-            methodA(file).then(onWin)['catch'](function(e) {
-                console.warn('Method A failed:', e && e.message);
-                onFail(e);
-            });
+    var base = file.name.lastIndexOf('.') > 0
+             ? file.name.substring(0, file.name.lastIndexOf('.'))
+             : file.name;
+    var outName = base + '_converted.wav';
 
-            methodB(file).then(onWin)['catch'](function(e) {
-                console.warn('Method B failed:', e && e.message);
-                onFail(e);
-            });
+    dlog('=== BẮT ĐẦU CONVERT ===', 'info');
+    dlog('File: ' + file.name + ' (' + (file.size/1024).toFixed(0) + 'KB, type=' + file.type + ')', 'info');
+    dlog('Target: ' + fmt, 'info');
+    dlog('iOS: ' + isIOS, isIOS ? 'warn' : 'info');
+
+    /* Delay nhỏ để iOS render UI */
+    setTimeout(function(){
+
+    setP(10, 'Đang đọc file...', 1);
+
+    /* Bước 1: đọc file */
+    readAsArrayBuffer(file).then(function(arrayBuffer){
+
+        setP(38, 'Đang giải mã (phương pháp A)...', 2);
+        dlog('Thử phương pháp A: decodeAudioData', 'info');
+
+        /* Bước 2A: decodeAudioData */
+        return decodeArrayBuffer(arrayBuffer);
+
+    }).then(function(audioBuf){
+
+        dlog('Phương pháp A thành công', 'ok');
+        return finalize(audioBuf, outName);
+
+    })['catch'](function(errA){
+
+        dlog('Phương pháp A thất bại: ' + errA.message + ' → thử B', 'warn');
+        setP(42, 'Thử phương pháp B (audio element)...', 2);
+
+        /* Bước 2B: AudioElement capture */
+        return captureViaAudioElement(file).then(function(buf){
+            dlog('Phương pháp B thành công', 'ok');
+            return finalize(buf, outName);
+        })['catch'](function(errB){
+            dlog('Phương pháp B thất bại: ' + errB.message + ' → fallback', 'err');
+            return passThroughFallback(file, outName);
         });
-    }
 
-    /* ── Main convert ─────────────────────────────────────────── */
-    function doConvert(file, targetFmt) {
-        setBusy(true);
-        hideMsg();
-        progressSection.classList.add('show');
-        resultSection.classList.remove('show');
-        prog(5, 'Chuẩn bị...', 1);
+    }).then(function(result){
 
-        var base = file.name.lastIndexOf('.') > 0
-                 ? file.name.substring(0, file.name.lastIndexOf('.'))
-                 : file.name;
-        var outName = base + '_converted.wav';
+        if (!result) return; /* đã xử lý trong finalize */
+        if (result.fallback) showFallback(result);
+        setBusy(false);
 
-        /* Delay nhỏ để iOS vẽ UI xong trước khi xử lý nặng */
-        setTimeout(function() {
+    })['catch'](function(e){
+        dlog('Lỗi nghiêm trọng: ' + e.message, 'err');
+        showMsg('❌ ' + e.message, 'err');
+        progSection.classList.remove('show');
+        setBusy(false);
+    });
 
-        prog(10, 'Đang đọc file...', 1);
+    }, 200);
+}
 
-        /* Hiển thị progress giả trong lúc chờ decode */
-        var fakePct  = 15;
-        var fakeStep = 1;
-        var fakeTimer = setInterval(function() {
-            if (fakePct < 38) {
-                fakePct++;
-                prog(fakePct, fakePct < 30 ? 'Đang đọc file...' : 'Đang giải mã âm thanh...', fakePct < 30 ? 1 : 2);
-                if (fakePct === 30) fakeStep = 2;
-            }
-        }, 300);
-
-        decodeRace(file)
-
-        .then(function(audioBuf) {
-            clearInterval(fakeTimer);
-            prog(72, 'Đang mã hoá WAV...', 2);
-
-            return new Promise(function(res) {
-                setTimeout(function() {
-                    var wavData = encodeWav(audioBuf);
-                    res(wavData);
-                }, 30);
-            });
-        })
-
-        .then(function(wavData) {
-            prog(92, 'Đang tạo file...', 3);
-            var blob = new Blob([wavData], { type: 'audio/wav' });
-            var url  = mkUrl(blob);
-
-            prog(100, 'Hoàn thành!');
-            allDone();
-
-            resultAudioEl.innerHTML =
-                '<h3>📄 ' + outName + '</h3>' +
-                '<audio controls playsinline webkit-playsinline style="width:100%;margin:10px 0">' +
-                '<source src="' + url + '" type="audio/wav">' +
-                '</audio><br>' +
-                '<a href="' + url + '" download="' + outName + '" class="download-btn">⬇️ Tải về</a>';
-
-            resultSection.classList.add('show');
-            showMsg('✅ Chuyển đổi thành công!', 'success');
-            setTimeout(function() { progressSection.classList.remove('show'); }, 1800);
-        })
-
-        .catch(function(err) {
-            clearInterval(fakeTimer);
-            console.error('Convert error:', err);
-
-            /* Fallback cuối: trả file gốc để user ít nhất nghe được */
-            prog(95, 'Đang thử chế độ tương thích...', 3);
-
-            var rdr = new FileReader();
-            rdr.onload = function(e) {
-                var blob = new Blob([e.target.result], { type: file.type || 'audio/mpeg' });
+function finalize(audioBuf, outName){
+    setP(72, 'Mã hoá WAV...', 2);
+    return new Promise(function(resolve){
+        setTimeout(function(){
+            var wavData = encodeWav(audioBuf);
+            setP(92, 'Tạo file...', 3);
+            setTimeout(function(){
+                var blob = new Blob([wavData], { type: 'audio/wav' });
                 var url  = mkUrl(blob);
-                allDone();
-
-                resultAudioEl.innerHTML =
-                    '<p style="background:#fff3cd;color:#856404;padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:12px;">' +
-                    '⚠️ Thiết bị iOS này không giải mã được codec của file. File trả về là BẢN GỐC (chưa đổi định dạng).<br>' +
-                    'Gợi ý: Chuyển file sang <b>MP3 128kbps</b> trên máy tính trước, rồi thử lại.</p>' +
-                    '<h3>📄 ' + file.name + ' (gốc)</h3>' +
-                    '<audio controls playsinline webkit-playsinline style="width:100%;margin:10px 0">' +
-                    '<source src="' + url + '" type="' + (file.type || 'audio/mpeg') + '">' +
-                    '</audio><br>' +
-                    '<a href="' + url + '" download="' + file.name + '" class="download-btn">⬇️ Tải về bản gốc</a>';
-
-                resultSection.classList.add('show');
-                showMsg('⚠️ Codec không được hỗ trợ trên thiết bị này. Xem chi tiết bên dưới.', 'warn');
-                progressSection.classList.remove('show');
+                doneAll();
+                setP(100, 'Hoàn thành!');
+                resultBox.innerHTML =
+                    '<h3 style="margin-bottom:10px;font-size:14px;">📄 ' + outName + '</h3>' +
+                    '<audio controls playsinline webkit-playsinline style="width:100%;margin:8px 0">' +
+                    '<source src="' + url + '" type="audio/wav"></audio><br>' +
+                    '<a href="' + url + '" download="' + outName + '" class="dl-btn">⬇️ Tải về</a>';
+                resultSec.classList.add('show');
+                showMsg('✅ Chuyển đổi thành công!', 'ok');
+                setTimeout(function(){ progSection.classList.remove('show'); }, 1800);
                 setBusy(false);
-            };
-            rdr.onerror = function() {
-                showMsg('❌ Không thể xử lý file này trên thiết bị. Hãy thử file MP3 hoặc WAV khác.', 'error');
-                progressSection.classList.remove('show');
-                setBusy(false);
-            };
-            rdr.readAsArrayBuffer(file);
-            return; /* setBusy sẽ gọi trong callback trên */
-        })
+                resolve(null);
+            }, 50);
+        }, 30);
+    });
+}
 
-        .then(function() {
-            setBusy(false);
-        });
-
-        }, 200);
-    }
+function showFallback(result){
+    doneAll();
+    setP(100, 'Xong (bản gốc)');
+    resultBox.innerHTML =
+        '<div style="background:#fff3cd;color:#856404;padding:10px;border-radius:6px;font-size:12px;margin-bottom:12px;">' +
+        '⚠️ <b>Không giải mã được trên thiết bị này.</b><br>' +
+        'File bên dưới là bản GỐC chưa đổi định dạng.<br>' +
+        'Kiểm tra log debug để biết lỗi cụ thể.<br>' +
+        '<b>Gợi ý:</b> Thử file MP3 128kbps hoặc WAV gốc.</div>' +
+        '<h3 style="font-size:14px;margin-bottom:10px;">📄 ' + result.name + '</h3>' +
+        '<audio controls playsinline webkit-playsinline style="width:100%;margin:8px 0">' +
+        '<source src="' + result.url + '" type="audio/mpeg"></audio><br>' +
+        '<a href="' + result.url + '" download="' + result.name + '" class="dl-btn">⬇️ Tải về bản gốc</a>';
+    resultSec.classList.add('show');
+    showMsg('⚠️ Codec không được hỗ trợ. Xem log debug.', 'warn');
+    progSection.classList.remove('show');
+}
 
 })();
 </script>
