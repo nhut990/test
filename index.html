@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Mario Bros - NES Emulator</title>
+    <title>NES Game Emulator - Nostalgist.js</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -31,16 +31,15 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
-            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             padding: 20px;
             text-align: center;
         }
 
         .header h1 {
-            font-size: 32px;
+            font-size: 28px;
             margin-bottom: 5px;
-            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.3);
         }
 
         .header p {
@@ -52,14 +51,64 @@
             padding: 20px;
             background: #2a2a2a;
             border-bottom: 2px solid #444;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-row {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
-            justify-content: center;
+            align-items: center;
+        }
+
+        label {
+            color: #ddd;
+            font-size: 14px;
+            font-weight: 600;
+            min-width: 120px;
+        }
+
+        input[type="file"],
+        input[type="text"] {
+            padding: 10px 12px;
+            border: 2px solid #444;
+            border-radius: 6px;
+            background: #333;
+            color: #fff;
+            font-size: 14px;
+            flex: 1;
+            min-width: 200px;
+            cursor: pointer;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            background: #5568d3;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         button {
-            padding: 12px 24px;
+            padding: 10px 20px;
             border: none;
             border-radius: 6px;
             font-size: 14px;
@@ -70,12 +119,13 @@
         }
 
         .btn-primary {
-            background: #FF6B6B;
-            min-width: 140px;
+            background: #667eea;
+            flex: 1;
+            min-width: 150px;
         }
 
-        .btn-primary:hover:not(:disabled) {
-            background: #ff5252;
+        .btn-primary:hover {
+            background: #5568d3;
             transform: translateY(-2px);
         }
 
@@ -86,19 +136,16 @@
         }
 
         .btn-secondary {
-            background: #FFD93D;
-            color: #333;
+            background: #764ba2;
             min-width: 120px;
         }
 
-        .btn-secondary:hover:not(:disabled) {
-            background: #ffc722;
-            transform: translateY(-2px);
+        .btn-secondary:hover {
+            background: #653a8a;
         }
 
         .btn-secondary:disabled {
             background: #999;
-            color: white;
             cursor: not-allowed;
         }
 
@@ -108,8 +155,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 500px;
-            position: relative;
+            min-height: 400px;
         }
 
         #nostalgist-container {
@@ -128,41 +174,10 @@
         }
 
         .status-message {
-            position: absolute;
             color: #ddd;
             padding: 20px;
             text-align: center;
             font-size: 16px;
-            width: 100%;
-        }
-
-        .status-message.error {
-            color: #ff6b6b;
-        }
-
-        .status-message.success {
-            color: #51cf66;
-        }
-
-        .status-message.loading {
-            text-align: center;
-            color: #FFD93D;
-        }
-
-        .status-message.loading::after {
-            content: '';
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            margin-left: 10px;
-            border: 3px solid #FFD93D;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
 
         .info-section {
@@ -175,7 +190,7 @@
         }
 
         .info-section h3 {
-            color: #FFD93D;
+            color: #667eea;
             margin-bottom: 10px;
             font-size: 14px;
         }
@@ -195,19 +210,30 @@
         }
 
         .control-item strong {
-            color: #FFD93D;
+            color: #667eea;
         }
 
         @media (max-width: 768px) {
             .header h1 {
-                font-size: 28px;
+                font-size: 24px;
             }
 
-            .emulator-section {
-                min-height: 350px;
+            .control-row {
+                flex-direction: column;
             }
 
-            .controls-section {
+            label {
+                min-width: auto;
+                width: 100%;
+            }
+
+            input[type="file"],
+            input[type="text"] {
+                min-width: auto;
+                width: 100%;
+            }
+
+            .button-group {
                 flex-direction: column;
             }
 
@@ -215,9 +241,34 @@
                 width: 100%;
             }
 
+            .emulator-section {
+                min-height: 300px;
+            }
+
             .keyboard-controls {
                 grid-template-columns: 1fr;
             }
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-left: 10px;
+            border: 3px solid #667eea;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -225,45 +276,64 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>🍄 Super Mario Bros - NES</h1>
-            <p>Chơi trò chơi huyền thoại trên trình duyệt</p>
+            <h1>🎮 NES Game Emulator</h1>
+            <p>Chơi game NES cổ điển trực tiếp trên trình duyệt của bạn</p>
         </div>
 
         <!-- Controls Section -->
         <div class="controls-section">
-            <button class="btn-primary" id="pauseButton" onclick="handlePause()" disabled>
-                ⏸ Tạm dừng
-            </button>
-            <button class="btn-secondary" id="resumeButton" onclick="handleResume()" disabled>
-                ▶️ Tiếp tục
-            </button>
-            <button class="btn-primary" id="stopButton" onclick="handleStop()" disabled>
-                ⏹ Dừng
-            </button>
-            <button class="btn-secondary" id="reloadButton" onclick="reloadGame()">
-                🔄 Tải lại
-            </button>
+            <div class="control-group">
+                <!-- ROM Input Options -->
+                <div class="control-row">
+                    <label>📁 Chọn ROM từ máy:</label>
+                    <input type="file" id="romFile" accept=".nes" />
+                </div>
+
+                <div class="control-row">
+                    <label>🔗 Hoặc nhập URL ROM:</label>
+                    <input type="text" id="romUrl" placeholder="https://example.com/game.nes" />
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="button-group">
+                    <button class="btn-primary" id="playButton" onclick="handlePlayRom()">
+                        ▶ Chơi Game
+                    </button>
+                    <button class="btn-secondary" id="pauseButton" onclick="handlePause()" disabled>
+                        ⏸ Tạm dừng
+                    </button>
+                    <button class="btn-secondary" id="resumeButton" onclick="handleResume()" disabled>
+                        ▶️ Tiếp tục
+                    </button>
+                    <button class="btn-secondary" id="stopButton" onclick="handleStop()" disabled>
+                        ⏹ Dừng
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Emulator Display -->
         <div class="emulator-section">
-            <div id="nostalgist-container"></div>
-            <div id="status" class="status-message loading">⏳ Đang tải Super Mario Bros...</div>
+            <div id="nostalgist-container" style="display: none;"></div>
+            <div id="status" class="status-message">
+                Chọn một file NES hoặc nhập URL để bắt đầu chơi game
+            </div>
         </div>
 
         <!-- Info Section -->
         <div class="info-section">
-            <h3>📖 Hướng dẫn điều khiển:</h3>
+            <h3>📖 Hướng dẫn điều khiển (PC):</h3>
             <div class="keyboard-controls">
-                <div class="control-item"><strong>↑↓←→</strong> - Di chuyển Mario</div>
-                <div class="control-item"><strong>Z</strong> - Nhảy</div>
-                <div class="control-item"><strong>X</strong> - Chạy/Thả lửa</div>
+                <div class="control-item"><strong>↑↓←→</strong> - D-Pad</div>
+                <div class="control-item"><strong>Z</strong> - Nút B</div>
+                <div class="control-item"><strong>X</strong> - Nút A</div>
                 <div class="control-item"><strong>Enter</strong> - Start</div>
                 <div class="control-item"><strong>Shift</strong> - Select</div>
-                <div class="control-item"><strong>R</strong> - Quay lại trước đó</div>
+                <div class="control-item"><strong>Ctrl+S</strong> - Lưu trạng thái</div>
             </div>
             <p style="margin-top: 15px; font-size: 12px; opacity: 0.8;">
-                💡 Hỗ trợ <strong>bàn phím</strong> trên PC và <strong>cảm ứng</strong> trên điện thoại
+                💡 <strong>Lưu ý:</strong> Bạn cần cung cấp file ROM NES của chính mình (game phải hợp pháp hoặc homebrew).
+                Hỗ trợ đầu vào cảm ứng trên thiết bị di động.
             </p>
         </div>
     </div>
@@ -275,60 +345,31 @@
         let currentGame = null;
         let isPaused = false;
 
-        // Danh sách các URL dự phòng
-        const gameUrls = [
-            'https://github.com/nhut990/files/raw/refs/heads/main/hinh/SuperMarioBros.nes',
-            'https://cdn.jsdelivr.net/gh/nhut990/files@main/hinh/SuperMarioBros.nes',
-            'https://raw.githubusercontent.com/nhut990/files/main/hinh/SuperMarioBros.nes'
-        ];
+        // Hàm xử lý phát game
+        async function handlePlayRom() {
+            const romFile = document.getElementById('romFile');
+            const romUrl = document.getElementById('romUrl').value;
+            const status = document.getElementById('status');
+            const container = document.getElementById('nostalgist-container');
 
-        // Hàm tải game với nhiều phương pháp
-        async function fetchGameRom() {
-            for (let i = 0; i < gameUrls.length; i++) {
-                try {
-                    const url = gameUrls[i];
-                    console.log(`📥 Cố gắng tải từ URL ${i + 1}: ${url}`);
-                    
-                    const response = await fetch(url, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/octet-stream'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-
-                    const blob = await response.blob();
-                    console.log(`✅ Tải thành công từ URL ${i + 1}`);
-                    return blob;
-                } catch (error) {
-                    console.warn(`❌ URL ${i + 1} thất bại:`, error.message);
-                    
-                    // Nếu đây không phải URL cuối cùng, tiếp tục thử
-                    if (i < gameUrls.length - 1) {
-                        continue;
-                    }
-                }
+            // Kiểm tra đầu vào
+            if (!romFile.files.length && !romUrl) {
+                status.textContent = '❌ Vui lòng chọn file ROM hoặc nhập URL';
+                return;
             }
 
-            throw new Error('Không thể tải game từ tất cả các nguồn. Vui lòng kiểm tra kết nối internet.');
-        }
-
-        // Hàm tải game
-        async function loadGame() {
-            const container = document.getElementById('nostalgist-container');
-            const status = document.getElementById('status');
-            
             try {
-                updateStatus('⏳ Đang tải Super Mario Bros...', 'loading');
+                status.textContent = '⏳ Đang tải game...';
+                status.className = 'status-message loading';
                 disableControls(true);
 
-                console.log('🎮 Bắt đầu tải game...');
-                const rom = await fetchGameRom();
+                let rom;
+                if (romFile.files.length > 0) {
+                    rom = romFile.files[0];
+                } else {
+                    rom = romUrl;
+                }
 
-                console.log('🎮 Đang khởi động emulator...');
                 // Khởi động trò chơi NES
                 currentGame = await Nostalgist.nes(rom, {
                     element: container,
@@ -338,30 +379,20 @@
                     }
                 });
 
-                updateStatus('✅ Game đã tải thành công! Bắt đầu chơi...', 'success');
+                // Hiển thị container
+                container.style.display = 'block';
+                status.style.display = 'none';
+                status.className = 'status-message';
+
+                // Cập nhật trạng thái nút
                 updateButtonStates(true);
 
-                // Ẩn status sau 2 giây
-                setTimeout(() => {
-                    status.style.display = 'none';
-                }, 2000);
-
-                console.log('✅ Super Mario Bros sẵn sàng!');
+                console.log('✅ Game NES đã tải thành công!');
             } catch (error) {
-                console.error('❌ Lỗi khi tải game:', error);
-                updateStatus(`❌ ${error.message}`, 'error');
+                console.error('Lỗi khi tải game:', error);
+                status.textContent = `❌ Lỗi: ${error.message || 'Không thể tải game. Vui lòng kiểm tra file ROM hoặc URL.'}`;
+                status.className = 'status-message';
                 disableControls(false);
-            }
-        }
-
-        // Hàm cập nhật status
-        function updateStatus(message, type = 'info') {
-            const status = document.getElementById('status');
-            status.textContent = message;
-            status.style.display = 'block';
-            status.className = 'status-message';
-            if (type) {
-                status.classList.add(type);
             }
         }
 
@@ -372,9 +403,9 @@
                     await currentGame.pause?.();
                     isPaused = true;
                     updateButtonStates(true);
-                    console.log('⏸ Game đã tạm dừng');
+                    console.log('⏸ Game đã được tạm dừng');
                 } catch (error) {
-                    console.error('Lỗi tạm dừng:', error);
+                    console.error('Lỗi khi tạm dừng:', error);
                 }
             }
         }
@@ -386,9 +417,9 @@
                     await currentGame.resume?.();
                     isPaused = false;
                     updateButtonStates(true);
-                    console.log('▶️ Game tiếp tục');
+                    console.log('▶️ Game đã tiếp tục');
                 } catch (error) {
-                    console.error('Lỗi tiếp tục:', error);
+                    console.error('Lỗi khi tiếp tục:', error);
                 }
             }
         }
@@ -401,36 +432,34 @@
                     currentGame = null;
                     isPaused = false;
                     
-                    updateStatus('Game đã dừng. Nhấp "Tải lại" để chơi lại.', 'info');
+                    // Ẩn emulator
+                    document.getElementById('nostalgist-container').style.display = 'none';
+                    const status = document.getElementById('status');
+                    status.style.display = 'block';
+                    status.textContent = 'Chọn một file NES hoặc nhập URL để bắt đầu chơi game';
+                    
                     updateButtonStates(false);
-                    console.log('⏹ Game dừng');
+                    console.log('⏹ Game đã dừng');
                 } catch (error) {
-                    console.error('Lỗi dừng:', error);
+                    console.error('Lỗi khi dừng:', error);
                 }
-            }
-        }
-
-        // Hàm tải lại game
-        function reloadGame() {
-            if (currentGame) {
-                handleStop();
-                setTimeout(() => loadGame(), 500);
-            } else {
-                loadGame();
             }
         }
 
         // Cập nhật trạng thái các nút
         function updateButtonStates(isPlaying) {
+            const playBtn = document.getElementById('playButton');
             const pauseBtn = document.getElementById('pauseButton');
             const resumeBtn = document.getElementById('resumeButton');
             const stopBtn = document.getElementById('stopButton');
 
             if (isPlaying) {
+                playBtn.disabled = true;
                 pauseBtn.disabled = isPaused;
                 resumeBtn.disabled = !isPaused;
                 stopBtn.disabled = false;
             } else {
+                playBtn.disabled = false;
                 pauseBtn.disabled = true;
                 resumeBtn.disabled = true;
                 stopBtn.disabled = true;
@@ -439,12 +468,25 @@
 
         // Vô hiệu hóa các điều khiển
         function disableControls(disable) {
-            document.getElementById('pauseButton').disabled = disable;
-            document.getElementById('stopButton').disabled = disable;
+            document.getElementById('romFile').disabled = disable;
+            document.getElementById('romUrl').disabled = disable;
+            document.getElementById('playButton').disabled = disable && !currentGame;
         }
 
-        // Auto load game khi trang tải xong
-        window.addEventListener('DOMContentLoaded', loadGame);
+        // Xử lý thay đổi file
+        document.getElementById('romFile').addEventListener('change', function(e) {
+            const romUrl = document.getElementById('romUrl');
+            if (e.target.files.length > 0) {
+                romUrl.value = '';
+            }
+        });
+
+        // Xử lý thay đổi URL
+        document.getElementById('romUrl').addEventListener('input', function(e) {
+            if (e.target.value) {
+                document.getElementById('romFile').value = '';
+            }
+        });
 
         // Khởi tạo trạng thái nút
         updateButtonStates(false);
