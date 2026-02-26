@@ -3,299 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tạo Mã QR - Nhiều Chức Năng</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>Super Mario Bros - NES Emulator</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
             min-height: 100vh;
-            padding: 20px;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
         }
-        
+
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            flex: 1;
+            width: 100%;
+            max-width: 900px;
+            background: #222;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
         }
-        
+
         .header {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
+            color: #333;
+            padding: 20px;
             text-align: center;
-            color: white;
-            margin-bottom: 40px;
         }
-        
+
         .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 32px;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.3);
         }
-        
+
         .header p {
-            font-size: 1.1em;
+            font-size: 14px;
             opacity: 0.9;
         }
-        
-        .content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            align-items: start;
+
+        .controls-section {
+            padding: 20px;
+            background: #2a2a2a;
+            border-bottom: 2px solid #444;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
-        
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
         }
-        
-        .form-section h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 1.5em;
+
+        .btn-primary {
+            background: #FF6B6B;
+            min-width: 140px;
         }
-        
-        .tab-buttons {
+
+        .btn-primary:hover:not(:disabled) {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            background: #999;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #FFD93D;
+            color: #333;
+            min-width: 120px;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #ffc722;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary:disabled {
+            background: #999;
+            color: white;
+            cursor: not-allowed;
+        }
+
+        .emulator-section {
+            padding: 20px;
+            background: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 500px;
+            position: relative;
+        }
+
+        #nostalgist-container {
+            width: 100%;
+            max-width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        #nostalgist-container canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 8px;
+        }
+
+        .status-message {
+            position: absolute;
+            color: #ddd;
+            padding: 20px;
+            text-align: center;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        .status-message.error {
+            color: #ff6b6b;
+        }
+
+        .status-message.success {
+            color: #51cf66;
+        }
+
+        .status-message.loading {
+            text-align: center;
+            color: #FFD93D;
+        }
+
+        .status-message.loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-left: 10px;
+            border: 3px solid #FFD93D;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .info-section {
+            padding: 20px;
+            background: #2a2a2a;
+            border-top: 2px solid #444;
+            color: #ddd;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .info-section h3 {
+            color: #FFD93D;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .keyboard-controls {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
-            margin-bottom: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 5px;
+            margin-top: 10px;
+            font-size: 12px;
         }
-        
-        .tab-btn {
-            padding: 12px 15px;
-            border: 2px solid #667eea;
-            background: white;
-            color: #667eea;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            font-size: 0.9em;
+
+        .control-item {
+            background: #333;
+            padding: 8px;
+            border-radius: 4px;
         }
-        
-        .tab-btn.active {
-            background: #667eea;
-            color: white;
+
+        .control-item strong {
+            color: #FFD93D;
         }
-        
-        .tab-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        .form-content {
-            display: none;
-        }
-        
-        .form-content.active {
-            display: block;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 600;
-            font-size: 0.95em;
-        }
-        
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s ease;
-        }
-        
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        
-        .button-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 1em;
-        }
-        
-        .btn-generate {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            grid-column: span 2;
-        }
-        
-        .btn-generate:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-        
-        .btn-download {
-            background: #4CAF50;
-            color: white;
-        }
-        
-        .btn-download:hover {
-            background: #45a049;
-        }
-        
-        .btn-download:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        
-        .btn-copy {
-            background: #2196F3;
-            color: white;
-        }
-        
-        .btn-copy:hover {
-            background: #0b7dda;
-        }
-        
-        .btn-clear {
-            background: #f44336;
-            color: white;
-        }
-        
-        .btn-clear:hover {
-            background: #da190b;
-        }
-        
-        .qr-display {
-            text-align: center;
-        }
-        
-        #qrcode {
-            display: inline-block;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        
-        #qrcode canvas {
-            display: block;
-            margin: 0 auto;
-        }
-        
-        .qr-info {
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            text-align: left;
-        }
-        
-        .qr-info h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-        
-        .qr-info p {
-            color: #555;
-            word-break: break-all;
-            font-size: 0.9em;
-        }
-        
-        .message {
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            text-align: center;
-            font-weight: 600;
-        }
-        
-        .message.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .footer {
-            text-align: center;
-            color: white;
-            padding: 20px;
-            margin-top: 40px;
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
-        
-        .amount-display {
-            background: #e8f5e9;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border-left: 4px solid #4CAF50;
-        }
-        
-        .amount-display p {
-            color: #2e7d32;
-            font-weight: 600;
-            font-size: 1.1em;
-            margin: 0;
-        }
-        
+
         @media (max-width: 768px) {
-            .content {
-                grid-template-columns: 1fr;
-            }
-            
             .header h1 {
-                font-size: 1.8em;
+                font-size: 28px;
             }
-            
-            .tab-buttons {
+
+            .emulator-section {
+                min-height: 350px;
+            }
+
+            .controls-section {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .keyboard-controls {
                 grid-template-columns: 1fr;
             }
         }
@@ -303,498 +223,231 @@
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <div class="header">
-            <h1>🎯 Tạo Mã QR Đa Chức Năng</h1>
-            <p>Tạo mã QR cho Wifi, Danh bạ, Văn bản, Website, Chuyển khoản và nhiều hơn nữa</p>
+            <h1>🍄 Super Mario Bros - NES</h1>
+            <p>Chơi trò chơi huyền thoại trên trình duyệt</p>
         </div>
-        
-        <div class="content">
-            <!-- Form Section -->
-            <div class="card form-section">
-                <h2>Chọn Loại Mã QR</h2>
-                
-                <div class="tab-buttons">
-                    <button class="tab-btn active" onclick="switchTab('url')">🌐 Website</button>
-                    <button class="tab-btn" onclick="switchTab('text')">📝 Văn Bản</button>
-                    <button class="tab-btn" onclick="switchTab('wifi')">📶 Wifi</button>
-                    <button class="tab-btn" onclick="switchTab('contact')">👤 Danh Bạ</button>
-                    <button class="tab-btn" onclick="switchTab('email')">📧 Email</button>
-                    <button class="tab-btn" onclick="switchTab('phone')">☎��� Điện Thoại</button>
-                    <button class="tab-btn" onclick="switchTab('sms')">💬 Tin Nhắn</button>
-                    <button class="tab-btn" onclick="switchTab('location')">📍 Vị Trí</button>
-                    <button class="tab-btn" onclick="switchTab('banking')">🏦 Chuyển Khoản</button>
-                </div>
-                
-                <!-- URL Tab -->
-                <div id="url" class="form-content active">
-                    <div class="form-group">
-                        <label>URL Website</label>
-                        <input type="url" id="url-input" placeholder="https://example.com" value="">
-                    </div>
-                </div>
-                
-                <!-- Text Tab -->
-                <div id="text" class="form-content">
-                    <div class="form-group">
-                        <label>Nội Dung Văn Bản</label>
-                        <textarea id="text-input" placeholder="Nhập văn bản cần mã hóa..."></textarea>
-                    </div>
-                </div>
-                
-                <!-- WiFi Tab -->
-                <div id="wifi" class="form-content">
-                    <div class="form-group">
-                        <label>Tên Mạng (SSID)</label>
-                        <input type="text" id="wifi-ssid" placeholder="Tên wifi của bạn">
-                    </div>
-                    <div class="form-group">
-                        <label>Mật Khẩu</label>
-                        <input type="password" id="wifi-password" placeholder="Mật khẩu wifi">
-                    </div>
-                    <div class="form-group">
-                        <label>Loại Bảo Mật</label>
-                        <select id="wifi-security">
-                            <option value="WPA">WPA/WPA2</option>
-                            <option value="WEP">WEP</option>
-                            <option value="nopass">Không có mật khẩu</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <!-- Contact Tab -->
-                <div id="contact" class="form-content">
-                    <div class="form-group">
-                        <label>Họ và Tên</label>
-                        <input type="text" id="contact-name" placeholder="Tên đầy đủ">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Điện Thoại</label>
-                            <input type="tel" id="contact-phone" placeholder="Số điện thoại">
-                        </div>
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" id="contact-email" placeholder="Email">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Công Ty</label>
-                        <input type="text" id="contact-company" placeholder="Tên công ty">
-                    </div>
-                    <div class="form-group">
-                        <label>Địa Chỉ</label>
-                        <input type="text" id="contact-address" placeholder="Địa chỉ">
-                    </div>
-                </div>
-                
-                <!-- Email Tab -->
-                <div id="email" class="form-content">
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="email-input" placeholder="example@email.com">
-                    </div>
-                    <div class="form-group">
-                        <label>Chủ Đề</label>
-                        <input type="text" id="email-subject" placeholder="Chủ đề email">
-                    </div>
-                    <div class="form-group">
-                        <label>Nội Dung</label>
-                        <textarea id="email-body" placeholder="Nội dung email"></textarea>
-                    </div>
-                </div>
-                
-                <!-- Phone Tab -->
-                <div id="phone" class="form-content">
-                    <div class="form-group">
-                        <label>Số Điện Thoại</label>
-                        <input type="tel" id="phone-input" placeholder="Số điện thoại">
-                    </div>
-                </div>
-                
-                <!-- SMS Tab -->
-                <div id="sms" class="form-content">
-                    <div class="form-group">
-                        <label>Số Điện Thoại</label>
-                        <input type="tel" id="sms-phone" placeholder="Số điện thoại">
-                    </div>
-                    <div class="form-group">
-                        <label>Nội Dung Tin Nhắn</label>
-                        <textarea id="sms-message" placeholder="Nội dung tin nhắn"></textarea>
-                    </div>
-                </div>
-                
-                <!-- Location Tab -->
-                <div id="location" class="form-content">
-                    <div class="form-group">
-                        <label>Vĩ Độ (Latitude)</label>
-                        <input type="number" id="location-lat" placeholder="21.0285" step="0.0001">
-                    </div>
-                    <div class="form-group">
-                        <label>Kinh Độ (Longitude)</label>
-                        <input type="number" id="location-lng" placeholder="105.8542" step="0.0001">
-                    </div>
-                    <div class="form-group">
-                        <label>Tên Địa Điểm (Tùy chọn)</label>
-                        <input type="text" id="location-name" placeholder="Tên địa điểm">
-                    </div>
-                </div>
-                
-                <!-- Banking Tab -->
-                <div id="banking" class="form-content">
-                    <div class="form-group">
-                        <label>Số Tài Khoản</label>
-                        <input type="text" id="banking-account" placeholder="Nhập số tài khoản">
-                    </div>
-                    <div class="form-group">
-                        <label>Tên Chủ Tài Khoản</label>
-                        <input type="text" id="banking-name" placeholder="Nhập tên chủ tài khoản">
-                    </div>
-                    <div class="form-group">
-                        <label>Ngân Hàng</label>
-                        <select id="banking-bank">
-                            <option value="">-- Chọn ngân hàng --</option>
-                            <option value="VCB">Vietcombank</option>
-                            <option value="TCB">Techcombank</option>
-                            <option value="STB">Sacombank</option>
-                            <option value="MB">MB Bank</option>
-                            <option value="ACB">ACB</option>
-                            <option value="OCB">OCB</option>
-                            <option value="VIB">VIB</option>
-                            <option value="BID">BIDV</option>
-                            <option value="VPB">VPBank</option>
-                            <option value="TPB">TPBank</option>
-                            <option value="OTHER">Khác</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Số Tiền (VND) *Nhập trước*</label>
-                        <input type="number" id="banking-amount" placeholder="Nhập số tiền (VD: 100000)" min="0" step="1000">
-                    </div>
-                    <div class="form-group">
-                        <label>Nội Dung Chuyển Khoản (Tùy chọn)</label>
-                        <textarea id="banking-description" placeholder="Nhập nội dung chuyển khoản..."></textarea>
-                    </div>
-                    <div id="amount-display" class="amount-display" style="display: none;">
-                        <p>💰 Số tiền: <span id="amount-value">0</span> VND</p>
-                    </div>
-                </div>
-                
-                <div class="button-group">
-                    <button class="btn btn-generate" onclick="generateQR()">Tạo Mã QR</button>
-                    <button class="btn btn-clear" onclick="clearForm()">Xóa</button>
-                </div>
+
+        <!-- Controls Section -->
+        <div class="controls-section">
+            <button class="btn-primary" id="pauseButton" onclick="handlePause()" disabled>
+                ⏸ Tạm dừng
+            </button>
+            <button class="btn-secondary" id="resumeButton" onclick="handleResume()" disabled>
+                ▶️ Tiếp tục
+            </button>
+            <button class="btn-primary" id="stopButton" onclick="handleStop()" disabled>
+                ⏹ Dừng
+            </button>
+            <button class="btn-secondary" id="reloadButton" onclick="reloadGame()">
+                🔄 Tải lại
+            </button>
+        </div>
+
+        <!-- Emulator Display -->
+        <div class="emulator-section">
+            <div id="nostalgist-container"></div>
+            <div id="status" class="status-message loading">⏳ Đang tải Super Mario Bros...</div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="info-section">
+            <h3>📖 Hướng dẫn điều khiển:</h3>
+            <div class="keyboard-controls">
+                <div class="control-item"><strong>↑↓←→</strong> - Di chuyển Mario</div>
+                <div class="control-item"><strong>Z</strong> - Nhảy</div>
+                <div class="control-item"><strong>X</strong> - Chạy/Thả lửa</div>
+                <div class="control-item"><strong>Enter</strong> - Start</div>
+                <div class="control-item"><strong>Shift</strong> - Select</div>
+                <div class="control-item"><strong>R</strong> - Quay lại trước đó</div>
             </div>
-            
-            <!-- QR Display Section -->
-            <div class="card qr-display">
-                <h2 style="margin-bottom: 20px; color: #667eea;">Mã QR Của Bạn</h2>
-                
-                <div id="message"></div>
-                <div id="qrcode"></div>
-                
-                <div id="qr-info" class="qr-info" style="display: none;">
-                    <h3>Nội Dung Mã QR:</h3>
-                    <p id="qr-content"></p>
-                </div>
-                
-                <div class="button-group">
-                    <button class="btn btn-download" id="download-btn" onclick="downloadQR()" disabled>📥 Tải Xuống</button>
-                    <button class="btn btn-copy" id="copy-btn" onclick="copyToClipboard()" disabled>📋 Sao Chép</button>
-                </div>
-            </div>
+            <p style="margin-top: 15px; font-size: 12px; opacity: 0.8;">
+                💡 Hỗ trợ <strong>bàn phím</strong> trên PC và <strong>cảm ứng</strong> trên điện thoại
+            </p>
         </div>
     </div>
-    
-    <div class="footer">
-        <p>Created by Minh Nhựt<br>© 2026</p>
-    </div>
-    
+
+    <!-- Nostalgist.js Library từ CDN -->
+    <script src="https://unpkg.com/nostalgist"></script>
+
     <script>
-        let currentQRData = null;
-        let currentQRCode = null;
-        let currentTab = 'url';
-        
-        function switchTab(tab) {
-            // Hide all content
-            document.querySelectorAll('.form-content').forEach(el => {
-                el.classList.remove('active');
-            });
-            
-            // Remove active state from buttons
-            document.querySelectorAll('.tab-btn').forEach(el => {
-                el.classList.remove('active');
-            });
-            
-            // Show selected content
-            document.getElementById(tab).classList.add('active');
-            
-            // Add active state to clicked button
-            event.target.classList.add('active');
-            
-            currentTab = tab;
-            clearMessage();
-        }
-        
-        // Hiển thị số tiền khi nhập
-        document.addEventListener('DOMContentLoaded', function() {
-            const bankingAmountInput = document.getElementById('banking-amount');
-            if (bankingAmountInput) {
-                bankingAmountInput.addEventListener('input', function() {
-                    const amount = parseInt(this.value) || 0;
-                    const amountDisplay = document.getElementById('amount-display');
-                    const amountValue = document.getElementById('amount-value');
+        let currentGame = null;
+        let isPaused = false;
+
+        // Danh sách các URL dự phòng
+        const gameUrls = [
+            'https://github.com/nhut990/files/raw/refs/heads/main/hinh/SuperMarioBros.nes',
+            'https://cdn.jsdelivr.net/gh/nhut990/files@main/hinh/SuperMarioBros.nes',
+            'https://raw.githubusercontent.com/nhut990/files/main/hinh/SuperMarioBros.nes'
+        ];
+
+        // Hàm tải game với nhiều phương pháp
+        async function fetchGameRom() {
+            for (let i = 0; i < gameUrls.length; i++) {
+                try {
+                    const url = gameUrls[i];
+                    console.log(`📥 Cố gắng tải từ URL ${i + 1}: ${url}`);
                     
-                    if (amount > 0) {
-                        amountValue.textContent = amount.toLocaleString('vi-VN');
-                        amountDisplay.style.display = 'block';
-                    } else {
-                        amountDisplay.style.display = 'none';
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/octet-stream'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const blob = await response.blob();
+                    console.log(`✅ Tải thành công từ URL ${i + 1}`);
+                    return blob;
+                } catch (error) {
+                    console.warn(`❌ URL ${i + 1} thất bại:`, error.message);
+                    
+                    // Nếu đây không phải URL cuối cùng, tiếp tục thử
+                    if (i < gameUrls.length - 1) {
+                        continue;
+                    }
+                }
+            }
+
+            throw new Error('Không thể tải game từ tất cả các nguồn. Vui lòng kiểm tra kết nối internet.');
+        }
+
+        // Hàm tải game
+        async function loadGame() {
+            const container = document.getElementById('nostalgist-container');
+            const status = document.getElementById('status');
+            
+            try {
+                updateStatus('⏳ Đang tải Super Mario Bros...', 'loading');
+                disableControls(true);
+
+                console.log('🎮 Bắt đầu tải game...');
+                const rom = await fetchGameRom();
+
+                console.log('🎮 Đang khởi động emulator...');
+                // Khởi động trò chơi NES
+                currentGame = await Nostalgist.nes(rom, {
+                    element: container,
+                    retroarchConfig: {
+                        rewind_enable: true,
+                        turbo_enable: true,
                     }
                 });
-            }
-        });
-        
-        function generateQRData() {
-            const tab = currentTab;
-            
-            switch(tab) {
-                case 'url':
-                    const url = document.getElementById('url-input').value.trim();
-                    if (!url) {
-                        showError('Vui lòng nhập URL');
-                        return null;
-                    }
-                    return url;
-                
-                case 'text':
-                    const text = document.getElementById('text-input').value.trim();
-                    if (!text) {
-                        showError('Vui lòng nhập văn bản');
-                        return null;
-                    }
-                    return text;
-                
-                case 'wifi':
-                    const ssid = document.getElementById('wifi-ssid').value.trim();
-                    const password = document.getElementById('wifi-password').value.trim();
-                    const security = document.getElementById('wifi-security').value;
-                    
-                    if (!ssid) {
-                        showError('Vui lòng nhập tên mạng Wifi');
-                        return null;
-                    }
-                    
-                    let wifiString = `WIFI:T:${security};S:${ssid};`;
-                    if (password && security !== 'nopass') {
-                        wifiString += `P:${password};`;
-                    }
-                    wifiString += ';';
-                    return wifiString;
-                
-                case 'contact':
-                    const name = document.getElementById('contact-name').value.trim();
-                    const phone = document.getElementById('contact-phone').value.trim();
-                    const email = document.getElementById('contact-email').value.trim();
-                    const company = document.getElementById('contact-company').value.trim();
-                    const address = document.getElementById('contact-address').value.trim();
-                    
-                    if (!name) {
-                        showError('Vui lòng nhập tên');
-                        return null;
-                    }
-                    
-                    let vcard = 'BEGIN:VCARD\nVERSION:3.0\n';
-                    vcard += `FN:${name}\n`;
-                    if (phone) vcard += `TEL:${phone}\n`;
-                    if (email) vcard += `EMAIL:${email}\n`;
-                    if (company) vcard += `ORG:${company}\n`;
-                    if (address) vcard += `ADR:;;${address}\n`;
-                    vcard += 'END:VCARD';
-                    return vcard;
-                
-                case 'email':
-                    const emailAddr = document.getElementById('email-input').value.trim();
-                    const subject = document.getElementById('email-subject').value.trim();
-                    const body = document.getElementById('email-body').value.trim();
-                    
-                    if (!emailAddr) {
-                        showError('Vui lòng nhập email');
-                        return null;
-                    }
-                    
-                    let emailString = `mailto:${emailAddr}`;
-                    const params = [];
-                    if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
-                    if (body) params.push(`body=${encodeURIComponent(body)}`);
-                    if (params.length > 0) emailString += '?' + params.join('&');
-                    return emailString;
-                
-                case 'phone':
-                    const phoneNum = document.getElementById('phone-input').value.trim();
-                    if (!phoneNum) {
-                        showError('Vui lòng nhập số điện thoại');
-                        return null;
-                    }
-                    return `tel:${phoneNum}`;
-                
-                case 'sms':
-                    const smsPhone = document.getElementById('sms-phone').value.trim();
-                    const smsMsg = document.getElementById('sms-message').value.trim();
-                    
-                    if (!smsPhone) {
-                        showError('Vui lòng nhập số điện thoại');
-                        return null;
-                    }
-                    
-                    let smsString = `smsto:${smsPhone}`;
-                    if (smsMsg) smsString += `:${encodeURIComponent(smsMsg)}`;
-                    return smsString;
-                
-                case 'location':
-                    const lat = document.getElementById('location-lat').value.trim();
-                    const lng = document.getElementById('location-lng').value.trim();
-                    
-                    if (!lat || !lng) {
-                        showError('Vui lòng nhập vĩ độ và kinh độ');
-                        return null;
-                    }
-                    
-                    let locationString = `geo:${lat},${lng}`;
-                    const locName = document.getElementById('location-name').value.trim();
-                    if (locName) locationString += `?q=${encodeURIComponent(locName)}`;
-                    return locationString;
-                
-                case 'banking':
-                    const account = document.getElementById('banking-account').value.trim();
-                    const bankingName = document.getElementById('banking-name').value.trim();
-                    const bankCode = document.getElementById('banking-bank').value.trim();
-                    const amount = document.getElementById('banking-amount').value.trim();
-                    const description = document.getElementById('banking-description').value.trim();
-                    
-                    if (!account) {
-                        showError('Vui lòng nhập số tài khoản');
-                        return null;
-                    }
-                    if (!bankingName) {
-                        showError('Vui lòng nhập tên chủ tài khoản');
-                        return null;
-                    }
-                    if (!bankCode) {
-                        showError('Vui lòng chọn ngân hàng');
-                        return null;
-                    }
-                    if (!amount) {
-                        showError('Vui lòng nhập số tiền');
-                        return null;
-                    }
-                    
-                    // Định dạng theo chuẩn VietQR (ngân hàng Việt)
-                    // Chuỗi: https://pay.{bankcode}.vn?accountno={account}&accountname={name}&amount={amount}&description={desc}
-                    let bankingString = `https://pay.${bankCode}.vn?accountno=${account}&accountname=${encodeURIComponent(bankingName)}&amount=${amount}`;
-                    if (description) {
-                        bankingString += `&description=${encodeURIComponent(description)}`;
-                    }
-                    return bankingString;
-                
-                default:
-                    return null;
+
+                updateStatus('✅ Game đã tải thành công! Bắt đầu chơi...', 'success');
+                updateButtonStates(true);
+
+                // Ẩn status sau 2 giây
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 2000);
+
+                console.log('✅ Super Mario Bros sẵn sàng!');
+            } catch (error) {
+                console.error('❌ Lỗi khi tải game:', error);
+                updateStatus(`❌ ${error.message}`, 'error');
+                disableControls(false);
             }
         }
-        
-        function generateQR() {
-            clearMessage();
-            const data = generateQRData();
-            
-            if (!data) return;
-            
-            currentQRData = data;
-            
-            // Clear previous QR code
-            document.getElementById('qrcode').innerHTML = '';
-            
-            // Generate new QR code
-            currentQRCode = new QRCode(document.getElementById('qrcode'), {
-                text: data,
-                width: 250,
-                height: 250,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            
-            // Show QR info
-            document.getElementById('qr-info').style.display = 'block';
-            document.getElementById('qr-content').textContent = data;
-            
-            // Enable download and copy buttons
-            document.getElementById('download-btn').disabled = false;
-            document.getElementById('copy-btn').disabled = false;
-            
-            showSuccess('✓ Tạo mã QR thành công!');
+
+        // Hàm cập nhật status
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.style.display = 'block';
+            status.className = 'status-message';
+            if (type) {
+                status.classList.add(type);
+            }
         }
-        
-        function downloadQR() {
-            if (!currentQRCode) return;
-            
-            const canvas = document.querySelector('#qrcode canvas');
-            if (!canvas) return;
-            
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            link.download = 'qr-code.png';
-            link.click();
-            
-            showSuccess('✓ Tải xuống thành công!');
+
+        // Hàm tạm dừng
+        async function handlePause() {
+            if (currentGame && !isPaused) {
+                try {
+                    await currentGame.pause?.();
+                    isPaused = true;
+                    updateButtonStates(true);
+                    console.log('⏸ Game đã tạm dừng');
+                } catch (error) {
+                    console.error('Lỗi tạm dừng:', error);
+                }
+            }
         }
-        
-        function copyToClipboard() {
-            if (!currentQRData) return;
-            
-            navigator.clipboard.writeText(currentQRData).then(() => {
-                showSuccess('✓ Sao chép thành công!');
-            }).catch(() => {
-                showError('Không thể sao chép');
-            });
+
+        // Hàm tiếp tục
+        async function handleResume() {
+            if (currentGame && isPaused) {
+                try {
+                    await currentGame.resume?.();
+                    isPaused = false;
+                    updateButtonStates(true);
+                    console.log('▶️ Game tiếp tục');
+                } catch (error) {
+                    console.error('Lỗi tiếp tục:', error);
+                }
+            }
         }
-        
-        function clearForm() {
-            // Clear all inputs based on current tab
-            document.querySelectorAll('input, textarea').forEach(el => {
-                el.value = '';
-            });
-            
-            document.getElementById('qrcode').innerHTML = '';
-            document.getElementById('qr-info').style.display = 'none';
-            document.getElementById('amount-display').style.display = 'none';
-            document.getElementById('download-btn').disabled = true;
-            document.getElementById('copy-btn').disabled = true;
-            clearMessage();
-            
-            currentQRData = null;
-            currentQRCode = null;
+
+        // Hàm dừng
+        async function handleStop() {
+            if (currentGame) {
+                try {
+                    await currentGame.stop?.();
+                    currentGame = null;
+                    isPaused = false;
+                    
+                    updateStatus('Game đã dừng. Nhấp "Tải lại" để chơi lại.', 'info');
+                    updateButtonStates(false);
+                    console.log('⏹ Game dừng');
+                } catch (error) {
+                    console.error('Lỗi dừng:', error);
+                }
+            }
         }
-        
-        function showSuccess(message) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.className = 'message success';
-            messageDiv.textContent = message;
+
+        // Hàm tải lại game
+        function reloadGame() {
+            if (currentGame) {
+                handleStop();
+                setTimeout(() => loadGame(), 500);
+            } else {
+                loadGame();
+            }
         }
-        
-        function showError(message) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.className = 'message error';
-            messageDiv.textContent = '✗ ' + message;
+
+        // Cập nhật trạng thái các nút
+        function updateButtonStates(isPlaying) {
+            const pauseBtn = document.getElementById('pauseButton');
+            const resumeBtn = document.getElementById('resumeButton');
+            const stopBtn = document.getElementById('stopButton');
+
+            if (isPlaying) {
+                pauseBtn.disabled = isPaused;
+                resumeBtn.disabled = !isPaused;
+                stopBtn.disabled = false;
+            } else {
+                pauseBtn.disabled = true;
+                resumeBtn.disabled = true;
+                stopBtn.disabled = true;
+            }
         }
-        
-        function clearMessage() {
-            document.getElementById('message').innerHTML = '';
+
+        // Vô hiệu hóa các điều khiển
+        function disableControls(disable) {
+            document.getElementById('pauseButton').disabled = disable;
+            document.getElementById('stopButton').disabled = disable;
         }
-        
-        // Set default values for location
-        window.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('location-lat').value = '21.0285';
-            document.getElementById('location-lng').value = '105.8542';
-        });
+
+        // Auto load game khi trang tải xong
+        window.addEventListener('DOMContentLoaded', loadGame);
+
+        // Khởi tạo trạng thái nút
+        updateButtonStates(false);
     </script>
 </body>
 </html>
