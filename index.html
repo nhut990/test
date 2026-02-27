@@ -18,14 +18,17 @@
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 20px;
+            gap: 20px;
         }
 
         /* iPhone Container */
         .iphone-container {
             position: relative;
-            width: 390px;
-            height: 844px;
+            width: 100%;
+            max-width: 390px;
+            height: auto;
+            aspect-ratio: 390/844;
             background: #000;
             border-radius: 54px;
             box-shadow: 
@@ -383,15 +386,7 @@
         /* Responsive */
         @media (max-width: 480px) {
             body {
-                padding: 20px 10px;
-            }
-
-            .iphone-container {
-                width: 100%;
-                max-width: 390px;
-                height: auto;
-                aspect-ratio: 390/844;
-                border-radius: 40px;
+                padding: 15px;
             }
 
             .header h1 {
@@ -400,6 +395,12 @@
 
             .newyear-year {
                 font-size: 48px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
             }
         }
 
