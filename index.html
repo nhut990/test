@@ -2,8 +2,8 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Minh Nhựt - iPhone Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minh Nhựt - Công Cụ & Ứng Dụng Web</title>
     <style>
         * {
             margin: 0;
@@ -11,322 +11,283 @@
             box-sizing: border-box;
         }
 
-        html, body {
-            width: 100%;
-            height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1e40af;
+            --secondary: #7c3aed;
+            --accent: #ec4899;
+            --success: #10b981;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --bg-light: #f9fafb;
+            --bg-white: #ffffff;
+            --border: #e5e7eb;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-lg: 0 10px 25px rgba(37, 99, 235, 0.1);
+            --shadow-xl: 0 20px 40px rgba(37, 99, 235, 0.15);
         }
 
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #f0f4ff 0%, #f9fafb 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
             min-height: 100vh;
-            padding: 0;
-        }
-
-        /* iPhone Container */
-        .iphone-container {
-            position: relative;
-            width: 90vw;
-            max-width: 390px;
-            height: 90vh;
-            max-height: 844px;
-            aspect-ratio: 390/844;
-            background: #000;
-            border-radius: 50px;
-            box-shadow: 
-                0 0 0 10px #1a1a1a,
-                0 0 0 11px #333,
-                0 20px 60px rgba(0, 0, 0, 0.8);
-            overflow: hidden;
-            animation: slideIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        /* Notch - iPhone 17 Pill Style */
-        .iphone-notch {
-            position: absolute;
-            top: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 28px;
-            background: #000;
-            border-radius: 14px;
-            z-index: 100;
-        }
-
-        /* Screen Content */
-        .iphone-screen {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 50%, #f5f5f5 100%);
-            overflow-y: scroll;
-            overflow-x: hidden;
-            scroll-behavior: smooth;
-            position: relative;
-            padding-top: 44px;
-            border-radius: 50px;
-        }
-
-        /* Scrollbar Hide */
-        .iphone-screen::-webkit-scrollbar {
-            width: 0;
-        }
-
-        .iphone-screen {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        /* Status Bar */
-        .status-bar {
-            position: sticky;
-            top: 0;
-            height: 44px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 16px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #000;
-            z-index: 99;
-            padding-top: 2px;
-        }
-
-        .time-display {
-            font-size: 14px;
-            font-weight: 600;
-            min-width: 40px;
-            text-align: left;
-        }
-
-        .status-left, .status-right {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            font-size: 13px;
-        }
-
-        /* Content */
-        .content {
-            padding: 16px 14px;
-            padding-bottom: 30px;
         }
 
         /* Header */
         .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 60px 20px 80px;
             text-align: center;
-            margin-bottom: 20px;
-            animation: fadeInDown 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 10s ease-in-out infinite reverse;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            color: #000;
-            margin-bottom: 4px;
+            font-size: 3em;
+            font-weight: 800;
+            margin-bottom: 12px;
             letter-spacing: -0.5px;
+            animation: slideDown 0.8s ease-out;
         }
 
         .header p {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.4;
-        }
-
-        /* New Year Box */
-        .newyear-box {
-            background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 25%, #f0e6ff 50%, #e6f0ff 75%, #fff5e6 100%);
-            background-size: 400% 400%;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-            box-shadow: 0 8px 24px rgba(230, 150, 50, 0.12);
-            animation: floatIn 1s ease-out 0.2s backwards, gradientShift 8s ease-in-out infinite;
-        }
-
-        .newyear-greeting {
-            font-size: 14px;
-            font-weight: 600;
-            color: #d4711d;
-            margin-bottom: 6px;
-            letter-spacing: 1px;
-        }
-
-        .newyear-year {
-            font-size: 42px;
-            font-weight: 900;
-            background: linear-gradient(135deg, #d4711d 0%, #ff9f43 25%, #f368e0 50%, #6c5ce7 75%, #0984e3 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin: 0;
-            line-height: 1.1;
-            letter-spacing: -1px;
-        }
-
-        .newyear-wish {
-            font-size: 13px;
-            color: #6c5ce7;
+            font-size: 1.1em;
+            opacity: 0.95;
+            margin-bottom: 24px;
+            animation: slideDown 0.8s ease-out 0.1s backwards;
             font-weight: 500;
-            margin-top: 6px;
-            letter-spacing: 0.5px;
         }
 
-        .sparkle {
+        .year-badge {
             display: inline-block;
-            animation: sparkleAnim 0.8s ease-in-out infinite;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.9em;
+            border: 1px solid rgba(255,255,255,0.3);
+            animation: slideDown 0.8s ease-out 0.2s backwards;
         }
 
-        .sparkle:nth-of-type(1) { animation-delay: 0s; }
-        .sparkle:nth-of-type(2) { animation-delay: 0.3s; }
-        .sparkle:nth-of-type(3) { animation-delay: 0.6s; }
-
-        /* Apps Grid */
-        .apps-section {
-            margin-bottom: 18px;
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: -40px auto 0;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
         }
 
-        .apps-section-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin: 16px 0 10px 0;
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+            margin-bottom: 60px;
         }
 
-        .app-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px;
-            background: #fff;
+        /* Cards */
+        .card {
+            background: var(--bg-white);
             border-radius: 12px;
-            margin-bottom: 8px;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            cursor: pointer;
+            padding: 28px 24px;
             text-decoration: none;
-            color: inherit;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            animation: slideInUp 0.6s ease-out backwards;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
         }
 
-        .app-item:active {
-            background: #f5f5f5;
-            transform: scale(0.97);
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease-out;
         }
 
-        .app-item:nth-child(1) { animation-delay: 0.3s; }
-        .app-item:nth-child(2) { animation-delay: 0.35s; }
-        .app-item:nth-child(3) { animation-delay: 0.40s; }
-        .app-item:nth-child(4) { animation-delay: 0.45s; }
-        .app-item:nth-child(5) { animation-delay: 0.50s; }
-        .app-item:nth-child(6) { animation-delay: 0.55s; }
-        .app-item:nth-child(7) { animation-delay: 0.60s; }
-        .app-item:nth-child(8) { animation-delay: 0.65s; }
-        .app-item:nth-child(9) { animation-delay: 0.70s; }
-        .app-item:nth-child(10) { animation-delay: 0.75s; }
-        .app-item:nth-child(11) { animation-delay: 0.80s; }
-        .app-item:nth-child(12) { animation-delay: 0.85s; }
-        .app-item:nth-child(13) { animation-delay: 0.90s; }
-        .app-item:nth-child(14) { animation-delay: 0.95s; }
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-light);
+        }
 
-        .app-icon {
-            width: 40px;
-            height: 40px;
-            min-width: 40px;
-            border-radius: 10px;
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-icon {
+            font-size: 2.5em;
+            margin-bottom: 16px;
+            display: inline-block;
+            animation: appear 0.6s ease-out backwards;
+        }
+
+        .card h3 {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .card p {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            flex-grow: 1;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .card-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            gap: 6px;
+            margin-top: auto;
+        }
+
+        .card-link:hover {
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Category Sections */
+        .category {
+            margin-bottom: 60px;
+        }
+
+        .category-title {
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--text-primary);
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 600;
-            color: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            gap: 12px;
         }
 
-        /* Icon Colors */
-        .icon-audio { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .icon-color { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .icon-lcd { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-        .icon-camera { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-        .icon-piano { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
-        .icon-chord { background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%); }
-        .icon-image { background: linear-gradient(135deg, #ff9a56 0%, #ff6a88 100%); }
-        .icon-audio-conv { background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%); }
-        .icon-maps { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-        .icon-windows { background: linear-gradient(135deg, #0078d4 0%, #00a4ef 100%); }
-        .icon-qr { background: linear-gradient(135deg, #1f2937 0%, #111827 100%); }
-        .icon-calendar { background: linear-gradient(135deg, #ef4444 0%, #fbbf24 100%); }
-        .icon-ios { background: linear-gradient(135deg, #000 0%, #333 100%); }
-        .icon-bundle { background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); }
-
-        .app-info {
-            flex: 1;
-            min-width: 0;
+        .category-title::before {
+            content: '';
+            width: 4px;
+            height: 28px;
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+            border-radius: 2px;
         }
 
-        .app-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #000;
-            margin-bottom: 1px;
-        }
-
-        .app-desc {
-            font-size: 12px;
-            color: #999;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .app-arrow {
-            color: #ccc;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-        }
-
-        .app-item:active .app-arrow {
-            transform: translateX(2px);
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
         }
 
         /* Footer */
         .footer {
+            background: var(--text-primary);
+            color: white;
+            padding: 60px 20px;
             text-align: center;
-            padding: 16px 0;
-            color: #999;
-            font-size: 12px;
-            border-top: 1px solid #e5e5e5;
-            margin-top: 16px;
+            margin-top: 80px;
         }
 
-        .footer-name {
-            font-weight: 600;
-            color: #555;
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .footer h2 {
+            font-size: 1.4em;
+            margin-bottom: 12px;
+        }
+
+        .footer p {
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+        }
+
+        .copyright {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9em;
+            opacity: 0.7;
         }
 
         /* Animations */
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        @keyframes fadeInDown {
+        @keyframes slideDown {
             from {
                 opacity: 0;
                 transform: translateY(-20px);
@@ -337,467 +298,261 @@
             }
         }
 
-        @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
+        @keyframes float {
+            0%, 100% {
                 transform: translateY(0);
             }
+            50% {
+                transform: translateY(20px);
+            }
         }
 
-        @keyframes floatIn {
+        @keyframes appear {
             from {
                 opacity: 0;
-                transform: translateY(-25px) scale(0.95);
+                transform: scale(0.8);
             }
             to {
                 opacity: 1;
-                transform: translateY(0) scale(1);
+                transform: scale(1);
             }
         }
 
-        @keyframes sparkleAnim {
-            0%, 100% { opacity: 0.4; transform: scale(0.8); }
-            50% { opacity: 1; transform: scale(1.2); }
+        /* Stagger animation for cards */
+        .card {
+            animation: appear 0.6s ease-out backwards;
         }
 
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        .card:nth-child(5) { animation-delay: 0.5s; }
+        .card:nth-child(6) { animation-delay: 0.6s; }
+        .card:nth-child(7) { animation-delay: 0.7s; }
+        .card:nth-child(8) { animation-delay: 0.8s; }
+        .card:nth-child(9) { animation-delay: 0.9s; }
+        .card:nth-child(10) { animation-delay: 1s; }
+        .card:nth-child(11) { animation-delay: 1.1s; }
+        .card:nth-child(12) { animation-delay: 1.2s; }
+        .card:nth-child(13) { animation-delay: 1.3s; }
+        .card:nth-child(14) { animation-delay: 1.4s; }
 
-        /* Responsive - Desktop */
-        @media (min-width: 1024px) {
-            body {
-                padding: 20px;
-            }
-
-            .iphone-container {
-                width: 390px;
-                height: 844px;
-            }
-
-            .app-icon {
-                width: 48px;
-                height: 48px;
-                border-radius: 12px;
-            }
-        }
-
-        /* Responsive - Tablet */
-        @media (min-width: 600px) and (max-width: 1023px) {
-            body {
-                padding: 10px;
-            }
-
-            .iphone-container {
-                width: 85vw;
-                max-width: 420px;
-                height: 85vh;
-                max-height: 900px;
-            }
-        }
-
-        /* Responsive - Mobile */
-        @media (max-width: 599px) {
-            body {
-                padding: 8px;
-            }
-
-            .iphone-container {
-                width: 95vw;
-                max-width: 380px;
-                height: 95vh;
-                max-height: 844px;
-                border-radius: 40px;
-            }
-
-            .iphone-notch {
-                width: 110px;
-                height: 24px;
-                border-radius: 12px;
-            }
-
-            .iphone-screen {
-                padding-top: 40px;
-                border-radius: 40px;
-            }
-
-            .status-bar {
-                height: 40px;
-                padding: 0 12px;
-                padding-top: 0;
-            }
-
-            .time-display {
-                font-size: 13px;
-            }
-
-            .content {
-                padding: 12px 12px;
-                padding-bottom: 24px;
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 40px 20px 60px;
             }
 
             .header h1 {
-                font-size: 24px;
-                margin-bottom: 2px;
+                font-size: 2em;
             }
 
             .header p {
-                font-size: 13px;
+                font-size: 1em;
             }
 
-            .newyear-box {
-                padding: 16px;
-                margin-bottom: 16px;
-                border-radius: 14px;
+            .cards-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 16px;
             }
 
-            .newyear-year {
-                font-size: 36px;
+            .category-title {
+                font-size: 1.3em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 16px;
             }
 
-            .newyear-greeting {
-                font-size: 13px;
+            .header h1 {
+                font-size: 1.6em;
+                margin-bottom: 8px;
             }
 
-            .newyear-wish {
-                font-size: 12px;
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
             }
 
-            .apps-section-title {
-                font-size: 11px;
-                margin: 12px 0 8px 0;
+            .card {
+                padding: 20px 16px;
             }
 
-            .app-item {
-                padding: 10px;
-                margin-bottom: 6px;
-                border-radius: 10px;
-                gap: 8px;
+            .footer-links {
+                gap: 16px;
             }
+        }
 
-            .app-icon {
-                width: 36px;
-                height: 36px;
-                border-radius: 8px;
-                font-size: 18px;
-            }
-
-            .app-name {
-                font-size: 13px;
-                margin-bottom: 0px;
-            }
-
-            .app-desc {
-                font-size: 11px;
-            }
-
-            .app-arrow {
-                font-size: 14px;
-            }
+        /* Utility */
+        .text-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
     </style>
 </head>
 <body>
-    <div class="iphone-container">
-        <!-- Notch -->
-        <div class="iphone-notch"></div>
-
-        <!-- Screen -->
-        <div class="iphone-screen">
-            <!-- Status Bar -->
-            <div class="status-bar">
-                <div class="status-left">
-                    <span class="time-display" id="time-display">20:00</span>
-                </div>
-                <div class="status-right">
-                    <span>📶</span>
-                    <span>📡</span>
-                    <span>🔋</span>
-                </div>
-            </div>
-
-            <!-- Content -->
-            <div class="content">
-                <!-- Header -->
-                <div class="header">
-                    <h1>Minh Nhựt</h1>
-                    <p>Khám phá các ứng dụng và dịch vụ</p>
-                </div>
-
-                <!-- New Year Box -->
-                <div class="newyear-box">
-                    <div class="newyear-greeting">
-                        <span class="sparkle">✨</span>
-                        Chúc Mừng Năm Mới
-                        <span class="sparkle">✨</span>
-                    </div>
-                    <h2 class="newyear-year">2026</h2>
-                    <p class="newyear-wish">Thành công & Hạnh phúc</p>
-                </div>
-
-                <!-- Apps -->
-                <div class="apps-section">
-                    <div class="apps-section-title">Audio & Media</div>
-                    <a href="https://nhut990.github.io/audio/" class="app-item">
-                        <div class="app-icon icon-audio">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" stroke-width="2">
-                                <circle cx="12" cy="12" r="1"></circle>
-                                <path d="M8.56 2.75c4.37 6.03 6.29 9.42 8.03 17.72m2.54-15.6c3.72 4.35 5.66 7.4 7.313 15.1"></path>
-                                <path d="M12 12v.01"></path>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">Audio & Radio</div>
-                            <div class="app-desc">Nghe nhạc và radio</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-
-                    <a href="https://nhut990.github.io/audio-converter/" class="app-item">
-                        <div class="app-icon icon-audio-conv">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" stroke-width="2">
-                                <path d="M12 2v20M2 12h20M7 7h10v10H7z"></path>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">Chuyển Đổi Âm Thanh</div>
-                            <div class="app-desc">Chuyển đổi định dạng</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-
-                    <a href="https://nhut990.github.io/piano/" class="app-item">
-                        <div class="app-icon icon-piano">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                                <path d="M2 6c0-1.1.9-2 2-2h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6zm2 0v12h1V6H4zm2 0v12h1V6H6zm2 0v12h1V6H8zm2 0v12h1V6h-1zm2 0v12h1V6h-1zm2 0v12h1V6h-1zm2 0v12h1V6h-1z"/>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">Giả Lập Piano</div>
-                            <div class="app-desc">Chơi piano</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-
-                    <a href="https://nhut990.github.io/piano/chord/" class="app-item">
-                        <div class="app-icon icon-chord">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                                <circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="18" r="2"/>
-                                <path d="M8 7v10M16 7v10" stroke="white" stroke-width="1.5" fill="none"/>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">Hợp Âm Piano</div>
-                            <div class="app-desc">Học hợp âm</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-                </div>
-
-                <div class="apps-section">
-                    <div class="apps-section-title">Visual & Design</div>
-                    <a href="https://nhut990.github.io/color/" class="app-item">
-                        <div class="app-icon icon-color">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                                <circle cx="12" cy="12" r="9"/>
-                                <circle cx="8" cy="8" r="2" fill="white" opacity="0.3"/>
-                                <path d="M12 3v18M3 12h18" stroke="white" stroke-width="1" opacity="0.3"/>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">Xem Mã Màu</div>
-                            <div class="app-desc">Quản lý mã màu</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-
-                    <a href="https://nhut990.github.io/color/lcd/" class="app-item">
-                        <div class="app-icon icon-lcd">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                                <rect x="2" y="3" width="20" height="14" rx="2" fill="none" stroke="white" stroke-width="1.5"/>
-                                <path d="M7 17h10M5 20h14" stroke="white" stroke-width="1.5"/>
-                                <rect x="4" y="5" width="4" height="4" fill="white" opacity="0.3"/>
-                                <rect x="10" y="5" width="4" height="4" fill="white" opacity="0.3"/>
-                                <rect x="16" y="5" width="2" height="4" fill="white" opacity="0.3"/>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">TEST Màn Hình</div>
-                            <div class="app-desc">Kiểm tra màn hình</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-
-                    <a href="https://nhut990.github.io/image-converter/" class="app-item">
-                        <div class="app-icon icon-image">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                                <rect x="2" y="3" width="20" height="18" rx="2" fill="none" stroke="white" stroke-width="1.5"/>
-                                <circle cx="7" cy="8" r="1.5" fill="white"/>
-                                <path d="M2 17l6-6 4 4 8-8" stroke="white" stroke-width="1.5" fill="none"/>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">Chuyển Đổi Hình Ảnh</div>
-                            <div class="app-desc">Chuyển đổi ảnh</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-                </div>
-
-                <div class="apps-section">
-                    <div class="apps-section-title">Tools & Utilities</div>
-                    <a href="https://nhut990.github.io/camtest/" class="app-item">
-                        <div class="app-icon icon-camera">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                                <path d="M14 4h-4L8 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-4l-2-2z"/>
-                                <circle cx="12" cy="13" r="3.5" fill="none" stroke="white" stroke-width="1.5"/>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">TEST Camera</div>
-                            <div class="app-desc">Kiểm tra camera</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-
-                    <a href="https://nhut990.github.io/qr-code/" class="app-item">
-                        <div class="app-icon icon-qr">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                                <rect x="2" y="2" width="8" height="8" fill="white"/>
-                                <rect x="4" y="4" width="4" height="4" fill="#111"/>
-                                <rect x="14" y="2" width="8" height="8" fill="white"/>
-                                <rect x="16" y="4" width="4" height="4" fill="#111"/>
-                                <rect x="2" y="14" width="8" height="8" fill="white"/>
-                                <rect x="4" y="16" width="4" height="4" fill="#111"/>
-                                <rect x="14" y="14" width="2" height="2" fill="white"/>
-                                <rect x="18" y="14" width="2" height="2" fill="white"/>
-                                <rect x="14" y="18" width="2" height="2" fill="white"/>
-                                <rect x="18" y="18" width="2" height="2" fill="white"/>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">Tạo Mã QR</div>
-                            <div class="app-desc">Tạo & quét QR</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-
-                    <a href="https://nhut990.github.io/maps/" class="app-item">
-                        <div class="app-icon icon-maps">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                                <path d="M12 2c-5.52 0-10 3.13-10 7s4.48 9 10 9 10-5.13 10-9-4.48-7-10-7zm0 11c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
-                                <path d="M12 20c-2 2-8 5-8 5s3 3 8 3 8-3 8-3-6-3-8-5z" fill="white" opacity="0.6"/>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">Xem Địa Chỉ</div>
-                            <div class="app-desc">Địa chỉ mới</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-
-                    <a href="https://nhut990.github.io/lich/" class="app-item">
-                        <div class="app-icon icon-calendar">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                                <rect x="3" y="4" width="18" height="18" rx="2" fill="none" stroke="white" stroke-width="1.5"/>
-                                <path d="M3 10h18M8 1v6M16 1v6" stroke="white" stroke-width="1.5"/>
-                                <circle cx="9" cy="15" r="1.5" fill="white"/>
-                                <circle cx="15" cy="15" r="1.5" fill="white"/>
-                                <circle cx="9" cy="20" r="1.5" fill="white"/>
-                                <circle cx="15" cy="20" r="1.5" fill="white"/>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">Lịch</div>
-                            <div class="app-desc">Xem lịch</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-                </div>
-
-                <div class="apps-section">
-                    <div class="apps-section-title">System & Platform</div>
-                    <a href="https://nhut990.github.io/Windows/" class="app-item">
-                        <div class="app-icon icon-windows">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                                <rect x="2" y="3" width="8" height="7"/>
-                                <rect x="14" y="3" width="8" height="7"/>
-                                <rect x="2" y="14" width="8" height="7"/>
-                                <rect x="14" y="14" width="8" height="7"/>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">Windows</div>
-                            <div class="app-desc">Giao diện Windows</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-
-                    <a href="https://nhut990.github.io/appcuios/" class="app-item">
-                        <div class="app-icon icon-ios">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                                <path d="M6 2h12c2.21 0 4 1.79 4 4v12c0 2.21-1.79 4-4 4H6c-2.21 0-4-1.79-4-4V6c0-2.21 1.79-4 4-4zm6 16c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">iOS Cũ</div>
-                            <div class="app-desc">Phiên bản cũ</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-
-                    <a href="https://nhut990.github.io/Bundle/" class="app-item">
-                        <div class="app-icon icon-bundle">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                                <path d="M12 1l11 4v7c0 5.55-3.84 10.74-9 12-5.16-1.26-9-6.45-9-12V5l11-4z"/>
-                                <path d="M10 17h4v-5h-4v5zm2-8h-2l2-2 2 2h-2z" fill="none" stroke="white" stroke-width="1"/>
-                                <circle cx="12" cy="12" r="2" fill="none" stroke="white" stroke-width="1.5"/>
-                            </svg>
-                        </div>
-                        <div class="app-info">
-                            <div class="app-name">Bundle ID</div>
-                            <div class="app-desc">Tìm Bundle ID</div>
-                        </div>
-                        <div class="app-arrow">›</div>
-                    </a>
-                </div>
-
-                <!-- Footer -->
-                <div class="footer">
-                    Created by <span class="footer-name">Minh Nhựt</span><br>
-                    © 2026
-                </div>
-            </div>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1>Minh Nhựt</h1>
+            <p>Bộ Công Cụ & Ứng Dụng Web Chuyên Nghiệp</p>
+            <div class="year-badge">✨ Năm 2026 - Thành Công & Hạnh Phúc</div>
         </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Category: Multimedia -->
+        <section class="category">
+            <h2 class="category-title">🎵 Âm Thanh & Đa Phương Tiện</h2>
+            <div class="cards-grid">
+                <a href="https://nhut990.github.io/audio/" class="card">
+                    <div class="card-icon">🎙️</div>
+                    <h3>Audio & Radio</h3>
+                    <p>Nghe nhạc và phát sóng trực tuyến với chất lượng cao</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/audio-converter/" class="card">
+                    <div class="card-icon">🎵</div>
+                    <h3>Chuyển Đổi Âm Thanh</h3>
+                    <p>Chuyển đổi giữa các định dạng âm thanh khác nhau</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/piano/" class="card">
+                    <div class="card-icon">🎹</div>
+                    <h3>Giả Lập Piano</h3>
+                    <p>Piano ảo với giao diện tương tác thực tế</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/piano/chord/" class="card">
+                    <div class="card-icon">🎼</div>
+                    <h3>Hợp Âm Piano</h3>
+                    <p>Tìm hiểu và thực hành các hợp âm piano</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Category: Design & Color -->
+        <section class="category">
+            <h2 class="category-title">🎨 Thiết Kế & Màu Sắc</h2>
+            <div class="cards-grid">
+                <a href="https://nhut990.github.io/color/" class="card">
+                    <div class="card-icon">🎨</div>
+                    <h3>Xem Mã Màu</h3>
+                    <p>Khám phá và quản lý các mã màu hex, RGB, HSL</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/color/lcd/" class="card">
+                    <div class="card-icon">📺</div>
+                    <h3>Test Màn Hình</h3>
+                    <p>Kiểm tra và hiệu chỉnh màu sắc màn hình</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/image-converter/" class="card">
+                    <div class="card-icon">🖼️</div>
+                    <h3>Chuyển Đổi Hình Ảnh</h3>
+                    <p>Chuyển đổi và xử lý hình ảnh nhiều định dạng</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Category: Testing & Tools -->
+        <section class="category">
+            <h2 class="category-title">🛠️ Công Cụ & Kiểm Tra</h2>
+            <div class="cards-grid">
+                <a href="https://nhut990.github.io/camtest/" class="card">
+                    <div class="card-icon">📷</div>
+                    <h3>Test Camera & Micro</h3>
+                    <p>Kiểm tra camera và microphone của thiết bị</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/qr-code/" class="card">
+                    <div class="card-icon">📱</div>
+                    <h3>Tạo Mã QR</h3>
+                    <p>Tạo mã QR nhanh chóng từ text và link</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/maps/" class="card">
+                    <div class="card-icon">🗺️</div>
+                    <h3>Xem Địa Chỉ</h3>
+                    <p>Xem địa chỉ mới sau sáp nhập</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Category: Productivity -->
+        <section class="category">
+            <h2 class="category-title">📅 Năng Suất & Tổ Chức</h2>
+            <div class="cards-grid">
+                <a href="https://nhut990.github.io/lich/" class="card">
+                    <div class="card-icon">📆</div>
+                    <h3>Lịch</h3>
+                    <p>Quản lý lịch và sự kiện hàng ngày</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Category: System & Apps -->
+        <section class="category">
+            <h2 class="category-title">💻 Hệ Thống & Ứng Dụng</h2>
+            <div class="cards-grid">
+                <a href="https://nhut990.github.io/Windows/" class="card">
+                    <div class="card-icon">🪟</div>
+                    <h3>Windows</h3>
+                    <p>Giả lập giao diện Windows trên web</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/appcuios/" class="card">
+                    <div class="card-icon">📱</div>
+                    <h3>Ứng Dụng iOS Cũ</h3>
+                    <p>Truy cập ứng dụng iOS phiên bản cũ</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/Bundle/" class="card">
+                    <div class="card-icon">📦</div>
+                    <h3>Tìm Bundle ID</h3>
+                    <p>Tìm Bundle ID của ứng dụng App Store</p>
+                    <span class="card-link">Mở →</span>
+                </a>
+            </div>
+        </section>
     </div>
 
-    <script>
-        // Cập nhật giờ thực tế
-        function updateTime() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('time-display').textContent = `${hours}:${minutes}`;
-        }
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <h2>Cảm Ơn Bạn</h2>
+            <p>Khám phá các công cụ & ứng dụng được thiết kế với tình yêu</p>
+            
+            <div class="footer-links">
+                <a href="#top">Về Đầu Trang</a>
+                <a href="https://github.com/nhut990" target="_blank">GitHub</a>
+            </div>
 
-        // Cập nhật lần đầu
-        updateTime();
-
-        // Cập nhật mỗi phút
-        setInterval(updateTime, 60000);
-
-        // Cập nhật khi trang được focus lại
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                updateTime();
-            }
-        });
-    </script>
+            <div class="copyright">
+                <p>Created by <strong>Minh Nhựt</strong></p>
+                <p>&copy; 2026 - All Rights Reserved</p>
+                <p style="font-size: 0.8em; margin-top: 12px; opacity: 0.6;">nhut117se4</p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
