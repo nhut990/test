@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Máy tính thông minh · thùng rác xoá lịch sử</title>
+    <title>Máy tính thông minh · biểu thức đầy đủ + cuộn lịch sử</title>
     <style>
         * {
             box-sizing: border-box;
@@ -20,7 +20,7 @@
             padding: 12px;
         }
         .calculator {
-            max-width: 420px;
+            max-width: 460px;
             width: 100%;
             background: #1b1e26;
             border-radius: 2.2rem;
@@ -28,7 +28,7 @@
             padding: 25px 22px 30px 22px;
         }
 
-        /* lịch sử + nút xoá tất cả (thùng rác) */
+        /* history header + thùng rác */
         .history-header {
             display: flex;
             align-items: center;
@@ -69,14 +69,29 @@
             color: #ffcaca;
         }
 
+        /* khung history có thể cuộn */
         .history-panel {
             background: #12141c;
             border-radius: 24px;
-            padding: 18px 16px 12px 16px;
+            padding: 12px 12px 8px 12px;
             margin-bottom: 18px;
             border: 1px solid #333842;
             box-shadow: inset 0 4px 6px rgba(0,0,0,0.6);
-            min-height: 130px;
+            max-height: 170px;         /* đủ chứa khoảng 5 dòng, sau đó cuộn */
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #3d4b5e #1a1e2a;
+        }
+        .history-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        .history-panel::-webkit-scrollbar-track {
+            background: #1a1e2a;
+            border-radius: 10px;
+        }
+        .history-panel::-webkit-scrollbar-thumb {
+            background: #3d4b5e;
+            border-radius: 10px;
         }
 
         .history-list {
@@ -94,6 +109,7 @@
             line-height: 1.4;
             border-bottom: 1px dashed #2e3440;
             padding-bottom: 5px;
+            padding-right: 5px;
         }
         .history-item:last-child {
             border-bottom: none;
@@ -102,10 +118,15 @@
             color: #b7c5e0;
             font-weight: 300;
             margin-right: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
         }
         .history-eq {
             color: #69758b;
             margin: 0 6px;
+            flex-shrink: 0;
         }
         .history-result {
             color: #ebf0ff;
@@ -116,41 +137,62 @@
             border-radius: 30px;
             font-size: 18px;
             box-shadow: inset 0 1px 3px #0a0c12;
+            white-space: nowrap;
         }
 
-        /* màn hình */
+        .empty-history-msg {
+            color: #3f4a5a;
+            text-align: center;
+            font-size: 16px;
+            padding: 16px 0;
+            font-style: italic;
+        }
+
+        /* màn hình chia 2 dòng: biểu thức (trên) và kết quả/số nhập (dưới) */
         .display-area {
             background: #0f1118;
             border-radius: 26px;
-            padding: 14px 20px;
+            padding: 14px 20px 10px 20px;
             margin-bottom: 20px;
             border: 1px solid #3b4252;
             box-shadow: 0 5px 0 #080a0e;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
-
+        #expression-display {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #9aa9c1;
+            font-size: 18px;
+            font-weight: 300;
+            text-align: right;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow-x: auto;
+            padding-bottom: 2px;
+            border-bottom: 1px dashed #2f384b;
+        }
         #calc-input {
             width: 100%;
             background: transparent;
             border: none;
             outline: none;
             color: #f2f4fa;
-            font-size: 38px;
+            font-size: 36px;
             font-weight: 400;
             text-align: right;
-            caret-color: #6e8cff;
-        }
-        #calc-input::placeholder {
-            color: #3f4658;
         }
 
-        /* bảng nút */
+        /* grid nút bấm */
         .button-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-top: 10px;
         }
-
         .btn {
             background: #262c38;
             border: none;
@@ -160,7 +202,7 @@
             font-weight: 500;
             color: #e5eaf5;
             box-shadow: 0 6px 0 #12161d, 0 5px 12px rgba(0,0,0,0.5);
-            transition: 0.07s ease;
+            transition: 0.05s linear;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -170,9 +212,24 @@
             border-bottom-width: 2px;
             user-select: none;
         }
+        /* hiệu ứng nhấn: sáng vàng và tụt xuống */
         .btn:active {
             transform: translateY(5px);
             box-shadow: 0 2px 0 #0e1219, 0 5px 10px black;
+            background: #556b86 !important;         /* màu sáng nổi bật khi nhấn */
+            color: white;
+            border-color: #89a1c2;
+        }
+        /* giữ lại màu sắc cho từng loại khi nhấn (không bị mất màu sắc riêng) */
+        .btn.top-action:active {
+            background: #657b9c !important;
+        }
+        .btn.operator:active {
+            background: #6d7f9e !important;
+            color: #ffeca0;
+        }
+        .btn.equals:active {
+            background: #5f7eb0 !important;
         }
 
         .btn.top-action {
@@ -180,7 +237,6 @@
             color: #fffbee;
             border-color: #5e6b80;
         }
-
         .btn.operator {
             background: #31435b;
             color: #ffd898;
@@ -188,7 +244,6 @@
             font-size: 30px;
             font-weight: 600;
         }
-
         .btn.equals {
             background: #3d5d8c;
             border-color: #6a8fc0;
@@ -196,31 +251,19 @@
             font-size: 32px;
             box-shadow: 0 6px 0 #1f3147;
         }
-
         .btn.dot {
             font-size: 36px;
             padding-bottom: 22px;
         }
-
-        /* icon thùng rác nhỏ trong nút */
         .trash-icon {
             font-size: 24px;
             line-height: 1;
-        }
-
-        /* hiệu ứng khi không có lịch sử */
-        .empty-history-msg {
-            color: #3f4a5a;
-            text-align: center;
-            font-size: 16px;
-            padding: 16px 0;
-            font-style: italic;
         }
     </style>
 </head>
 <body>
 <div class="calculator">
-    <!-- Header lịch sử + nút thùng rác xoá tất cả -->
+    <!-- header lịch sử + thùng rác -->
     <div class="history-header">
         <span>Lịch sử</span>
         <button class="delete-all-btn" id="deleteAllHistoryBtn" title="Xoá tất cả lịch sử">
@@ -228,19 +271,18 @@
         </button>
     </div>
 
-    <!-- Khu vực lịch sử (ban đầu trống, không có mẫu) -->
+    <!-- khung lịch sử cuộn được -->
     <div class="history-panel">
-        <div class="history-list" id="historyContainer">
-            <!-- Sẽ được render bằng js, ban đầu trống -->
-        </div>
+        <div class="history-list" id="historyContainer"></div>
     </div>
 
-    <!-- Màn hình nhập / kết quả -->
+    <!-- màn hình: biểu thức (dòng trên) + kết quả/số hiện tại (dòng dưới) -->
     <div class="display-area">
+        <input type="text" id="expression-display" readonly placeholder=" " value=" ">
         <input type="text" id="calc-input" readonly placeholder="0" value="0">
     </div>
 
-    <!-- Bảng nút bấm giống hình, đủ C, +/-, %, ÷, ×, −, +, 0, ., = -->
+    <!-- bảng nút -->
     <div class="button-grid">
         <!-- Hàng 1 -->
         <button class="btn top-action" id="clearBtn">C</button>
@@ -266,7 +308,7 @@
         <button class="btn" id="num3">3</button>
         <button class="btn operator" id="plusBtn">+</button>
 
-        <!-- Hàng 5: 0, . , = -->
+        <!-- Hàng 5 -->
         <button class="btn" id="num0">0</button>
         <button class="btn dot" id="dotBtn">.</button>
         <button class="btn equals" id="equalsBtn">=</button>
@@ -276,28 +318,33 @@
 <script>
     (function() {
         // State
-        let currentInput = '0';
+        let currentInput = '0';               // số hiện tại (màn hình dưới)
+        let expressionStr = '';                // biểu thức đang xây dựng (màn hình trên)
         let previousOperand = null;
         let pendingOperator = null;
         let shouldResetInput = false;
-        // Lịch sử: mảng các đối tượng { operation, result }
-        let historyItems = [];   // không có mẫu, ban đầu trống
+        let historyItems = [];                  // lưu tất cả lịch sử, hiển thị nhiều, cuộn
 
         const inputField = document.getElementById('calc-input');
+        const exprField = document.getElementById('expression-display');
         const historyContainer = document.getElementById('historyContainer');
         const deleteAllBtn = document.getElementById('deleteAllHistoryBtn');
 
-        // ---------- Hàm hiển thị lịch sử (từ mảng historyItems, hiển thị tối đa 3 gần nhất) ----------
+        // Hàm cập nhật màn hình biểu thức (dòng trên) và kết quả (dòng dưới)
+        function updateDisplays() {
+            inputField.value = currentInput;
+            exprField.value = expressionStr || ' '; // nếu rỗng thì hiện khoảng trống
+        }
+
+        // Hiển thị lịch sử - tất cả các mục, cuộn khi nhiều
         function renderHistory() {
             if (historyItems.length === 0) {
-                // Hiển thị thông báo trống hoặc để trống (không có dòng mẫu)
                 historyContainer.innerHTML = `<div class="empty-history-msg">⋯ chưa có phép tính</div>`;
                 return;
             }
-            // Lấy tối đa 3 phần tử gần nhất (mảng lưu theo thứ tự mới nhất ở đầu)
-            const latest = historyItems.slice(0, 3);
             let html = '';
-            for (let item of latest) {
+            // hiển thị toàn bộ (mới nhất ở trên)
+            for (let item of historyItems) {
                 html += `<div class="history-item">
                     <span class="history-op">${item.operation}</span>
                     <span class="history-eq">=</span>
@@ -305,35 +352,33 @@
                 </div>`;
             }
             historyContainer.innerHTML = html;
+            // cuộn xuống dưới cùng để xem lịch sử cũ nhất (tuỳ chọn, có thể cuộn lên trên để thấy mới)
+            // để mới nhất ở trên, nên muốn xem cũ thì cuộn xuống, không tự động cuộng
         }
 
         // Thêm một phép tính vào lịch sử (khi nhấn = hoặc sau khi tính toán)
         function addHistory(operation, result) {
-            // Thêm vào đầu mảng (gần nhất)
-            historyItems.unshift({ operation, result });
-            // Giới hạn tối đa 20 dòng để tránh quá dài (có thể điều chỉnh)
-            if (historyItems.length > 20) historyItems.pop();
+            historyItems.unshift({ operation, result });  // thêm vào đầu (gần nhất)
+            // Không giới hạn số lượng, nhưng vì giao diện cuộn được nên lưu nhiều.
+            // nếu muốn giới hạn bộ nhớ có thể giữ 50, nhưng không cần lắm.
+            if (historyItems.length > 50) historyItems.pop(); // vẫn giới hạn 50, nhưng cuộn tốt
             renderHistory();
         }
 
-        // Xoá toàn bộ lịch sử (nút thùng rác)
+        // Xoá toàn bộ lịch sử
         function deleteAllHistory() {
             historyItems = [];
             renderHistory();
         }
 
-        // Cập nhật màn hình
-        function updateDisplay(value) {
-            inputField.value = value;
-        }
-
-        // Reset máy tính (C)
+        // Reset toàn bộ máy tính (C)
         function clearAll() {
             currentInput = '0';
+            expressionStr = '';
             previousOperand = null;
             pendingOperator = null;
             shouldResetInput = false;
-            updateDisplay(currentInput);
+            updateDisplays();
         }
 
         // Nhập số
@@ -348,11 +393,23 @@
             if (currentInput === '0' && num !== '.') {
                 currentInput = num;
             } else {
-                if (currentInput.replace('-','').replace('.','').length < 12) {
+                if (currentInput.replace('-','').replace('.','').length < 14) {
                     currentInput += num;
                 }
             }
-            updateDisplay(currentInput);
+            // Cập nhật biểu thức: nếu đang xây dựng thì không tự động thay đổi biểu thức ở đây,
+            // biểu thức được cập nhật khi nhấn operator hoặc bằng. 
+            // Tuy nhiên, để thân thiện, khi nhập số ta cũng muốn biểu thức thể hiện số hiện tại?
+            // Nhưng theo luồng: người dùng muốn thấy biểu thức đầy đủ, ta sẽ xây dựng expressionStr trong handleOperator và handleEquals.
+            // Nếu expressionStr đang rỗng và chưa có toán tử, ta có thể hiển thị số hiện tại trên biểu thức?
+            // Để giống máy tính: biểu thức hiển thị những gì đã nhập trước đó (ví dụ "10+65+66")
+            if (!pendingOperator && previousOperand === null) {
+                // Trường hợp chưa có toán tử nào, biểu thức nên là số hiện tại? nhưng để trống hoặc chỉ số hiện tại
+                expressionStr = currentInput;
+            } else {
+                // giữ nguyên biểu thức (đã được cập nhật khi nhấn operator)
+            }
+            updateDisplays();
         }
 
         // Dấu chấm
@@ -364,7 +421,7 @@
             if (!currentInput.includes('.')) {
                 currentInput += '.';
             }
-            updateDisplay(currentInput);
+            updateDisplays();
         }
 
         // Đổi dấu
@@ -375,7 +432,7 @@
                 } else {
                     currentInput = '-' + currentInput;
                 }
-                updateDisplay(currentInput);
+                updateDisplays();
             }
         }
 
@@ -384,7 +441,7 @@
             if (currentInput) {
                 let val = parseFloat(currentInput) / 100;
                 currentInput = String(val);
-                updateDisplay(currentInput);
+                updateDisplays();
             }
         }
 
@@ -402,35 +459,50 @@
             }
         }
 
-        // Xử lý phép toán (+, −, ×, ÷)
+        // Xây dựng biểu thức để hiển thị
+        function buildExpression(prev, op, curr) {
+            if (prev === null) return curr;
+            return `${prev} ${op} ${curr}`;
+        }
+
+        // Xử lý phép toán
         function handleOperator(opSymbol) {
             if (pendingOperator !== null && previousOperand !== null && !shouldResetInput) {
-                // tính toán với toán tử đang chờ
+                // tính kết quả trước
                 let result = compute(pendingOperator, previousOperand, currentInput);
                 if (!isNaN(result) && isFinite(result)) {
                     let operationStr = `${previousOperand} ${pendingOperator} ${currentInput}`;
                     result = Math.round((result + Number.EPSILON) * 1e12) / 1e12;
                     let resultStr = String(result);
-                    // Lưu vào lịch sử NGAY KHI CÓ KẾT QUẢ (theo yêu cầu: bấm mới lưu)
+                    // Lưu lịch sử
                     addHistory(operationStr, resultStr);
+                    // Cập nhật các toán hạng
                     previousOperand = result;
                     currentInput = resultStr;
+                    // Biểu thức hiển thị sẽ là phép tính vừa thực hiện, nhưng sau đó lại gắn thêm opSymbol mới?
+                    expressionStr = `${previousOperand} ${opSymbol}`;
                 } else {
                     currentInput = 'Error';
                     previousOperand = null;
                     pendingOperator = null;
-                    updateDisplay(currentInput);
+                    expressionStr = '';
+                    updateDisplays();
                     return;
                 }
             } else {
-                // chưa có toán tử trước
-                if (previousOperand === null || shouldResetInput) {
+                // chưa có toán tử chờ
+                if (previousOperand === null) {
                     previousOperand = currentInput;
+                    expressionStr = `${previousOperand} ${opSymbol}`;
+                } else {
+                    // đã có previousOperand và chưa có pendingOperator? (trường hợp đổi ý chọn toán tử khác)
+                    // gán lại toán tử mới
+                    expressionStr = `${previousOperand} ${opSymbol}`;
                 }
             }
             pendingOperator = opSymbol;
             shouldResetInput = true;
-            updateDisplay(currentInput);
+            updateDisplays();
         }
 
         // Xử lý dấu bằng
@@ -441,8 +513,9 @@
                     let operationStr = `${previousOperand} ${pendingOperator} ${currentInput}`;
                     result = Math.round((result + Number.EPSILON) * 1e12) / 1e12;
                     let resultStr = String(result);
-                    // Lưu vào lịch sử khi nhấn =
                     addHistory(operationStr, resultStr);
+                    // Sau khi bằng, biểu thức hiện phép tính đã hoàn thành (có thể để lại kết quả)
+                    expressionStr = operationStr + ' =';   // ví dụ "10+65+66 ="
                     currentInput = resultStr;
                     previousOperand = null;
                     pendingOperator = null;
@@ -451,16 +524,19 @@
                     currentInput = 'Error';
                     previousOperand = null;
                     pendingOperator = null;
+                    expressionStr = '';
                     shouldResetInput = true;
                 }
-                updateDisplay(currentInput);
             } else {
-                // Nếu không có phép toán, chỉ reset
+                // Nếu không có phép toán, vẫn clear để nhập mới
                 shouldResetInput = true;
+                // giữ nguyên biểu thức? nên reset biểu thức
+                expressionStr = '';
             }
+            updateDisplays();
         }
 
-        // ---------- Gán sự kiện ----------
+        // Gán sự kiện
         document.getElementById('clearBtn').addEventListener('click', clearAll);
         document.getElementById('plusMinusBtn').addEventListener('click', toggleSign);
         document.getElementById('percentBtn').addEventListener('click', percent);
@@ -481,24 +557,20 @@
         document.getElementById('num8').addEventListener('click', () => inputNumber('8'));
         document.getElementById('num9').addEventListener('click', () => inputNumber('9'));
 
-        // Nút xoá tất cả lịch sử (thùng rác)
         deleteAllBtn.addEventListener('click', deleteAllHistory);
 
-        // Khởi tạo màn hình và lịch sử trống (không có dòng mẫu)
-        updateDisplay(currentInput);
-        renderHistory();  // hiển thị "⋯ chưa có phép tính"
+        // Khởi tạo
+        clearAll();  // đặt về 0 và biểu thức rỗng, lịch sử trống
+        renderHistory();
 
-        // Hỗ trợ bàn phím (không bắt buộc nhưng tiện)
+        // Hỗ trợ bàn phím
         document.addEventListener('keydown', (e) => {
             const key = e.key;
             if (key >= '0' && key <= '9') inputNumber(key);
             if (key === '.') inputDot();
             if (key === '+' || key === '-') handleOperator(key === '+' ? '+' : '−');
             if (key === '*') handleOperator('×');
-            if (key === '/') {
-                e.preventDefault();
-                handleOperator('÷');
-            }
+            if (key === '/') { e.preventDefault(); handleOperator('÷'); }
             if (key === 'Enter' || key === '=') handleEquals();
             if (key === 'Escape') clearAll();
             if (key === '%') percent();
