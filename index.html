@@ -1,558 +1,509 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minh Nhựt - Công Cụ & Ứng Dụng Web</title>
+    <title>Máy tính thông minh · thùng rác xoá lịch sử</title>
     <style>
         * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
-
-        :root {
-            --primary: #2563eb;
-            --primary-light: #3b82f6;
-            --primary-dark: #1e40af;
-            --secondary: #7c3aed;
-            --accent: #ec4899;
-            --success: #10b981;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --bg-light: #f9fafb;
-            --bg-white: #ffffff;
-            --border: #e5e7eb;
-            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-            --shadow-lg: 0 10px 25px rgba(37, 99, 235, 0.1);
-            --shadow-xl: 0 20px 40px rgba(37, 99, 235, 0.15);
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-            background: linear-gradient(135deg, #f0f4ff 0%, #f9fafb 100%);
-            color: var(--text-primary);
-            line-height: 1.6;
             min-height: 100vh;
-        }
-
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            padding: 60px 20px 80px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: float 8s ease-in-out infinite;
-        }
-
-        .header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: float 10s ease-in-out infinite reverse;
-        }
-
-        .header-content {
-            position: relative;
-            z-index: 2;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .header h1 {
-            font-size: 3em;
-            font-weight: 800;
-            margin-bottom: 12px;
-            letter-spacing: -0.5px;
-            animation: slideDown 0.8s ease-out;
-        }
-
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.95;
-            margin-bottom: 24px;
-            animation: slideDown 0.8s ease-out 0.1s backwards;
-            font-weight: 500;
-        }
-
-        .year-badge {
-            display: inline-block;
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            padding: 8px 20px;
-            border-radius: 50px;
-            font-size: 0.9em;
-            border: 1px solid rgba(255,255,255,0.3);
-            animation: slideDown 0.8s ease-out 0.2s backwards;
-        }
-
-        /* Main Content */
-        .container {
-            max-width: 1200px;
-            margin: -40px auto 0;
-            padding: 0 20px;
-            position: relative;
-            z-index: 10;
-        }
-
-        /* Grid Layout */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
-            margin-top: 40px;
-            margin-bottom: 60px;
-        }
-
-        /* Cards */
-        .card {
-            background: var(--bg-white);
-            border-radius: 12px;
-            padding: 28px 24px;
-            text-decoration: none;
-            color: var(--text-primary);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform 0.4s ease-out;
-        }
-
-        .card:hover {
-            transform: translateY(-8px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--primary-light);
-        }
-
-        .card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .card-icon {
-            font-size: 2.5em;
-            margin-bottom: 16px;
-            display: inline-block;
-            animation: appear 0.6s ease-out backwards;
-        }
-
-        .card h3 {
-            font-size: 1.2em;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--text-primary);
-        }
-
-        .card p {
-            font-size: 0.9em;
-            color: var(--text-secondary);
-            flex-grow: 1;
-            margin-bottom: 16px;
-            line-height: 1.5;
-        }
-
-        .card-link {
-            display: inline-flex;
-            align-items: center;
-            padding: 10px 20px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            color: white;
-            border-radius: 6px;
-            font-size: 0.95em;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            gap: 6px;
-            margin-top: auto;
-        }
-
-        .card-link:hover {
-            transform: translateX(3px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        }
-
-        /* Category Sections */
-        .category {
-            margin-bottom: 60px;
-        }
-
-        .category-title {
-            font-size: 1.6em;
-            font-weight: 700;
-            margin-bottom: 24px;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .category-title::before {
-            content: '';
-            width: 4px;
-            height: 28px;
-            background: linear-gradient(180deg, var(--primary), var(--secondary));
-            border-radius: 2px;
-        }
-
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 20px;
-        }
-
-        /* Footer */
-        .footer {
-            background: var(--text-primary);
-            color: white;
-            padding: 60px 20px;
-            text-align: center;
-            margin-top: 80px;
-        }
-
-        .footer-content {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .footer h2 {
-            font-size: 1.4em;
-            margin-bottom: 12px;
-        }
-
-        .footer p {
-            opacity: 0.8;
-            margin-bottom: 8px;
-        }
-
-        .footer-links {
+            background: linear-gradient(145deg, #2b2f3a 0%, #1e2129 100%);
             display: flex;
             justify-content: center;
-            gap: 24px;
-            margin-top: 24px;
-            flex-wrap: wrap;
+            align-items: center;
+            padding: 12px;
+        }
+        .calculator {
+            max-width: 420px;
+            width: 100%;
+            background: #1b1e26;
+            border-radius: 2.2rem;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06) inset;
+            padding: 25px 22px 30px 22px;
         }
 
-        .footer-links a {
-            color: white;
-            text-decoration: none;
-            opacity: 0.8;
-            transition: opacity 0.3s;
+        /* lịch sử + nút xoá tất cả (thùng rác) */
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 0 6px;
         }
-
-        .footer-links a:hover {
-            opacity: 1;
-        }
-
-        .copyright {
-            margin-top: 24px;
-            padding-top: 24px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            font-size: 0.9em;
+        .history-header span {
+            color: #b9c4dd;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
             opacity: 0.7;
         }
-
-        /* Animations */
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .delete-all-btn {
+            background: #2d3440;
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #ecb2b2;
+            font-size: 22px;
+            box-shadow: 0 4px 0 #171c24, 0 3px 8px black;
+            transition: 0.07s ease;
+            border: 1px solid #505e72;
+        }
+        .delete-all-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #1a1f28;
+        }
+        .delete-all-btn:hover {
+            background: #3e485a;
+            color: #ffcaca;
         }
 
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(20px);
-            }
+        .history-panel {
+            background: #12141c;
+            border-radius: 24px;
+            padding: 18px 16px 12px 16px;
+            margin-bottom: 18px;
+            border: 1px solid #333842;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.6);
+            min-height: 130px;
         }
 
-        @keyframes appear {
-            from {
-                opacity: 0;
-                transform: scale(0.8);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
-        /* Stagger animation for cards */
-        .card {
-            animation: appear 0.6s ease-out backwards;
+        .history-item {
+            color: #a5b0c5;
+            font-size: 19px;
+            font-weight: 400;
+            display: flex;
+            align-items: baseline;
+            line-height: 1.4;
+            border-bottom: 1px dashed #2e3440;
+            padding-bottom: 5px;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        .history-op {
+            color: #b7c5e0;
+            font-weight: 300;
+            margin-right: 12px;
+        }
+        .history-eq {
+            color: #69758b;
+            margin: 0 6px;
+        }
+        .history-result {
+            color: #ebf0ff;
+            font-weight: 500;
+            margin-left: auto;
+            background: #282e3c;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 18px;
+            box-shadow: inset 0 1px 3px #0a0c12;
         }
 
-        .card:nth-child(1) { animation-delay: 0.1s; }
-        .card:nth-child(2) { animation-delay: 0.2s; }
-        .card:nth-child(3) { animation-delay: 0.3s; }
-        .card:nth-child(4) { animation-delay: 0.4s; }
-        .card:nth-child(5) { animation-delay: 0.5s; }
-        .card:nth-child(6) { animation-delay: 0.6s; }
-        .card:nth-child(7) { animation-delay: 0.7s; }
-        .card:nth-child(8) { animation-delay: 0.8s; }
-        .card:nth-child(9) { animation-delay: 0.9s; }
-        .card:nth-child(10) { animation-delay: 1s; }
-        .card:nth-child(11) { animation-delay: 1.1s; }
-        .card:nth-child(12) { animation-delay: 1.2s; }
-        .card:nth-child(13) { animation-delay: 1.3s; }
-        .card:nth-child(14) { animation-delay: 1.4s; }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header {
-                padding: 40px 20px 60px;
-            }
-
-            .header h1 {
-                font-size: 2em;
-            }
-
-            .header p {
-                font-size: 1em;
-            }
-
-            .cards-grid {
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-                gap: 16px;
-            }
-
-            .category-title {
-                font-size: 1.3em;
-            }
+        /* màn hình */
+        .display-area {
+            background: #0f1118;
+            border-radius: 26px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+            border: 1px solid #3b4252;
+            box-shadow: 0 5px 0 #080a0e;
         }
 
-        @media (max-width: 480px) {
-            .container {
-                padding: 0 16px;
-            }
-
-            .header h1 {
-                font-size: 1.6em;
-                margin-bottom: 8px;
-            }
-
-            .cards-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .card {
-                padding: 20px 16px;
-            }
-
-            .footer-links {
-                gap: 16px;
-            }
+        #calc-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #f2f4fa;
+            font-size: 38px;
+            font-weight: 400;
+            text-align: right;
+            caret-color: #6e8cff;
+        }
+        #calc-input::placeholder {
+            color: #3f4658;
         }
 
-        /* Utility */
-        .text-gradient {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        /* bảng nút */
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            background: #262c38;
+            border: none;
+            border-radius: 28px;
+            padding: 18px 0;
+            font-size: 26px;
+            font-weight: 500;
+            color: #e5eaf5;
+            box-shadow: 0 6px 0 #12161d, 0 5px 12px rgba(0,0,0,0.5);
+            transition: 0.07s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            border: 1px solid #404b5a;
+            border-bottom-width: 2px;
+            user-select: none;
+        }
+        .btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 #0e1219, 0 5px 10px black;
+        }
+
+        .btn.top-action {
+            background: #384153;
+            color: #fffbee;
+            border-color: #5e6b80;
+        }
+
+        .btn.operator {
+            background: #31435b;
+            color: #ffd898;
+            border-color: #5c6f8a;
+            font-size: 30px;
+            font-weight: 600;
+        }
+
+        .btn.equals {
+            background: #3d5d8c;
+            border-color: #6a8fc0;
+            color: white;
+            font-size: 32px;
+            box-shadow: 0 6px 0 #1f3147;
+        }
+
+        .btn.dot {
+            font-size: 36px;
+            padding-bottom: 22px;
+        }
+
+        /* icon thùng rác nhỏ trong nút */
+        .trash-icon {
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        /* hiệu ứng khi không có lịch sử */
+        .empty-history-msg {
+            color: #3f4a5a;
+            text-align: center;
+            font-size: 16px;
+            padding: 16px 0;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-content">
-            <h1>Minh Nhựt</h1>
-            <p>Bộ Công Cụ & Ứng Dụng Web Chuyên Nghiệp</p>
-            <div class="year-badge">✨ Năm 2026 - Thành Công & Hạnh Phúc</div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <div class="container">
-        <!-- Category: Multimedia -->
-        <section class="category">
-            <h2 class="category-title">🎵 Âm Thanh & Đa Phương Tiện</h2>
-            <div class="cards-grid">
-                <a href="https://nhut990.github.io/audio/" class="card">
-                    <div class="card-icon">🎙️</div>
-                    <h3>Audio & Radio</h3>
-                    <p>Nghe nhạc và phát sóng trực tuyến với chất lượng cao</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-
-                <a href="https://nhut990.github.io/audio-converter/" class="card">
-                    <div class="card-icon">🎵</div>
-                    <h3>Chuyển Đổi Âm Thanh</h3>
-                    <p>Chuyển đổi giữa các định dạng âm thanh khác nhau</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-
-                <a href="https://nhut990.github.io/piano/" class="card">
-                    <div class="card-icon">🎹</div>
-                    <h3>Giả Lập Piano</h3>
-                    <p>Piano ảo với giao diện tương tác thực tế</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-
-                <a href="https://nhut990.github.io/piano/chord/" class="card">
-                    <div class="card-icon">🎼</div>
-                    <h3>Hợp Âm Piano</h3>
-                    <p>Tìm hiểu và thực hành các hợp âm piano</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-            </div>
-        </section>
-
-        <!-- Category: Design & Color -->
-        <section class="category">
-            <h2 class="category-title">🎨 Thiết Kế & Màu Sắc</h2>
-            <div class="cards-grid">
-                <a href="https://nhut990.github.io/color/" class="card">
-                    <div class="card-icon">🎨</div>
-                    <h3>Xem Mã Màu</h3>
-                    <p>Khám phá và quản lý các mã màu hex, RGB, HSL</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-
-                <a href="https://nhut990.github.io/color/lcd/" class="card">
-                    <div class="card-icon">📺</div>
-                    <h3>Test Màn Hình</h3>
-                    <p>Kiểm tra và hiệu chỉnh màu sắc màn hình</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-
-                <a href="https://nhut990.github.io/image-converter/" class="card">
-                    <div class="card-icon">🖼️</div>
-                    <h3>Chuyển Đổi Hình Ảnh</h3>
-                    <p>Chuyển đổi và xử lý hình ảnh nhiều định dạng</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-            </div>
-        </section>
-
-        <!-- Category: Testing & Tools -->
-        <section class="category">
-            <h2 class="category-title">🛠️ Công Cụ & Kiểm Tra</h2>
-            <div class="cards-grid">
-                <a href="https://nhut990.github.io/camtest/" class="card">
-                    <div class="card-icon">📷</div>
-                    <h3>Test Camera & Micro</h3>
-                    <p>Kiểm tra camera và microphone của thiết bị</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-
-                <a href="https://nhut990.github.io/qr-code/" class="card">
-                    <div class="card-icon">📱</div>
-                    <h3>Tạo Mã QR</h3>
-                    <p>Tạo mã QR nhanh chóng từ text và link</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-
-                <a href="https://nhut990.github.io/maps/" class="card">
-                    <div class="card-icon">🗺️</div>
-                    <h3>Xem Địa Chỉ</h3>
-                    <p>Xem địa chỉ mới sau sáp nhập</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-            </div>
-        </section>
-
-        <!-- Category: Productivity -->
-        <section class="category">
-            <h2 class="category-title">📅 Năng Suất & Tổ Chức</h2>
-            <div class="cards-grid">
-                <a href="https://nhut990.github.io/lich/" class="card">
-                    <div class="card-icon">📆</div>
-                    <h3>Lịch</h3>
-                    <p>Quản lý lịch và sự kiện hàng ngày</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-            </div>
-        </section>
-
-        <!-- Category: System & Apps -->
-        <section class="category">
-            <h2 class="category-title">💻 Hệ Thống & Ứng Dụng</h2>
-            <div class="cards-grid">
-                <a href="https://nhut990.github.io/Windows/" class="card">
-                    <div class="card-icon">🪟</div>
-                    <h3>Windows</h3>
-                    <p>Giả lập giao diện Windows trên web</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-
-                <a href="https://nhut990.github.io/appcuios/" class="card">
-                    <div class="card-icon">📱</div>
-                    <h3>Ứng Dụng iOS Cũ</h3>
-                    <p>Truy cập ứng dụng iOS phiên bản cũ</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-
-                <a href="https://nhut990.github.io/Bundle/" class="card">
-                    <div class="card-icon">📦</div>
-                    <h3>Tìm Bundle ID</h3>
-                    <p>Tìm Bundle ID của ứng dụng App Store</p>
-                    <span class="card-link">Mở →</span>
-                </a>
-            </div>
-        </section>
+<div class="calculator">
+    <!-- Header lịch sử + nút thùng rác xoá tất cả -->
+    <div class="history-header">
+        <span>Lịch sử</span>
+        <button class="delete-all-btn" id="deleteAllHistoryBtn" title="Xoá tất cả lịch sử">
+            <span class="trash-icon">🗑️</span>
+        </button>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <h2>Cảm Ơn Bạn</h2>
-            <p>Khám phá các công cụ & ứng dụng được thiết kế với tình yêu</p>
-            
-            <div class="footer-links">
-                <a href="#top">Về Đầu Trang</a>
-                <a href="https://github.com/nhut990" target="_blank">GitHub</a>
-            </div>
-
-            <div class="copyright">
-                <p>Created by <strong>Minh Nhựt</strong></p>
-                <p>&copy; 2026 - All Rights Reserved</p>
-                <p style="font-size: 0.8em; margin-top: 12px; opacity: 0.6;">nhut117se4</p>
-            </div>
+    <!-- Khu vực lịch sử (ban đầu trống, không có mẫu) -->
+    <div class="history-panel">
+        <div class="history-list" id="historyContainer">
+            <!-- Sẽ được render bằng js, ban đầu trống -->
         </div>
-    </footer>
+    </div>
+
+    <!-- Màn hình nhập / kết quả -->
+    <div class="display-area">
+        <input type="text" id="calc-input" readonly placeholder="0" value="0">
+    </div>
+
+    <!-- Bảng nút bấm giống hình, đủ C, +/-, %, ÷, ×, −, +, 0, ., = -->
+    <div class="button-grid">
+        <!-- Hàng 1 -->
+        <button class="btn top-action" id="clearBtn">C</button>
+        <button class="btn top-action" id="plusMinusBtn">±</button>
+        <button class="btn top-action" id="percentBtn">%</button>
+        <button class="btn operator" id="divideBtn">÷</button>
+
+        <!-- Hàng 2 -->
+        <button class="btn" id="num7">7</button>
+        <button class="btn" id="num8">8</button>
+        <button class="btn" id="num9">9</button>
+        <button class="btn operator" id="multiplyBtn">×</button>
+
+        <!-- Hàng 3 -->
+        <button class="btn" id="num4">4</button>
+        <button class="btn" id="num5">5</button>
+        <button class="btn" id="num6">6</button>
+        <button class="btn operator" id="minusBtn">−</button>
+
+        <!-- Hàng 4 -->
+        <button class="btn" id="num1">1</button>
+        <button class="btn" id="num2">2</button>
+        <button class="btn" id="num3">3</button>
+        <button class="btn operator" id="plusBtn">+</button>
+
+        <!-- Hàng 5: 0, . , = -->
+        <button class="btn" id="num0">0</button>
+        <button class="btn dot" id="dotBtn">.</button>
+        <button class="btn equals" id="equalsBtn">=</button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // State
+        let currentInput = '0';
+        let previousOperand = null;
+        let pendingOperator = null;
+        let shouldResetInput = false;
+        // Lịch sử: mảng các đối tượng { operation, result }
+        let historyItems = [];   // không có mẫu, ban đầu trống
+
+        const inputField = document.getElementById('calc-input');
+        const historyContainer = document.getElementById('historyContainer');
+        const deleteAllBtn = document.getElementById('deleteAllHistoryBtn');
+
+        // ---------- Hàm hiển thị lịch sử (từ mảng historyItems, hiển thị tối đa 3 gần nhất) ----------
+        function renderHistory() {
+            if (historyItems.length === 0) {
+                // Hiển thị thông báo trống hoặc để trống (không có dòng mẫu)
+                historyContainer.innerHTML = `<div class="empty-history-msg">⋯ chưa có phép tính</div>`;
+                return;
+            }
+            // Lấy tối đa 3 phần tử gần nhất (mảng lưu theo thứ tự mới nhất ở đầu)
+            const latest = historyItems.slice(0, 3);
+            let html = '';
+            for (let item of latest) {
+                html += `<div class="history-item">
+                    <span class="history-op">${item.operation}</span>
+                    <span class="history-eq">=</span>
+                    <span class="history-result">${item.result}</span>
+                </div>`;
+            }
+            historyContainer.innerHTML = html;
+        }
+
+        // Thêm một phép tính vào lịch sử (khi nhấn = hoặc sau khi tính toán)
+        function addHistory(operation, result) {
+            // Thêm vào đầu mảng (gần nhất)
+            historyItems.unshift({ operation, result });
+            // Giới hạn tối đa 20 dòng để tránh quá dài (có thể điều chỉnh)
+            if (historyItems.length > 20) historyItems.pop();
+            renderHistory();
+        }
+
+        // Xoá toàn bộ lịch sử (nút thùng rác)
+        function deleteAllHistory() {
+            historyItems = [];
+            renderHistory();
+        }
+
+        // Cập nhật màn hình
+        function updateDisplay(value) {
+            inputField.value = value;
+        }
+
+        // Reset máy tính (C)
+        function clearAll() {
+            currentInput = '0';
+            previousOperand = null;
+            pendingOperator = null;
+            shouldResetInput = false;
+            updateDisplay(currentInput);
+        }
+
+        // Nhập số
+        function inputNumber(num) {
+            if (shouldResetInput) {
+                currentInput = '';
+                shouldResetInput = false;
+            }
+            if (currentInput === '0' && num === '0') {
+                return;
+            }
+            if (currentInput === '0' && num !== '.') {
+                currentInput = num;
+            } else {
+                if (currentInput.replace('-','').replace('.','').length < 12) {
+                    currentInput += num;
+                }
+            }
+            updateDisplay(currentInput);
+        }
+
+        // Dấu chấm
+        function inputDot() {
+            if (shouldResetInput) {
+                currentInput = '0';
+                shouldResetInput = false;
+            }
+            if (!currentInput.includes('.')) {
+                currentInput += '.';
+            }
+            updateDisplay(currentInput);
+        }
+
+        // Đổi dấu
+        function toggleSign() {
+            if (currentInput !== '0' && currentInput !== '') {
+                if (currentInput.startsWith('-')) {
+                    currentInput = currentInput.substring(1);
+                } else {
+                    currentInput = '-' + currentInput;
+                }
+                updateDisplay(currentInput);
+            }
+        }
+
+        // Phần trăm
+        function percent() {
+            if (currentInput) {
+                let val = parseFloat(currentInput) / 100;
+                currentInput = String(val);
+                updateDisplay(currentInput);
+            }
+        }
+
+        // Tính toán
+        function compute(op, left, right) {
+            const a = parseFloat(left);
+            const b = parseFloat(right);
+            if (isNaN(a) || isNaN(b)) return NaN;
+            switch (op) {
+                case '+': return a + b;
+                case '−': return a - b;
+                case '×': return a * b;
+                case '÷': return a / b;
+                default: return b;
+            }
+        }
+
+        // Xử lý phép toán (+, −, ×, ÷)
+        function handleOperator(opSymbol) {
+            if (pendingOperator !== null && previousOperand !== null && !shouldResetInput) {
+                // tính toán với toán tử đang chờ
+                let result = compute(pendingOperator, previousOperand, currentInput);
+                if (!isNaN(result) && isFinite(result)) {
+                    let operationStr = `${previousOperand} ${pendingOperator} ${currentInput}`;
+                    result = Math.round((result + Number.EPSILON) * 1e12) / 1e12;
+                    let resultStr = String(result);
+                    // Lưu vào lịch sử NGAY KHI CÓ KẾT QUẢ (theo yêu cầu: bấm mới lưu)
+                    addHistory(operationStr, resultStr);
+                    previousOperand = result;
+                    currentInput = resultStr;
+                } else {
+                    currentInput = 'Error';
+                    previousOperand = null;
+                    pendingOperator = null;
+                    updateDisplay(currentInput);
+                    return;
+                }
+            } else {
+                // chưa có toán tử trước
+                if (previousOperand === null || shouldResetInput) {
+                    previousOperand = currentInput;
+                }
+            }
+            pendingOperator = opSymbol;
+            shouldResetInput = true;
+            updateDisplay(currentInput);
+        }
+
+        // Xử lý dấu bằng
+        function handleEquals() {
+            if (pendingOperator !== null && previousOperand !== null && !shouldResetInput) {
+                let result = compute(pendingOperator, previousOperand, currentInput);
+                if (!isNaN(result) && isFinite(result)) {
+                    let operationStr = `${previousOperand} ${pendingOperator} ${currentInput}`;
+                    result = Math.round((result + Number.EPSILON) * 1e12) / 1e12;
+                    let resultStr = String(result);
+                    // Lưu vào lịch sử khi nhấn =
+                    addHistory(operationStr, resultStr);
+                    currentInput = resultStr;
+                    previousOperand = null;
+                    pendingOperator = null;
+                    shouldResetInput = true;
+                } else {
+                    currentInput = 'Error';
+                    previousOperand = null;
+                    pendingOperator = null;
+                    shouldResetInput = true;
+                }
+                updateDisplay(currentInput);
+            } else {
+                // Nếu không có phép toán, chỉ reset
+                shouldResetInput = true;
+            }
+        }
+
+        // ---------- Gán sự kiện ----------
+        document.getElementById('clearBtn').addEventListener('click', clearAll);
+        document.getElementById('plusMinusBtn').addEventListener('click', toggleSign);
+        document.getElementById('percentBtn').addEventListener('click', percent);
+        document.getElementById('divideBtn').addEventListener('click', () => handleOperator('÷'));
+        document.getElementById('multiplyBtn').addEventListener('click', () => handleOperator('×'));
+        document.getElementById('minusBtn').addEventListener('click', () => handleOperator('−'));
+        document.getElementById('plusBtn').addEventListener('click', () => handleOperator('+'));
+        document.getElementById('equalsBtn').addEventListener('click', handleEquals);
+        document.getElementById('dotBtn').addEventListener('click', inputDot);
+        document.getElementById('num0').addEventListener('click', () => inputNumber('0'));
+        document.getElementById('num1').addEventListener('click', () => inputNumber('1'));
+        document.getElementById('num2').addEventListener('click', () => inputNumber('2'));
+        document.getElementById('num3').addEventListener('click', () => inputNumber('3'));
+        document.getElementById('num4').addEventListener('click', () => inputNumber('4'));
+        document.getElementById('num5').addEventListener('click', () => inputNumber('5'));
+        document.getElementById('num6').addEventListener('click', () => inputNumber('6'));
+        document.getElementById('num7').addEventListener('click', () => inputNumber('7'));
+        document.getElementById('num8').addEventListener('click', () => inputNumber('8'));
+        document.getElementById('num9').addEventListener('click', () => inputNumber('9'));
+
+        // Nút xoá tất cả lịch sử (thùng rác)
+        deleteAllBtn.addEventListener('click', deleteAllHistory);
+
+        // Khởi tạo màn hình và lịch sử trống (không có dòng mẫu)
+        updateDisplay(currentInput);
+        renderHistory();  // hiển thị "⋯ chưa có phép tính"
+
+        // Hỗ trợ bàn phím (không bắt buộc nhưng tiện)
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            if (key >= '0' && key <= '9') inputNumber(key);
+            if (key === '.') inputDot();
+            if (key === '+' || key === '-') handleOperator(key === '+' ? '+' : '−');
+            if (key === '*') handleOperator('×');
+            if (key === '/') {
+                e.preventDefault();
+                handleOperator('÷');
+            }
+            if (key === 'Enter' || key === '=') handleEquals();
+            if (key === 'Escape') clearAll();
+            if (key === '%') percent();
+        });
+    })();
+</script>
 </body>
 </html>
