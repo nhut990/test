@@ -1,553 +1,289 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-    <title>Máy tính · hiển thị phép tính đang nhập</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            min-height: 100vh;
-            background: #1e2128;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Segoe UI', 'Inter', -apple-system, sans-serif;
-            padding: 8px;
-            touch-action: manipulation;
-        }
-
-        .calculator {
-            width: 100%;
-            max-width: 380px;
-            background: #1a1d24;
-            border-radius: 32px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 2px 0 2px #2f3540 inset;
-            padding: 20px 18px 26px 18px;
-        }
-
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-            padding: 0 4px;
-        }
-        .history-header span {
-            color: #9aaac7;
-            font-weight: 600;
-            font-size: 15px;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            opacity: 0.8;
-        }
-
-        .delete-all-btn {
-            background: #2d3442;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: #e2b6b6;
-            box-shadow: 0 4px 0 #181d26;
-            border: 1px solid #4d5a6e;
-            cursor: pointer;
-            transition: 0.05s linear;
-            touch-action: manipulation;
-        }
-        .delete-all-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 1px 0 #1a1e28;
-        }
-
-        .history-panel {
-            background: #131722;
-            border-radius: 22px;
-            padding: 14px 14px 10px 14px;
-            margin-bottom: 16px;
-            border: 1px solid #2f3747;
-            box-shadow: inset 0 4px 6px #0b0e14;
-            max-height: 150px;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #3f5068 #1b212c;
-        }
-        .history-panel::-webkit-scrollbar {
-            width: 5px;
-        }
-        .history-panel::-webkit-scrollbar-track {
-            background: #1b212c;
-        }
-        .history-panel::-webkit-scrollbar-thumb {
-            background: #3f5068;
-            border-radius: 10px;
-        }
-
-        .history-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .history-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            color: #b9c7e6;
-            font-size: 20px;
-            font-weight: 400;
-            background: #1c222f;
-            padding: 6px 16px 6px 16px;
-            border-radius: 40px;
-            border: 1px solid #354052;
-            box-shadow: 0 2px 0 #0e121b;
-        }
-        .history-op {
-            font-weight: 300;
-            color: #cbd5f0;
-        }
-        .history-eq {
-            color: #7c8bb0;
-            margin: 0 8px;
-        }
-        .history-result {
-            font-weight: 600;
-            color: #ffffff;
-            background: #2a3347;
-            padding: 3px 18px;
-            border-radius: 30px;
-            font-size: 20px;
-            box-shadow: inset 0 1px 3px black;
-        }
-
-        .empty-history-msg {
-            color: #4e5b72;
-            text-align: center;
-            padding: 14px 0;
-            font-size: 17px;
-        }
-
-        /* KHU VỰC MÀN HÌNH: GỒM 2 DÒNG (biểu thức trên, kết quả dưới) */
-        .display-area {
-            background: #0f1219;
-            border-radius: 28px;
-            padding: 12px 20px 8px 20px;
-            margin-bottom: 18px;
-            border: 2px solid #354153;
-            box-shadow: 0 6px 0 #080b10;
-        }
-
-        #expression-display {
-            width: 100%;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: #9dafd1;
-            font-size: 20px;
-            font-weight: 300;
-            text-align: right;
-            white-space: nowrap;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            border-bottom: 1px dashed #33405a;
-        }
-
-        #calc-input {
-            width: 100%;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: #f0f4ff;
-            font-size: 46px;
-            font-weight: 500;
-            text-align: right;
-            line-height: 1.2;
-            margin-top: 2px;
-        }
-        #calc-input::placeholder {
-            color: #374153;
-        }
-
-        .button-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-top: 8px;
-        }
-
-        .btn {
-            background: #272e3b;
-            border: none;
-            border-radius: 30px;
-            padding: 18px 0;
-            font-size: 28px;
-            font-weight: 500;
-            color: #f0f4fd;
-            box-shadow: 0 6px 0 #131722, 0 5px 12px black;
-            transition: 0.05s linear;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #48546b;
-            border-bottom-width: 2px;
-            touch-action: manipulation;
-            user-select: none;
-        }
-
-        .btn:active {
-            transform: translateY(5px);
-            box-shadow: 0 2px 0 #131722;
-            background: #4e5f7a !important;
-            color: white;
-            border-color: #7c90b0;
-        }
-
-        .btn.top-action {
-            background: #364153;
-            border-color: #57677f;
-        }
-
-        .btn.operator {
-            background: #314763;
-            color: #ffda9e;
-            border-color: #5f779b;
-            font-size: 34px;
-            font-weight: 600;
-        }
-
-        .btn.equals {
-            background: #3f62a0;
-            border-color: #6e96d4;
-            color: white;
-            font-size: 34px;
-            box-shadow: 0 6px 0 #25395b;
-        }
-
-        .btn.dot {
-            font-size: 38px;
-            padding-bottom: 22px;
-        }
-
-        @media (max-width: 360px) {
-            .btn { font-size: 24px; padding: 14px 0; }
-            #calc-input { font-size: 40px; }
-            #expression-display { font-size: 18px; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cài Đặt Ứng Dụng iOS Phiên Bản Cũ</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: radial-gradient(ellipse at top left, #232526 0%, #434343 70%, #000 100%);
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container { max-width: 600px; margin: auto; }
+    .title-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 25px;}
+    .title-row img { width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 2px 8px #fff8); background: #fff; border-radius: 14px; padding: 4px; box-shadow: 0 2px 16px #0007;}
+    h1 { margin: 0; color: #ff5555; font-size: 2.1rem; font-weight: bold; text-align: center; letter-spacing: 1px; text-shadow: 0 2px 6px #000c;}
+    .app-list { display: flex; flex-direction: column; gap: 15px;}
+    .app { background: rgba(255, 255, 255, 0.10); border-radius: 10px; padding: 12px 14px; margin: 0; box-shadow: 0 0 8px 2px rgba(0,0,0,0.25); max-width: 600px; margin-left: auto; margin-right: auto; width: 100%; transition: box-shadow 0.15s;}
+    .app-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;}
+    .app-header h2 { font-size: 1.15rem; margin: 0; font-weight: 600; letter-spacing: 0.5px; display: flex; align-items: center; gap: 10px;}
+    .app-header span { font-size: 1.2rem; margin-left: 10px; transition: transform 0.2s;}
+    .app-header:hover { color: #64b5f6;}
+    .app-icon { width: 32px; height: 32px; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 12px #0005; background: #fff; margin-right: 2px;}
+    .versions { display: none; margin-top: 8px;}
+    .version { background: rgba(255,255,255,0.15); border-radius: 7px; padding: 7px 9px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;}
+    .version-info { display: flex; flex-direction: column; }
+    .version .ver-icon { width: 24px; height: 24px; object-fit: contain; border-radius: 6px; background: #fff; margin-right: 8px; vertical-align: middle; box-shadow: 0 2px 8px #0003;}
+    .ios-support { color: #90caf9; font-size: 0.98em; font-weight: 400; margin-top: 2px; }
+    .btn { background: #64b5f6; color: #000; border: none; border-radius: 7px; padding: 4px 10px; cursor: pointer; font-weight: bold; font-size: 0.97em; transition: background 0.15s;}
+    .btn:active { background: #43a047; color: #fff;}
+    .btn:hover { background: #90caf9;}
+    .footer { text-align: center; margin-top: 40px; font-size: 1.16em; color: #fff; letter-spacing: 1px; opacity: 0.8; user-select: none;}
+    .blinker { display: inline-block; animation: blink 1.2s infinite alternate; font-weight: bold;}
+    .blinker2 { display: inline-block; animation: blink2 1.2s infinite alternate; font-weight: bold;}
+    @keyframes blink { from { color: #ff5555; text-shadow: 0 0 10px #ff555599; } to { color: #64b5f6; text-shadow: 0 0 10px #64b5f699; } }
+    @keyframes blink2 { from { color: #64b5f6; text-shadow: 0 0 10px #64b5f699; } to { color: #ff5555; text-shadow: 0 0 10px #ff555599; } }
+    .back-home { display: inline-block; margin-bottom: 10px; padding: 9px 16px; background: #fff2; color: #64b5f6; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.04em; box-shadow: 0 2px 8px #0006; transition: background 0.18s, color 0.18s;}
+    .back-home:hover { background: #64b5f6; color: #fff;}
+    .page2-link { display: inline-block; margin-bottom: 10px; margin-left: 8px; padding: 9px 16px; background: #fff2; color: #ff5555; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.04em; box-shadow: 0 2px 8px #0006; transition: background 0.18s, color 0.18s;}
+    .page2-link:hover { background: #ff5555; color: #fff;}
+    .note-app-id { text-align: center; color: #bbb; font-size: 1.04em; margin: 24px 0 0 0; font-style: italic; letter-spacing: 0.5px; user-select: none;}
+    @media (max-width: 700px) {
+      .container { max-width: 98vw; }
+      .app { max-width: 98vw; }
+      .footer { font-size: 1em; }
+      .back-home { font-size: 0.98em; }
+      .page2-link { font-size: 0.98em; }
+      h1 { font-size: 1.35rem; }
+    }
+  </style>
 </head>
 <body>
-    <div class="calculator">
-        <!-- Header LỊCH SỬ + thùng rác -->
-        <div class="history-header">
-            <span>LỊCH SỬ</span>
-            <button class="delete-all-btn" id="deleteAllHistoryBtn" title="Xoá tất cả">🗑️</button>
-        </div>
-
-        <!-- Khung hiển thị lịch sử (ban đầu trống) -->
-        <div class="history-panel">
-            <div class="history-list" id="historyContainer">
-                <!-- Sẽ render bằng js, ban đầu trống hoàn toàn -->
-            </div>
-        </div>
-
-        <!-- MÀN HÌNH CHÍNH: 2 dòng - biểu thức trên, kết quả dưới -->
-        <div class="display-area">
-            <input type="text" id="expression-display" readonly placeholder=" " value=" ">
-            <input type="text" id="calc-input" readonly placeholder="0" value="0">
-        </div>
-
-        <!-- Grid nút bấm -->
-        <div class="button-grid">
-            <!-- hàng 1 -->
-            <button class="btn top-action" id="clearBtn">C</button>
-            <button class="btn top-action" id="plusMinusBtn">±</button>
-            <button class="btn top-action" id="percentBtn">%</button>
-            <button class="btn operator" id="divideBtn">÷</button>
-
-            <!-- hàng 2 -->
-            <button class="btn" id="num7">7</button>
-            <button class="btn" id="num8">8</button>
-            <button class="btn" id="num9">9</button>
-            <button class="btn operator" id="multiplyBtn">×</button>
-
-            <!-- hàng 3 -->
-            <button class="btn" id="num4">4</button>
-            <button class="btn" id="num5">5</button>
-            <button class="btn" id="num6">6</button>
-            <button class="btn operator" id="minusBtn">−</button>
-
-            <!-- hàng 4 -->
-            <button class="btn" id="num1">1</button>
-            <button class="btn" id="num2">2</button>
-            <button class="btn" id="num3">3</button>
-            <button class="btn operator" id="plusBtn">+</button>
-
-            <!-- hàng 5 -->
-            <button class="btn" id="num0">0</button>
-            <button class="btn dot" id="dotBtn">.</button>
-            <button class="btn equals" id="equalsBtn">=</button>
-        </div>
+  <div class="container">
+    <div class="title-row">
+      <img src="https://raw.githubusercontent.com/nhut990/files/refs/heads/main/hinh/Apple-Logo.png" alt="Apple Logo" />
+      <h1>Cài Đặt Ứng Dụng iOS Phiên Bản Cũ</h1>
     </div>
+    <div id="apps" class="app-list"></div>
+    <div class="note-app-id">
+      <em>Lưu ý: Các ứng dụng bên trên chỉ sử dụng được khi bạn có ID Apple của người tạo ra app</em>
+    </div>
+  </div>
+  <div class="footer">
+    <a class="page2-link" href="https://nhut990.github.io/appcuios/page2/">Trang sau</a>
+    <a class="back-home" href="https://nhut990.github.io/">← Quay về trang chủ</a>
+    <br>
+    Created by <span class="blinker">Minh</span> <span class="blinker2">Nhut</span><br>
+    &copy; 2025
+  </div>
+  <script type="text/javascript">
+    // Dùng var, function truyền thống cho iOS thấp
+    var apps = [
+      // 1. Documents
+      {
+        name: "1. Documents",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Documents.jpg",
+        versions: [
+          { version: "1.0.0.1", ios: "iOS 3.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents1001.plist" },
+          { version: "1.5.0", ios: "iOS 3.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents150.plist" },
+          { version: "1.7.1", ios: "iOS 3.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents171.plist" },
+          { version: "3.2",   ios: "iOS 4.3 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents32.plist" },
+          { version: "4.4",   ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents44.plist" },
+          { version: "5.5.2", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/4TEST.plist" },
+          { version: "6.0.2", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents602.plist" },
+          { version: "6.5.2", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents652.plist" },
+          { version: "6.9",   ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/TEST.plist" },
+          { version: "7.6.1", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1TEST.plist" },
+          { version: "8.1.18", ios: "iOS 14.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2TEST.plist" },
+          { version: "8.12.5", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3TEST.plist" }
+        ]
+      },
+      // 2. Facebook
+      {
+        name: "2. Facebook",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Facebook.jpg",
+        versions: [
+          { version: "37.0", ios: "iOS 7.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.37.0.plist" },
+          { version: "67.0", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.67.0.plist" },
+          { version: "138.0", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.138.0.plist" },
+          { version: "226.0", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.226.0.plist" },
+          { version: "301.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1Nhut.plist" },
+          { version: "335.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.335.0.plist" },
+          { version: "371.1", ios: "iOS 12.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2Nhut.plist" },
+          { version: "419.0", ios: "iOS 13.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3Nhut.plist" },
+          { version: "452.0.0", ios: "iOS 13.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.452.0.0.plist" },
+          { version: "491.1.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/4Nhut.plist" },
+          { version: "506.1.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/5Nhut.plist" },
+          { version: "513.1.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.513.1.0.plist" },
+          { version: "523.0.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.523.0.0.plist" },
+          { version: "546.0.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.546.0.0.plist" },
+          { version: "551.1.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.551.1.0.plist" }
+        ]
+      },
+      // 3. UC.Browser
+      {
+        name: "3. UC.Browser",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/UC.Browser.jpg",
+        versions: [
+          { version: "10.3.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1ucbrowse.plist" },
+          { version: "11.3.5", ios: "iOS 7.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2ucbrowse.plist" }
+        ]
+      },
+      // 4. Chợ Tốt
+      {
+        name: "4. Chợ Tốt",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Chotot.jpg",
+        versions: [
+          { version: "4.9.1", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1chotot.plist" },
+          { version: "4.36.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/chotot.plist" },
+          { version: "4.38.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Cho-tot-4.38.0.plist" }
+        ]
+      },
+      // 5. Google Maps
+      {
+        name: "5. Google Maps",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Google.Maps.jpg",
+        versions: [
+          { version: "1.1.6", ios: "iOS 3.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.1.1.6.plist" },
+          { version: "2.2.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.2.2.0.plist" },
+          { version: "3.0.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/5maps.plist" },
+          { version: "4.2.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.4.2.0.plist" },
+          { version: "4.3.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/maps.plist" },
+          { version: "4.56.0", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.4.56.0.plist" },
+          { version: "5.55.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1maps.plist" },
+          { version: "6.1.0", ios: "iOS 12.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.6.1.0.plist" },
+          { version: "6.17.0", ios: "iOS 13.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.6.17.0.plist" },
+          { version: "6.85.0", ios: "iOS 14.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3maps.plist" },
+          { version: "6.142.0", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2maps.plist" },
+          { version: "24.48.0", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/4maps.plist" },
+          { version: "25.37.1", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Google.Maps.25.37.1.plist" },
+          { version: "26.03.1", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Google.Maps.26.03.1.plist" },
+          { version: "26.10.2", ios: "iOS 16.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Google.Maps.26.10.2.plist" }
+        ]
+      },
+      // 6. TikTok
+      {
+        name: "6. TikTok",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Tiktok.jpg",
+        versions: [
+          { version: "1.4.0", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/4tiktok.plist" },
+          { version: "23.7.1", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/tiktok.plist" },
+          { version: "24.9.0", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1tiktok.plist" },
+          { version: "30.7.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2tiktok.plist" },
+          { version: "34.5.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3tiktok.plist" }
+        ]
+      },
+      // 7. Tiktok China (抖音 Douyin)
+      {
+        name: "7. Tiktok China (抖音 Douyin)",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Tiktok.jpg",
+        versions: [
+          { version: "1.0.0", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin340.plist" },
+          { version: "8.7.1", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin871.plist" },
+          { version: "13.6.0", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin13.60.plist" },
+          { version: "21.0.0", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin21.00.plist" },
+          { version: "22.0.0", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin22.00.plist" },
+          { version: "23.8.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin23.80.plist" },
+          { version: "28.9.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin28.90.plist" },
+          { version: "29.8.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin29.80.plist" },
+          { version: "33.6.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin33.60.plist" },
+          { version: "35.4.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin35.40.plist" }
+        ]
+      },
+      // 8. BODAPLAY AI
+      {
+        name: "8. BODAPLAY AI",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/BODAPLAY.AI.jpg",
+        versions: [
+          { version: "1.4.1", ios: "iOS 13.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1Vodaplay.plist" },
+          { version: "1.6.0", ios: "iOS 13.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2Vodaplay.plist" },
+          { version: "1.6.2", ios: "iOS 13.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3Vodaplay.plist" }
+        ]
+      },
+      // 9. Telegram
+      {
+        name: "9. Telegram",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Telegram.jpg",
+        versions: [
+          { version: "9.2.1", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/Telegram.9.2.1.plist" },
+          { version: "10.1", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/Telegram.10.1.plist" },
+          { version: "10.10.1", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/Telegram.10.10.1.plist" },
+          { version: "11.12.1", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/Telegram.11.12.1.plist" },
+          { version: "11.10", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/Telegram.plist" },
+          { version: "11.5", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1Telegram.plist" },
+          { version: "12.1.1", ios: "iOS 13.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2Telegram.plist" }
+        ]
+      },
+      // 10. Cốc Cốc
+      {
+        name: "10. Cốc Cốc",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Cococ.jpg",
+        versions: [
+          { version: "60.3.73", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/cococ.plist" },
+          { version: "70.4.210", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1cococ.plist" },
+          { version: "83.0.208", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2cococ.plist" }
+        ]
+      }
+    ];
 
-    <script>
-        (function() {
-            // State
-            let currentInput = '0';               // số hiện tại (màn hình dưới)
-            let expressionStr = '';                // biểu thức đang xây dựng (màn hình trên)
-            let previousOperand = null;
-            let pendingOperator = null;
-            let shouldResetInput = false;
-
-            let historyItems = [];                  // lịch sử, ban đầu trống
-
-            const inputField = document.getElementById('calc-input');
-            const exprField = document.getElementById('expression-display');
-            const historyContainer = document.getElementById('historyContainer');
-            const deleteAllBtn = document.getElementById('deleteAllHistoryBtn');
-
-            // Cập nhật cả 2 màn hình
-            function updateDisplays() {
-                inputField.value = currentInput;
-                exprField.value = expressionStr || ' '; // nếu rỗng thì hiện khoảng trống
-            }
-
-            // Render lịch sử
-            function renderHistory() {
-                if (historyItems.length === 0) {
-                    historyContainer.innerHTML = `<div class="empty-history-msg">⋯ chưa có phép tính</div>`;
-                    return;
-                }
-                let html = '';
-                for (let item of historyItems) {
-                    html += `<div class="history-item">
-                        <span class="history-op">${item.operation}</span>
-                        <span class="history-eq">=</span>
-                        <span class="history-result">${item.result}</span>
-                    </div>`;
-                }
-                historyContainer.innerHTML = html;
-            }
-
-            // Thêm vào lịch sử
-            function addHistory(operation, result) {
-                historyItems.unshift({ operation, result });
-                if (historyItems.length > 50) historyItems.pop();
-                renderHistory();
-            }
-
-            // Xoá toàn bộ lịch sử
-            function deleteAllHistory() {
-                historyItems = [];
-                renderHistory();
-            }
-
-            // Reset máy tính (C)
-            function clearAll() {
-                currentInput = '0';
-                expressionStr = '';
-                previousOperand = null;
-                pendingOperator = null;
-                shouldResetInput = false;
-                updateDisplays();
-            }
-
-            // Nhập số
-            function inputNumber(num) {
-                if (shouldResetInput) {
-                    currentInput = '';
-                    shouldResetInput = false;
-                }
-                if (currentInput === '0' && num === '0') return;
-                if (currentInput === '0' && num !== '.') {
-                    currentInput = num;
-                } else {
-                    if (currentInput.replace('-','').replace('.','').length < 14) {
-                        currentInput += num;
-                    }
-                }
-
-                // Cập nhật biểu thức hiển thị khi đang nhập số
-                if (pendingOperator && previousOperand !== null) {
-                    // Trường hợp đã có toán tử và số hạng trước, hiển thị: previousOperand + operator + số đang nhập
-                    expressionStr = `${previousOperand} ${pendingOperator} ${currentInput}`;
-                } else if (previousOperand !== null && pendingOperator === null) {
-                    // Sau khi nhấn =, previousOperand được clear, nên không vào đây
-                    expressionStr = `${previousOperand}`;
-                } else {
-                    // Chưa có toán tử, chỉ hiển thị số hiện tại (hoặc có thể để trống? nhưng để số hiện tại cho dễ)
-                    expressionStr = currentInput;
-                }
-                updateDisplays();
-            }
-
-            // Dấu chấm
-            function inputDot() {
-                if (shouldResetInput) {
-                    currentInput = '0';
-                    shouldResetInput = false;
-                }
-                if (!currentInput.includes('.')) {
-                    currentInput += '.';
-                }
-                // cập nhật biểu thức giống inputNumber
-                if (pendingOperator && previousOperand !== null) {
-                    expressionStr = `${previousOperand} ${pendingOperator} ${currentInput}`;
-                } else {
-                    expressionStr = currentInput;
-                }
-                updateDisplays();
-            }
-
-            // Đổi dấu
-            function toggleSign() {
-                if (currentInput !== '0' && currentInput !== '') {
-                    if (currentInput.startsWith('-')) {
-                        currentInput = currentInput.substring(1);
-                    } else {
-                        currentInput = '-' + currentInput;
-                    }
-                }
-                // cập nhật biểu thức
-                if (pendingOperator && previousOperand !== null) {
-                    expressionStr = `${previousOperand} ${pendingOperator} ${currentInput}`;
-                } else {
-                    expressionStr = currentInput;
-                }
-                updateDisplays();
-            }
-
-            // Phần trăm
-            function percent() {
-                if (currentInput) {
-                    let val = parseFloat(currentInput) / 100;
-                    currentInput = String(val);
-                    if (pendingOperator && previousOperand !== null) {
-                        expressionStr = `${previousOperand} ${pendingOperator} ${currentInput}`;
-                    } else {
-                        expressionStr = currentInput;
-                    }
-                    updateDisplays();
-                }
-            }
-
-            // Tính toán
-            function compute(op, left, right) {
-                const a = parseFloat(left);
-                const b = parseFloat(right);
-                if (isNaN(a) || isNaN(b)) return NaN;
-                switch (op) {
-                    case '+': return a + b;
-                    case '−': return a - b;
-                    case '×': return a * b;
-                    case '÷': return a / b;
-                    default: return b;
-                }
-            }
-
-            // Xử lý phép toán
-            function handleOperator(opSymbol) {
-                // Nếu đang có phép toán chờ, thực hiện phép tính trước
-                if (pendingOperator !== null && previousOperand !== null && !shouldResetInput) {
-                    let result = compute(pendingOperator, previousOperand, currentInput);
-                    if (!isNaN(result) && isFinite(result)) {
-                        let operationStr = `${previousOperand} ${pendingOperator} ${currentInput}`;
-                        result = Math.round((result + Number.EPSILON) * 1e12) / 1e12;
-                        let resultStr = String(result);
-                        // Lưu lịch sử
-                        addHistory(operationStr, resultStr);
-                        previousOperand = result;
-                        currentInput = resultStr;
-                    } else {
-                        currentInput = 'Error';
-                        previousOperand = null;
-                        pendingOperator = null;
-                        expressionStr = '';
-                        updateDisplays();
-                        return;
-                    }
-                } else {
-                    // Trường hợp đầu tiên hoặc đã qua bằng
-                    if (previousOperand === null || shouldResetInput) {
-                        previousOperand = currentInput;
-                    }
-                }
-                pendingOperator = opSymbol;
-                shouldResetInput = true;
-
-                // Cập nhật biểu thức hiển thị: vd "88 × "
-                expressionStr = `${previousOperand} ${pendingOperator}`;
-                updateDisplays();
-            }
-
-            // Xử lý dấu bằng
-            function handleEquals() {
-                if (pendingOperator !== null && previousOperand !== null && !shouldResetInput) {
-                    let result = compute(pendingOperator, previousOperand, currentInput);
-                    if (!isNaN(result) && isFinite(result)) {
-                        let operationStr = `${previousOperand} ${pendingOperator} ${currentInput}`;
-                        result = Math.round((result + Number.EPSILON) * 1e12) / 1e12;
-                        let resultStr = String(result);
-                        addHistory(operationStr, resultStr);
-                        // Cập nhật màn hình dưới là kết quả, màn hình trên hiển thị phép tính đã hoàn thành
-                        currentInput = resultStr;
-                        expressionStr = operationStr + ' =';
-                        previousOperand = null;
-                        pendingOperator = null;
-                        shouldResetInput = true;
-                    } else {
-                        currentInput = 'Error';
-                        previousOperand = null;
-                        pendingOperator = null;
-                        expressionStr = '';
-                        shouldResetInput = true;
-                    }
-                } else {
-                    // Nếu không có phép toán, chỉ reset
-                    shouldResetInput = true;
-                    expressionStr = '';
-                }
-                updateDisplays();
-            }
-
-            // Gán sự kiện
-            document.getElementById('clearBtn').addEventListener('click', clearAll);
-            document.getElementById('plusMinusBtn').addEventListener('click', toggleSign);
-            document.getElementById('percentBtn').addEventListener('click', percent);
-            document.getElementById('divideBtn').addEventListener('click', () => handleOperator('÷'));
-            document.getElementById('multiplyBtn').addEventListener('click', () => handleOperator('×'));
-            document.getElementById('minusBtn').addEventListener('click', () => handleOperator('−'));
-            document.getElementById('plusBtn').addEventListener('click', () => handleOperator('+'));
-            document.getElementById('equalsBtn').addEventListener('click', handleEquals);
-            document.getElementById('dotBtn').addEventListener('click', inputDot);
-            document.getElementById('num0').addEventListener('click', () => inputNumber('0'));
-            document.getElementById('num1').addEventListener('click', () => inputNumber('1'));
-            document.getElementById('num2').addEventListener('click', () => inputNumber('2'));
-            document.getElementById('num3').addEventListener('click', () => inputNumber('3'));
-            document.getElementById('num4').addEventListener('click', () => inputNumber('4'));
-            document.getElementById('num5').addEventListener('click', () => inputNumber('5'));
-            document.getElementById('num6').addEventListener('click', () => inputNumber('6'));
-            document.getElementById('num7').addEventListener('click', () => inputNumber('7'));
-            document.getElementById('num8').addEventListener('click', () => inputNumber('8'));
-            document.getElementById('num9').addEventListener('click', () => inputNumber('9'));
-
-            deleteAllBtn.addEventListener('click', deleteAllHistory);
-
-            // Khởi tạo: lịch sử trống, màn hình 0
-            clearAll();
-            renderHistory(); // hiển thị "⋯ chưa có phép tính"
-
-            // KHÔNG thêm dòng mẫu nào
-        })();
-    </script>
+    var appsContainer = document.getElementById("apps");
+    for (var i = 0; i < apps.length; i++) {
+      var app = apps[i];
+      // Sắp xếp versions theo version tăng dần cho app "Chợ Tốt", "Facebook" và "Google Maps"
+      if(app.name === "4. Chợ Tốt" || app.name === "2. Facebook" || app.name === "5. Google Maps") {
+        // Sử dụng sort string tự nhiên cho version
+        app.versions.sort(function(a,b){
+          // Tách các phần số theo dấu .
+          var va = a.version.split('.').map(Number);
+          var vb = b.version.split('.').map(Number);
+          for(var k=0;k<Math.max(va.length,vb.length);k++){
+            var pa = va[k] || 0;
+            var pb = vb[k] || 0;
+            if(pa < pb) return -1;
+            if(pa > pb) return 1;
+          }
+          return 0;
+        });
+      }
+      var appDiv = document.createElement("div");
+      appDiv.className = "app";
+      var versionsHtml = "";
+      for (var j = 0; j < app.versions.length; j++) {
+        var v = app.versions[j];
+        var iconToShow = app.icon;
+        versionsHtml += '<div class="version">' +
+          '<div class="version-info">' +
+            '<span>' +
+              '<img src="' + iconToShow + '" alt="icon" class="ver-icon"> Phiên bản <b>' + v.version + '</b>' +
+            '</span>' +
+            '<span class="ios-support">(' + v.ios + ')</span>' +
+          '</div>' +
+          '<button class="btn" onclick="install(\'' + v.link + '\')">Cài đặt</button>' +
+        '</div>';
+      }
+      appDiv.innerHTML =
+        '<div class="app-header" onclick="toggleVersions(' + i + ')">' +
+          '<h2>' +
+            '<span>' + app.name.split(' ')[0] + '</span>' +
+            '<img src="' + app.icon + '" alt="icon" class="app-icon">' +
+            app.name.substring(app.name.indexOf(' ') + 1) +
+          '</h2>' +
+          '<span id="arrow-' + i + '">⬇️</span>' +
+        '</div>' +
+        '<div class="versions" id="versions-' + i + '">' +
+          versionsHtml +
+        '</div>';
+      appsContainer.appendChild(appDiv);
+    }
+    window.toggleVersions = function(index) {
+      var div = document.getElementById("versions-" + index);
+      var arrow = document.getElementById("arrow-" + index);
+      // fix cho ios thấp: kiểm tra trạng thái display
+      if (div.style.display === "" || div.style.display === "none") {
+        div.style.display = "block";
+        if(arrow) arrow.style.transform = "rotate(180deg)";
+      } else {
+        div.style.display = "none";
+        if(arrow) arrow.style.transform = "";
+      }
+    }
+    window.install = function(link) {
+      window.location.href = link;
+    }
+  </script>
 </body>
 </html>
