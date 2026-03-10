@@ -164,7 +164,10 @@
           { version: "23.7.1", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/tiktok.plist" },
           { version: "24.9.0", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1tiktok.plist" },
           { version: "30.7.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2tiktok.plist" },
-          { version: "34.5.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3tiktok.plist" }
+          { version: "34.5.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3tiktok.plist" },
+          { version: "37.1.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/TikTok.37.1.0.plist" },
+          { version: "40.4.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/TikTok.40.4.0.plist" },
+          { version: "43.9.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/TikTok.43.9.0.plist" }
         ]
       },
       // 7. Tiktok China (抖音 Douyin)
@@ -223,8 +226,8 @@
     var appsContainer = document.getElementById("apps");
     for (var i = 0; i < apps.length; i++) {
       var app = apps[i];
-      // Sắp xếp versions theo version tăng dần cho app "Chợ Tốt", "Facebook" và "Google Maps"
-      if(app.name === "4. Chợ Tốt" || app.name === "2. Facebook" || app.name === "5. Google Maps") {
+      // Sắp xếp versions theo version tăng dần cho app "Chợ Tốt", "Facebook", "Google Maps" và "TikTok"
+      if(app.name === "4. Chợ Tốt" || app.name === "2. Facebook" || app.name === "5. Google Maps" || app.name === "6. TikTok") {
         // Sử dụng sort string tự nhiên cho version
         app.versions.sort(function(a,b){
           // Tách các phần số theo dấu .
