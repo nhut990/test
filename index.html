@@ -1,116 +1,564 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>Wormzilla iOS Wrapper</title>
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  height: 100%;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cài Đặt Ứng Dụng iOS Phiên Bản Cũ</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: radial-gradient(ellipse at top left, #232526 0%, #434343 70%, #000 100%);
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container { max-width: 600px; margin: auto; }
+    
+    .title-row { 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      gap: 12px; 
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    
+    .title-row img { 
+      width: 50px; 
+      height: 50px; 
+      min-width: 50px;
+      min-height: 50px;
+      object-fit: contain; 
+      filter: drop-shadow(0 2px 8px #fff8); 
+      background: #fff; 
+      border-radius: 12px; 
+      padding: 6px; 
+      box-shadow: 0 2px 16px #0007;
+      flex-shrink: 0;
+      -webkit-border-radius: 12px;
+      -webkit-box-shadow: 0 2px 16px #0007;
+    }
+    
+    h1 { 
+      margin: 0; 
+      color: #ff5555; 
+      font-size: 1.6rem; 
+      font-weight: bold; 
+      text-align: center; 
+      letter-spacing: 0.5px; 
+      text-shadow: 0 2px 6px #000c;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+    
+    .app-list { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 15px;
+    }
+    
+    .app { 
+      background: rgba(255, 255, 255, 0.10); 
+      border-radius: 10px; 
+      padding: 12px 14px; 
+      margin: 0 auto;
+      box-shadow: 0 0 8px 2px rgba(0,0,0,0.25); 
+      max-width: 100%;
+      width: 100%;
+      transition: box-shadow 0.15s;
+      box-sizing: border-box;
+      -webkit-border-radius: 10px;
+      -webkit-box-shadow: 0 0 8px 2px rgba(0,0,0,0.25);
+    }
+    
+    .app-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      cursor: pointer; 
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    
+    .app-header h2 { 
+      font-size: 1.1rem; 
+      margin: 0; 
+      font-weight: 600; 
+      letter-spacing: 0.3px; 
+      display: flex; 
+      align-items: center; 
+      gap: 8px;
+      flex: 1;
+      word-break: break-word;
+    }
+    
+    .app-header span { 
+      font-size: 1.2rem; 
+      margin-left: 10px; 
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    
+    .app-header:active { 
+      opacity: 0.8;
+    }
+    
+    .app-icon { 
+      width: 28px; 
+      height: 28px; 
+      min-width: 28px;
+      min-height: 28px;
+      object-fit: contain; 
+      border-radius: 6px; 
+      box-shadow: 0 2px 8px #0005; 
+      background: #fff; 
+      flex-shrink: 0;
+      -webkit-border-radius: 6px;
+      -webkit-box-shadow: 0 2px 8px #0005;
+    }
+    
+    .versions { 
+      display: none; 
+      margin-top: 10px;
+    }
+    
+    .version { 
+      background: rgba(255,255,255,0.15); 
+      border-radius: 7px; 
+      padding: 8px 10px; 
+      margin-bottom: 8px; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      gap: 10px;
+      box-sizing: border-box;
+      -webkit-border-radius: 7px;
+    }
+    
+    .version-info { 
+      display: flex; 
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .version-info span {
+      word-break: break-word;
+    }
+    
+    .version .ver-icon { 
+      width: 20px; 
+      height: 20px;
+      min-width: 20px;
+      min-height: 20px;
+      object-fit: contain; 
+      border-radius: 4px; 
+      background: #fff; 
+      margin-right: 6px; 
+      vertical-align: middle; 
+      box-shadow: 0 2px 6px #0003;
+      flex-shrink: 0;
+      -webkit-border-radius: 4px;
+      -webkit-box-shadow: 0 2px 6px #0003;
+      display: inline-block;
+    }
+    
+    .ios-support { 
+      color: #90caf9; 
+      font-size: 0.9rem; 
+      font-weight: 400; 
+      margin-top: 3px;
+    }
+    
+    .btn { 
+      background: #64b5f6; 
+      color: #000; 
+      border: none; 
+      border-radius: 6px; 
+      padding: 6px 12px; 
+      cursor: pointer; 
+      font-weight: bold; 
+      font-size: 0.9rem; 
+      transition: background 0.15s;
+      flex-shrink: 0;
+      -webkit-border-radius: 6px;
+      -webkit-appearance: none;
+    }
+    
+    .btn:active { 
+      background: #43a047; 
+      color: #fff;
+    }
+    
+    .footer { 
+      text-align: center; 
+      margin-top: 40px; 
+      font-size: 1.05rem; 
+      color: #fff; 
+      letter-spacing: 0.5px; 
+      opacity: 0.8; 
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    .blinker { 
+      display: inline-block; 
+      animation: blink 1.2s infinite alternate; 
+      font-weight: bold;
+    }
+    
+    .blinker2 { 
+      display: inline-block; 
+      animation: blink2 1.2s infinite alternate; 
+      font-weight: bold;
+    }
+    
+    @keyframes blink { 
+      from { color: #ff5555; text-shadow: 0 0 10px #ff555599; } 
+      to { color: #64b5f6; text-shadow: 0 0 10px #64b5f699; } 
+    }
+    
+    @keyframes blink2 { 
+      from { color: #64b5f6; text-shadow: 0 0 10px #64b5f699; } 
+      to { color: #ff5555; text-shadow: 0 0 10px #ff555599; } 
+    }
+    
+    .back-home { 
+      display: inline-block; 
+      margin-bottom: 10px; 
+      padding: 9px 16px; 
+      background: #fff2; 
+      color: #64b5f6; 
+      border-radius: 6px; 
+      text-decoration: none; 
+      font-weight: bold; 
+      font-size: 0.95rem; 
+      box-shadow: 0 2px 8px #0006; 
+      transition: background 0.18s, color 0.18s;
+      -webkit-border-radius: 6px;
+      -webkit-box-shadow: 0 2px 8px #0006;
+      -webkit-appearance: none;
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
+    }
+    
+    .back-home:active { 
+      background: #64b5f6; 
+      color: #fff;
+    }
+    
+    .page2-link { 
+      display: inline-block; 
+      margin-bottom: 10px; 
+      margin-left: 0; 
+      padding: 9px 16px; 
+      background: #fff2; 
+      color: #ff5555; 
+      border-radius: 6px; 
+      text-decoration: none; 
+      font-weight: bold; 
+      font-size: 0.95rem; 
+      box-shadow: 0 2px 8px #0006; 
+      transition: background 0.18s, color 0.18s;
+      -webkit-border-radius: 6px;
+      -webkit-box-shadow: 0 2px 8px #0006;
+      -webkit-appearance: none;
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
+    }
+    
+    .page2-link:active { 
+      background: #ff5555; 
+      color: #fff;
+    }
+    
+    .note-app-id { 
+      text-align: center; 
+      color: #bbb; 
+      font-size: 0.95rem; 
+      margin: 24px 0 0 0; 
+      font-style: italic; 
+      letter-spacing: 0.3px; 
+      user-select: none;
+      -webkit-user-select: none;
+      line-height: 1.4;
+    }
+    
+    @media (max-width: 600px) {
+      body {
+        padding: 15px;
+      }
+      .title-row { 
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .title-row img {
+        width: 45px;
+        height: 45px;
+      }
+      h1 { 
+        font-size: 1.3rem; 
+      }
+      .app-header h2 {
+        font-size: 1rem;
+      }
+      .footer { 
+        font-size: 0.95rem; 
+      }
+      .back-home { 
+        font-size: 0.9rem; 
+      }
+      .page2-link { 
+        font-size: 0.9rem; 
+      }
+    }
 
-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
-/* joystick */
-#joystick {
-  position: fixed;
-  bottom: 80px;
-  left: 30px;
-  width: 120px;
-  height: 120px;
-  background: rgba(0,0,0,0.2);
-  border-radius: 50%;
-  touch-action: none;
-}
-
-#stick {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  background: rgba(0,0,0,0.5);
-  border-radius: 50%;
-  top: 35px;
-  left: 35px;
-}
-
-/* boost button */
-#boost {
-  position: fixed;
-  bottom: 100px;
-  right: 40px;
-  width: 80px;
-  height: 80px;
-  background: rgba(255,0,0,0.6);
-  border-radius: 50%;
-  text-align: center;
-  line-height: 80px;
-  color: white;
-  font-weight: bold;
-}
-</style>
+    @media (max-width: 400px) {
+      h1 { 
+        font-size: 1.1rem;
+        letter-spacing: 0;
+      }
+      .title-row img {
+        width: 40px;
+        height: 40px;
+      }
+      .app-header h2 {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
 </head>
-
 <body>
+  <div class="container">
+    <div class="title-row">
+      <img src="https://raw.githubusercontent.com/nhut990/files/refs/heads/main/hinh/Apple-Logo.png" alt="Apple Logo" />
+      <h1>Cài Đặt Ứng Dụng iOS Phiên Bản Cũ</h1>
+    </div>
+    <div id="apps" class="app-list"></div>
+    <div class="note-app-id">
+      <em>Lưu ý: Các ứng dụng bên trên chỉ sử dụng được khi bạn có ID Apple của người tạo ra app</em>
+    </div>
+  </div>
+  <div class="footer">
+    <a class="page2-link" href="https://nhut990.github.io/appcuios/page2/">Trang sau</a>
+    <br>
+    <a class="back-home" href="https://nhut990.github.io/">← Quay về trang chủ</a>
+    <br>
+    Created by <span class="blinker">Minh</span> <span class="blinker2">Nhut</span><br>
+    &copy; 2025
+  </div>
+  <script type="text/javascript">
+    var apps = [
+      {
+        name: "1. Documents",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Documents.jpg",
+        versions: [
+          { version: "1.0.0.1", ios: "iOS 3.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents1001.plist" },
+          { version: "1.5.0", ios: "iOS 3.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents150.plist" },
+          { version: "1.7.1", ios: "iOS 3.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents171.plist" },
+          { version: "3.2",   ios: "iOS 4.3 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents32.plist" },
+          { version: "4.4",   ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents44.plist" },
+          { version: "5.5.2", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/4TEST.plist" },
+          { version: "6.0.2", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents602.plist" },
+          { version: "6.5.2", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents652.plist" },
+          { version: "6.9",   ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/TEST.plist" },
+          { version: "7.6.1", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1TEST.plist" },
+          { version: "8.1.18", ios: "iOS 14.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2TEST.plist" },
+          { version: "8.12.5", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3TEST.plist" }
+        ]
+      },
+      {
+        name: "2. Facebook",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Facebook.jpg",
+        versions: [
+          { version: "37.0", ios: "iOS 7.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.37.0.plist" },
+          { version: "67.0", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.67.0.plist" },
+          { version: "138.0", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.138.0.plist" },
+          { version: "226.0", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.226.0.plist" },
+          { version: "301.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1Nhut.plist" },
+          { version: "335.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.335.0.plist" },
+          { version: "371.1", ios: "iOS 12.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2Nhut.plist" },
+          { version: "419.0", ios: "iOS 13.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3Nhut.plist" },
+          { version: "452.0.0", ios: "iOS 13.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.452.0.0.plist" },
+          { version: "491.1.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/4Nhut.plist" },
+          { version: "506.1.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/5Nhut.plist" },
+          { version: "513.1.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.513.1.0.plist" },
+          { version: "523.0.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.523.0.0.plist" },
+          { version: "546.0.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.546.0.0.plist" },
+          { version: "551.1.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.551.1.0.plist" }
+        ]
+      },
+      {
+        name: "3. UC.Browser",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/UC.Browser.jpg",
+        versions: [
+          { version: "10.3.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1ucbrowse.plist" },
+          { version: "11.3.5", ios: "iOS 7.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2ucbrowse.plist" }
+        ]
+      },
+      {
+        name: "4. Chợ Tốt",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Chotot.jpg",
+        versions: [
+          { version: "4.9.1", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1chotot.plist" },
+          { version: "4.36.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/chotot.plist" },
+          { version: "4.38.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Cho-tot-4.38.0.plist" },
+          { version: "5.5.1", ios: "iOS 14.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/ChoTot_5.5.1.plist" },
+          { version: "5.20.0", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/ChoTot_5.20.0.plist" }
+        ]
+      },
+      {
+        name: "5. Google Maps",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Google.Maps.jpg",
+        versions: [
+          { version: "1.1.6", ios: "iOS 3.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.1.1.6.plist" },
+          { version: "2.2.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.2.2.0.plist" },
+          { version: "3.0.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/5maps.plist" },
+          { version: "4.2.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.4.2.0.plist" },
+          { version: "4.3.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/maps.plist" },
+          { version: "4.56.0", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.4.56.0.plist" },
+          { version: "5.55.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1maps.plist" },
+          { version: "6.1.0", ios: "iOS 12.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.6.1.0.plist" },
+          { version: "6.17.0", ios: "iOS 13.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.6.17.0.plist" },
+          { version: "6.85.0", ios: "iOS 14.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3maps.plist" },
+          { version: "6.142.0", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2maps.plist" },
+          { version: "24.48.0", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/4maps.plist" },
+          { version: "25.37.1", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Google.Maps.25.37.1.plist" },
+          { version: "26.03.1", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Google.Maps.26.03.1.plist" },
+          { version: "26.10.2", ios: "iOS 16.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Google.Maps.26.10.2.plist" }
+        ]
+      },
+      {
+        name: "6. TikTok",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Tiktok.jpg",
+        versions: [
+          { version: "1.4.0", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/4tiktok.plist" },
+          { version: "23.7.1", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/tiktok.plist" },
+          { version: "24.9.0", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1tiktok.plist" },
+          { version: "30.7.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2tiktok.plist" },
+          { version: "34.5.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3tiktok.plist" },
+          { version: "37.1.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/TikTok.37.1.0.plist" },
+          { version: "40.4.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/TikTok.40.4.0.plist" },
+          { version: "43.9.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/TikTok.43.9.0.plist" }
+        ]
+      },
+      {
+        name: "7. Tiktok China (抖音 Douyin)",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Tiktok.jpg",
+        versions: [
+          { version: "1.0.0", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin340.plist" },
+          { version: "8.7.1", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin871.plist" },
+          { version: "13.6.0", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin13.60.plist" },
+          { version: "21.0.0", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin21.00.plist" },
+          { version: "22.0.0", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin22.00.plist" },
+          { version: "23.8.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin23.80.plist" },
+          { version: "28.9.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin28.90.plist" },
+          { version: "29.8.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin29.80.plist" },
+          { version: "33.6.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin33.60.plist" },
+          { version: "35.4.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin35.40.plist" }
+        ]
+      },
+      {
+        name: "8. BODAPLAY AI",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/BODAPLAY.AI.jpg",
+        versions: [
+          { version: "1.4.1", ios: "iOS 13.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1Vodaplay.plist" },
+          { version: "1.6.0", ios: "iOS 13.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2Vodaplay.plist" },
+          { version: "1.6.2", ios: "iOS 13.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3Vodaplay.plist" }
+        ]
+      },
+      {
+        name: "9. Telegram",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Telegram.jpg",
+        versions: [
+          { version: "9.2.1", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/Telegram.9.2.1.plist" },
+          { version: "10.1", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/Telegram.10.1.plist" },
+          { version: "10.10.1", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/Telegram.10.10.1.plist" },
+          { version: "11.12.1", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/Telegram.11.12.1.plist" },
+          { version: "11.10", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/Telegram.plist" },
+          { version: "11.5", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1Telegram.plist" },
+          { version: "12.1.1", ios: "iOS 13.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2Telegram.plist" }
+        ]
+      },
+      {
+        name: "10. Cốc Cốc",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Cococ.jpg",
+        versions: [
+          { version: "60.3.73", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/cococ.plist" },
+          { version: "70.4.210", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1cococ.plist" },
+          { version: "83.0.208", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2cococ.plist" },
+          { version: "104.0.370", ios: "iOS 14.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/CocCoc_104.0.370.plist" },
+          { version: "130.0.176", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/CocCoc_130.0.176.plist" },
+          { version: "142.0.148", ios: "iOS 16.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/CocCoc_142.0.148.plist" }
+        ]
+      }
+    ];
 
-<iframe src="http://wormzilla.io"></iframe>
-
-<div id="joystick">
-  <div id="stick"></div>
-</div>
-
-<div id="boost">BOOST</div>
-
-<script>
-const stick = document.getElementById("stick");
-const joystick = document.getElementById("joystick");
-
-let centerX, centerY;
-
-joystick.addEventListener("touchstart", e => {
-  const rect = joystick.getBoundingClientRect();
-  centerX = rect.left + rect.width / 2;
-  centerY = rect.top + rect.height / 2;
-});
-
-joystick.addEventListener("touchmove", e => {
-  const touch = e.touches[0];
-  let dx = touch.clientX - centerX;
-  let dy = touch.clientY - centerY;
-
-  const distance = Math.min(Math.sqrt(dx*dx + dy*dy), 40);
-  const angle = Math.atan2(dy, dx);
-
-  const x = Math.cos(angle) * distance;
-  const y = Math.sin(angle) * distance;
-
-  stick.style.transform = `translate(${x}px, ${y}px)`;
-
-  // giả lập chuột di chuyển (không chắc game nhận)
-  window.dispatchEvent(new MouseEvent("mousemove", {
-    clientX: touch.clientX,
-    clientY: touch.clientY
-  }));
-});
-
-joystick.addEventListener("touchend", () => {
-  stick.style.transform = `translate(0px,0px)`;
-});
-
-// boost giả lập click
-document.getElementById("boost").addEventListener("touchstart", () => {
-  window.dispatchEvent(new MouseEvent("mousedown"));
-});
-
-document.getElementById("boost").addEventListener("touchend", () => {
-  window.dispatchEvent(new MouseEvent("mouseup"));
-});
-</script>
-
+    var appsContainer = document.getElementById("apps");
+    for (var i = 0; i < apps.length; i++) {
+      var app = apps[i];
+      if(app.name === "4. Chợ Tốt" || app.name === "2. Facebook" || app.name === "5. Google Maps" || app.name === "6. TikTok") {
+        app.versions.sort(function(a,b){
+          var va = a.version.split('.').map(Number);
+          var vb = b.version.split('.').map(Number);
+          for(var k=0;k<Math.max(va.length,vb.length);k++){
+            var pa = va[k] || 0;
+            var pb = vb[k] || 0;
+            if(pa < pb) return -1;
+            if(pa > pb) return 1;
+          }
+          return 0;
+        });
+      }
+      var appDiv = document.createElement("div");
+      appDiv.className = "app";
+      var versionsHtml = "";
+      for (var j = 0; j < app.versions.length; j++) {
+        var v = app.versions[j];
+        var iconToShow = app.icon;
+        versionsHtml += '<div class="version">' +
+          '<div class="version-info">' +
+            '<span>' +
+              '<img src="' + iconToShow + '" alt="icon" class="ver-icon"> Phiên bản <b>' + v.version + '</b>' +
+            '</span>' +
+            '<span class="ios-support">(' + v.ios + ')</span>' +
+          '</div>' +
+          '<button class="btn" onclick="install(\'' + v.link.replace(/'/g, "\\'") + '\')">Cài đặt</button>' +
+        '</div>';
+      }
+      appDiv.innerHTML =
+        '<div class="app-header" onclick="toggleVersions(' + i + ')">' +
+          '<h2>' +
+            '<span>' + app.name.split(' ')[0] + '</span>' +
+            '<img src="' + app.icon + '" alt="icon" class="app-icon">' +
+            app.name.substring(app.name.indexOf(' ') + 1) +
+          '</h2>' +
+          '<span id="arrow-' + i + '">⬇️</span>' +
+        '</div>' +
+        '<div class="versions" id="versions-' + i + '">' +
+          versionsHtml +
+        '</div>';
+      appsContainer.appendChild(appDiv);
+    }
+    
+    window.toggleVersions = function(index) {
+      var div = document.getElementById("versions-" + index);
+      var arrow = document.getElementById("arrow-" + index);
+      if (div && arrow) {
+        if (div.style.display === "" || div.style.display === "none") {
+          div.style.display = "block";
+          arrow.style.transform = "rotate(180deg)";
+        } else {
+          div.style.display = "none";
+          arrow.style.transform = "";
+        }
+      }
+    }
+    
+    window.install = function(link) {
+      window.location.href = link;
+    }
+  </script>
 </body>
 </html>
