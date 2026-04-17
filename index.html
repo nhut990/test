@@ -2,11 +2,12 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>SpessaSynth MIDI Player</title>
     <style>
         * {
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -27,7 +28,6 @@
             max-width: 600px;
             width: 100%;
             color: white;
-            transition: all 0.3s ease;
         }
         h1 {
             text-align: center;
@@ -44,19 +44,25 @@
             margin-bottom: 30px;
             font-size: 0.85rem;
         }
-        .upload-area {
-            background: rgba(255,255,255,0.1);
-            border: 2px dashed rgba(255,255,255,0.3);
-            border-radius: 20px;
-            padding: 25px;
-            text-align: center;
+        /* QUAN TRỌNG: nút bấm rõ ràng, dễ chạm trên iPhone */
+        .upload-btn {
+            background: #ffb347;
+            border: none;
+            padding: 16px 20px;
+            border-radius: 60px;
+            color: #1e2a3a;
+            font-size: 1.2rem;
+            font-weight: bold;
             cursor: pointer;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 20px;
             transition: 0.2s;
-            margin-bottom: 25px;
+            display: block;
         }
-        .upload-area:hover {
-            background: rgba(255,255,255,0.2);
-            border-color: #ffd89b;
+        .upload-btn:active {
+            transform: scale(0.97);
+            background: #ff9f1a;
         }
         .file-input {
             display: none;
@@ -71,26 +77,23 @@
         button {
             background: rgba(255,255,255,0.15);
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 40px;
             color: white;
             font-size: 1rem;
             cursor: pointer;
             transition: 0.2s;
-            backdrop-filter: blur(5px);
             font-weight: bold;
-        }
-        button:hover {
-            background: #ffb347;
-            color: #1e2a3a;
-            transform: scale(1.02);
+            flex: 1;
+            min-width: 80px;
         }
         button:active {
-            transform: scale(0.98);
+            transform: scale(0.96);
+            background: #ffb347;
+            color: #1e2a3a;
         }
         button:disabled {
             opacity: 0.4;
-            cursor: not-allowed;
             transform: none;
         }
         .status {
@@ -98,10 +101,10 @@
             border-radius: 20px;
             padding: 12px 18px;
             font-family: monospace;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             margin: 15px 0;
             text-align: center;
-            word-break: break-all;
+            word-break: break-word;
         }
         .progress-bar {
             width: 100%;
@@ -119,9 +122,10 @@
         }
         .song-info {
             text-align: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             margin-top: 15px;
             font-weight: bold;
+            word-break: break-word;
         }
         footer {
             text-align: center;
@@ -129,12 +133,12 @@
             margin-top: 25px;
             opacity: 0.5;
         }
+        .loading {
+            animation: pulse 1s infinite;
+        }
         @keyframes pulse {
             0% { opacity: 0.6; }
             100% { opacity: 1; }
-        }
-        .loading {
-            animation: pulse 1s infinite;
         }
     </style>
 </head>
@@ -143,10 +147,9 @@
     <h1>🎹 SpessaSynth Player</h1>
     <div class="sub">MIDI · SF2 SoundFont · Trình duyệt</div>
 
-    <div class="upload-area" id="uploadArea">
-        📂 Nhấn hoặc kéo thả file MIDI vào đây
-        <input type="file" id="midiFileInput" accept=".mid,.midi" class="file-input">
-    </div>
+    <!-- NÚT BẤM RÕ RÀNG TRỰC TIẾP CHO IPHONE -->
+    <button class="upload-btn" id="openFileBtn">📂 Chọn file MIDI</button>
+    <input type="file" id="midiFileInput" accept=".mid,.midi" class="file-input">
 
     <div class="controls">
         <button id="playBtn" disabled>▶ Phát</button>
@@ -163,8 +166,8 @@
     </div>
     <div class="song-info" id="songInfo"></div>
     <footer>
-        Dùng thư viện SpessaSynth | SoundFont: FatBoy (8MB - tải nhanh)<br>
-        Có thể thay bằng GeneralUser GS (30MB) bằng cách đổi URL SoundFont
+        Dùng thư viện SpessaSynth | SoundFont: FatBoy (8MB)<br>
+        Có thể thay bằng GeneralUser GS (30MB)
     </footer>
 </div>
 
@@ -179,12 +182,8 @@
 <script type="module">
     import { Synthesizer, Output, Player } from 'spessasynth_lib';
 
-    // --- CẤU HÌNH SOUNDFONT ---
-    // SoundFont nhẹ (FatBoy 8MB) - tải nhanh, đủ dùng thử
-    // Bạn có thể thay link này bằng bất kỳ SoundFont .sf2 nào (kể cả GeneralUser GS)
     const SOUNDFONT_URL = 'https://cdn.jsdelivr.net/gh/sgossman/FatBoy@master/FatBoy.sf2';
-    // Nếu muốn dùng GeneralUser GS (30MB) chính chủ từ trang SpessaSynth, bỏ comment dòng dưới:
-    // const SOUNDFONT_URL = 'https://spessasus.github.io/SpessaSynth/soundfonts/GeneralUserGS_2_0_3.sf2';
+    // Hoặc dùng bộ chất lượng cao: 'https://spessasus.github.io/SpessaSynth/soundfonts/GeneralUserGS_2_0_3.sf2'
     
     let synth = null;
     let output = null;
@@ -199,8 +198,8 @@
     const stopBtn = document.getElementById('stopBtn');
     const progressFill = document.getElementById('progressFill');
     const songInfoDiv = document.getElementById('songInfo');
-    const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('midiFileInput');
+    const openFileBtn = document.getElementById('openFileBtn');
     
     function setStatus(text, isLoading = false) {
         statusDiv.innerHTML = text;
@@ -211,148 +210,136 @@
         }
     }
     
-    function enableButtons(enable) {
-        playBtn.disabled = !enable || !currentMidiData || !isSoundFontLoaded;
-        pauseBtn.disabled = !enable || !player || !player.isPlaying;
-        stopBtn.disabled = !enable || !player || !player.isPlaying;
+    function enableButtons() {
+        const hasMidi = currentMidiData !== null;
+        playBtn.disabled = !hasMidi || !isSoundFontLoaded;
+        pauseBtn.disabled = !hasMidi || !player || !player.isPlaying;
+        stopBtn.disabled = !hasMidi || !player || !player.isPlaying;
     }
     
-    // Khởi tạo Synthesizer + load SoundFont
     async function initSynth() {
-        setStatus("🎧 Đang tải SoundFont (khoảng 8-30MB)...", true);
+        setStatus("🎧 Đang tải SoundFont (khoảng 8MB)...", true);
         try {
-            // Tạo output (Web Audio)
             output = new Output();
-            // Tạo synthesizer với sample rate mặc định (44100)
             synth = new Synthesizer(output.audioContext, {});
-            
-            // Load SoundFont từ URL
             await synth.loadSoundFont(SOUNDFONT_URL);
             isSoundFontLoaded = true;
-            setStatus("✅ SoundFont đã sẵn sàng! Hãy tải file MIDI lên.");
-            enableButtons(true);
+            setStatus("✅ SoundFont sẵn sàng! Nhấn 'Chọn file MIDI'");
+            enableButtons();
         } catch (e) {
             console.error(e);
-            setStatus("❌ Lỗi tải SoundFont: " + e.message + "<br>Kiểm tra kết nối hoặc thử SoundFont khác.");
+            setStatus("❌ Lỗi tải SoundFont: " + e.message);
         }
     }
     
-    // Tạo Player từ dữ liệu MIDI
     function createPlayerFromMidi(midiBytes) {
-        if (!synth || !isSoundFontLoaded) {
-            setStatus("⚠️ SoundFont chưa sẵn sàng, thử lại sau.");
-            return null;
-        }
+        if (!synth || !isSoundFontLoaded) return null;
         try {
-            // Dừng player cũ nếu có
             if (player) {
                 player.stop();
                 player = null;
             }
-            // Tạo player mới
             player = new Player(synth, output);
-            // Load MIDI file (dạng Uint8Array)
             player.loadMIDI(midiBytes);
             
-            // Cập nhật thông tin bài hát (nếu có metadata)
             const duration = player.getDuration() || 0;
             const minutes = Math.floor(duration / 60);
             const seconds = Math.floor(duration % 60);
             songInfoDiv.innerHTML = `🎵 ${currentFileName}  |  ⏱ ${minutes}:${seconds.toString().padStart(2,'0')}`;
             
-            // Thiết lập cập nhật thanh progress
-            let interval = null;
-            const updateProgress = () => {
-                if (player && player.isPlaying) {
-                    const current = player.getCurrentTime();
-                    const total = player.getDuration();
-                    if (total > 0) {
-                        const percent = (current / total) * 100;
-                        progressFill.style.width = percent + '%';
-                    }
-                    requestAnimationFrame(updateProgress);
-                } else if (!player || !player.isPlaying) {
-                    if (interval) cancelAnimationFrame(interval);
-                }
-            };
-            // Hủy interval cũ rồi chạy mới
-            if (window._progressInterval) cancelAnimationFrame(window._progressInterval);
-            window._progressInterval = requestAnimationFrame(function loop() {
+            // Cập nhật thanh progress
+            function updateProgress() {
                 if (player && player.isPlaying) {
                     const current = player.getCurrentTime();
                     const total = player.getDuration();
                     if (total > 0) progressFill.style.width = (current / total) * 100 + '%';
-                    window._progressInterval = requestAnimationFrame(loop);
-                } else {
-                    if (!player || !player.isPlaying) {
-                        // Nếu dừng hẳn mà chưa về 0 thì reset sau khi kết thúc bài
-                        if (player && player.getCurrentTime() >= player.getDuration() - 0.05) {
-                            progressFill.style.width = '0%';
-                        }
+                    requestAnimationFrame(updateProgress);
+                } else if (!player || !player.isPlaying) {
+                    if (player && player.getCurrentTime() >= player.getDuration() - 0.05) {
+                        progressFill.style.width = '0%';
                     }
-                    window._progressInterval = null;
+                }
+            }
+            if (window._anim) cancelAnimationFrame(window._anim);
+            window._anim = requestAnimationFrame(function loop() {
+                if (player && player.isPlaying) {
+                    const curr = player.getCurrentTime();
+                    const total = player.getDuration();
+                    if (total > 0) progressFill.style.width = (curr / total) * 100 + '%';
+                    window._anim = requestAnimationFrame(loop);
+                } else {
+                    window._anim = null;
                 }
             });
             
-            setStatus(`🎶 Đã load: ${currentFileName} — Nhấn Play`);
-            enableButtons(true);
+            setStatus(`✅ Đã load: ${currentFileName}`);
+            enableButtons();
             return player;
         } catch (err) {
-            console.error(err);
-            setStatus("❌ Lỗi đọc file MIDI: " + err.message);
+            setStatus("❌ Lỗi MIDI: " + err.message);
             return null;
         }
     }
     
-    // Xử lý file MIDI được chọn
     function handleMidiFile(file) {
         if (!file) return;
         if (!file.name.match(/\.(mid|midi)$/i)) {
-            setStatus("❌ Vui lòng chọn file .mid hoặc .midi");
+            setStatus("❌ Cần file .mid hoặc .midi");
             return;
         }
         currentFileName = file.name;
         setStatus(`📀 Đang đọc ${file.name}...`, true);
         
         const reader = new FileReader();
-        reader.onload = async (e) => {
-            const arrayBuffer = e.target.result;
-            currentMidiData = new Uint8Array(arrayBuffer);
+        reader.onload = (e) => {
+            currentMidiData = new Uint8Array(e.target.result);
             if (isSoundFontLoaded && synth) {
                 createPlayerFromMidi(currentMidiData);
             } else {
-                setStatus("⏳ SoundFont chưa xong, sẽ tự động tạo player sau khi load SF2...");
-                // Chờ SoundFont load xong rồi mới tạo player
-                const waitForSF = setInterval(() => {
-                    if (isSoundFontLoaded && synth) {
-                        clearInterval(waitForSF);
+                const wait = setInterval(() => {
+                    if (isSoundFontLoaded) {
+                        clearInterval(wait);
                         createPlayerFromMidi(currentMidiData);
                     }
                 }, 200);
             }
         };
-        reader.onerror = () => setStatus("❌ Không thể đọc file");
+        reader.onerror = () => setStatus("❌ Đọc file thất bại");
         reader.readAsArrayBuffer(file);
     }
     
-    // --- SỰ KIỆN ĐIỀU KHIỂN ---
+    // --- SỰ KIỆN ---
+    // CÁCH 1: click vào nút để mở file (HOẠT ĐỘNG TRÊN IPHONE)
+    openFileBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        fileInput.click();  // kích hoạt input file ẩn
+    });
+    
+    // CÁCH 2: nếu người dùng chọn file từ input
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleMidiFile(e.target.files[0]);
+        }
+        // reset input để có thể chọn cùng file lại lần sau
+        fileInput.value = '';
+    });
+    
+    // Điều khiển phát nhạc
     playBtn.onclick = () => {
         if (player && currentMidiData && !player.isPlaying) {
             player.play();
             setStatus(`🎵 Đang phát: ${currentFileName}`);
-            enableButtons(true);
+            enableButtons();
         } else if (!player && currentMidiData && isSoundFontLoaded) {
             createPlayerFromMidi(currentMidiData)?.play();
-        } else {
-            setStatus("⚠️ Chưa có MIDI hoặc SoundFont chưa sẵn sàng.");
         }
     };
     
     pauseBtn.onclick = () => {
         if (player && player.isPlaying) {
             player.pause();
-            setStatus(`⏸ Đã tạm dừng: ${currentFileName}`);
-            enableButtons(true);
+            setStatus(`⏸ Tạm dừng: ${currentFileName}`);
+            enableButtons();
         }
     };
     
@@ -361,39 +348,15 @@
             player.stop();
             progressFill.style.width = '0%';
             setStatus(`⏹ Đã dừng: ${currentFileName}`);
-            enableButtons(true);
-            if (window._progressInterval) {
-                cancelAnimationFrame(window._progressInterval);
-                window._progressInterval = null;
+            enableButtons();
+            if (window._anim) {
+                cancelAnimationFrame(window._anim);
+                window._anim = null;
             }
         }
     };
     
-    // Kéo thả file
-    uploadArea.addEventListener('click', () => fileInput.click());
-    uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.style.background = 'rgba(255,255,255,0.25)';
-    });
-    uploadArea.addEventListener('dragleave', () => {
-        uploadArea.style.background = 'rgba(255,255,255,0.1)';
-    });
-    uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.style.background = 'rgba(255,255,255,0.1)';
-        const files = e.dataTransfer.files;
-        if (files.length > 0) handleMidiFile(files[0]);
-    });
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) handleMidiFile(e.target.files[0]);
-    });
-    
-    // Bắt đầu khởi tạo
-    initSynth().catch(console.error);
-    
-    // Hướng dẫn thay SoundFont: chỉ cần sửa biến SOUNDFONT_URL ở đầu script.
-    // Ví dụ dùng GeneralUser GS (30MB) chính chủ của SpessaSynth:
-    // SOUNDFONT_URL = 'https://spessasus.github.io/SpessaSynth/soundfonts/GeneralUserGS_2_0_3.sf2'
+    initSynth();
 </script>
 </body>
 </html>
