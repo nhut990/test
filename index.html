@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mô phỏng Timemark Camera</title>
+    <title>Timemark Free 100%</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,19 +26,19 @@
             width: 100%;
             display: block;
         }
-        /* Giao diện hiển thị đè chữ lên camera lúc đang xem (Preview) */
         #watermark-overlay {
             position: absolute;
             bottom: 15px;
             left: 15px;
             color: #fff;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-            font-size: 14px;
+            font-size: 13px;
             pointer-events: none;
             line-height: 1.4;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px;
             border-radius: 5px;
+            max-width: 80%;
         }
         button {
             margin-top: 20px;
@@ -50,27 +50,24 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: background 0.2s;
         }
-        button:hover {
-            background-color: #0056b3;
-        }
-        h3 { margin-top: 30px; }
+        button:hover { background-color: #0056b3; }
         #result-image {
             max-width: 100%;
             width: 500px;
             border-radius: 10px;
+            margin-top: 20px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
 
-    <h2>Timemark Web Camera</h2>
+    <h2>Timemark Free Web Camera</h2>
     
     <div id="camera-container">
         <video id="video" autoplay playsinline></video>
-        <div id="watermark-overlay">Đang tải vị trí và thời gian...</div>
+        <div id="watermark-overlay">Đang xác định vị trí...</div>
     </div>
 
     <button id="snap">Chụp Ảnh</button>
@@ -79,7 +76,7 @@
 
     <h3>Ảnh kết quả:</h3>
     <div id="result-container">
-        <p style="color: #666;">Chưa có ảnh nào được chụp.</p>
+        <p>Chưa có ảnh nào được chụp.</p>
     </div>
 
 <script>
@@ -88,80 +85,128 @@
     const snap = document.getElementById('snap');
     const watermarkOverlay = document.getElementById('watermark-overlay');
     const resultContainer = document.getElementById('result-container');
+    
+    let lat = 0, lon = 0;
+    let addressStr = "Đang lấy địa chỉ...";
+    let mapImageLoaded = false;
+    const mapImg = new Image();
+    mapImg.crossOrigin = "anonymous"; // Tránh lỗi bảo mật Canvas công cộng
 
-    let currentCoords = "Chưa có tọa độ";
-
-    // 1. Lấy tọa độ GPS từ trình duyệt
+    // 1. Lấy vị trí GPS và chuyển thành địa chỉ chữ + Tải Map miễn phí không token
     if (navigator.geolocation) {
-        navigator.geolocation.watchPosition((position) => {
-            const lat = position.coords.latitude.toFixed(6);
-            const lon = position.coords.longitude.toFixed(6);
-            currentCoords = `Tọa độ: ${lat}, ${lon}`;
+        navigator.geolocation.getCurrentPosition((position) => {
+            lat = position.coords.latitude;
+            lon = position.coords.longitude;
+            
+            // API lấy địa chỉ miễn phí từ OpenStreetMap (Nominatim)
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`)
+                .then(res => res.json())
+                .then(data => {
+                    addressStr = data.display_name || `Tọa độ: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+                })
+                .catch(() => {
+                    addressStr = `Tọa độ: ${lat.toFixed(5)}, ${lon.toFixed(5)} (Lỗi tìm địa chỉ)`;
+                });
+
+            // Sử dụng API Bản đồ tĩnh miễn phí 100% của OpenStreetMap thông qua nhà cung cấp công cộng
+            // Bản đồ này định dạng tiêu chuẩn (Street Map), phóng to mức 15.
+            mapImg.src = `https://static-maps.yandex.ru/1.x/?ll=${lon},${lat}&z=15&l=map&size=200,200&pt=${lon},${lat},pm2blm`;
+            mapImg.onload = () => { mapImageLoaded = true; };
+
         }, (error) => {
-            currentCoords = "Không thể lấy vị trí (Chưa cấp quyền)";
+            addressStr = "Không thể truy cập GPS / Chưa cấp quyền vị trí.";
         }, { enableHighAccuracy: true });
     } else {
-        currentCoords = "Trình duyệt không hỗ trợ GPS";
+        addressStr = "Trình duyệt không hỗ trợ GPS.";
     }
 
-    // 2. Cập nhật thời gian thực lên màn hình preview
+    // 2. Cập nhật giao diện chữ hiển thị lúc xem camera (Preview)
     function updateOverlay() {
         const now = new Date();
-        const timeStr = now.toLocaleString('vi-VN'); // Định dạng ngày giờ VN
-        watermarkOverlay.innerHTML = `${timeStr}<br>${currentCoords}`;
+        watermarkOverlay.innerHTML = `<b>Thời gian:</b> ${now.toLocaleString('vi-VN')}<br><b>Địa điểm:</b> ${addressStr}`;
         requestAnimationFrame(updateOverlay);
     }
     updateOverlay();
 
-    // 3. Kích hoạt Camera
+    // 3. Mở Camera
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
-        .then((stream) => {
-            video.srcObject = stream;
-        })
-        .catch((err) => {
-            console.error("Lỗi truy cập camera: ", err);
-            alert("Vui lòng cấp quyền truy cập camera!");
-        });
+        .then(stream => { video.srcObject = stream; })
+        .catch(err => { alert("Vui lòng cấp quyền mở Camera!"); });
 
-    // 4. Xử lý sự kiện CHỤP ẢNH
+    // 4. Xử lý Chụp ảnh và ghép Map, Đóng dấu chữ
     snap.addEventListener('click', () => {
-        // Đặt kích thước canvas bằng với kích thước thật của luồng video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        
         const ctx = canvas.getContext('2d');
         
-        // Vẽ hình ảnh từ video lên canvas
+        // Vẽ ảnh camera gốc
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // Thiết lập font chữ và màu sắc cho watermark (tỷ lệ theo kích thước ảnh)
-        const fontSize = Math.max(16, Math.floor(canvas.width * 0.035)); 
+        // Tỷ lệ font chữ theo kích thước ảnh
+        const fontSize = Math.max(14, Math.floor(canvas.width * 0.03));
         ctx.font = `bold ${fontSize}px Arial`;
         ctx.fillStyle = "white";
-        
-        // Tạo đổ bóng cho chữ để dễ đọc trên nền sáng
         ctx.shadowColor = "black";
-        ctx.shadowBlur = 6;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
+        ctx.shadowBlur = 4;
 
-        // Chuẩn bị nội dung chữ
         const now = new Date();
-        const timeStr = now.toLocaleString('vi-VN');
-        
-        // Vẽ chữ lên góc dưới bên trái của ảnh
-        const marginX = canvas.width * 0.04;
-        const marginY = canvas.height * 0.05;
-        
-        // Vẽ dòng tọa độ trước (dưới cùng) rồi tới dòng thời gian
-        ctx.fillText(currentCoords, marginX, canvas.height - marginY);
-        ctx.fillText(timeStr, marginX, canvas.height - marginY - (fontSize * 1.3));
+        const timeStr = `Thời gian: ${now.toLocaleString('vi-VN')}`;
+        const locStr = `Vị trí: ${addressStr}`;
 
-        // Xuất canvas thành file ảnh (base64) và hiển thị ra màn hình
+        // Tính toán kích thước và vị trí bản đồ nhỏ (Mini-map) ở góc dưới bên phải ảnh
+        const mapSize = Math.floor(canvas.width * 0.25); // Chiếm 25% chiều rộng ảnh
+        const marginRight = canvas.width * 0.04;
+        const marginBottom = canvas.height * 0.05;
+        
+        // Vẽ bản đồ nếu đã tải xong
+        if (mapImageLoaded) {
+            ctx.drawImage(mapImg, canvas.width - mapSize - marginRight, canvas.height - mapSize - marginBottom, mapSize, mapSize);
+            
+            // Vẽ viền trắng mỏng cho bản đồ đẹp hơn
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(canvas.width - mapSize - marginRight, canvas.height - mapSize - marginBottom, mapSize, mapSize);
+        }
+
+        // Vẽ thông tin chữ (Góc dưới bên trái)
+        const marginLeft = canvas.width * 0.04;
+        
+        // Tự động xuống dòng cho địa chỉ nếu quá dài để tránh tràn viền ảnh
+        function wrapText(context, text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+            for(let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                let metrics = context.measureText(testLine);
+                let testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    context.fillText(line, x, y);
+                    line = words[n] + ' ';
+                    y += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            context.fillText(line, x, y);
+        }
+
+        // Ước lượng vùng chứa chữ (Tránh đè vào khu vực chứa bản đồ bên phải)
+        const maxTextWidth = canvas.width - mapSize - (marginRight * 3);
+        
+        // Vẽ dòng thời gian trước
+        ctx.fillText(timeStr, marginLeft, canvas.height - marginBottom - (fontSize * 3));
+        // Vẽ dòng địa chỉ (tự xuống dòng nếu dài)
+        wrapText(ctx, locStr, marginLeft, canvas.height - marginBottom - fontSize, maxTextWidth, fontSize * 1.3);
+
+        // Xuất ảnh thành file thành phẩm
         const dataURL = canvas.toDataURL('image/jpeg');
-        resultContainer.innerHTML = `<img id="result-image" src="${dataURL}" alt="Captured Image"><br><a href="${dataURL}" download="timemark_${Date.now()}.jpg"><button style="background-color: #28a745;">Tải ảnh về máy</button></a>`;
+        resultContainer.innerHTML = `
+            <img id="result-image" src="${dataURL}">
+            <br>
+            <a href="${dataURL}" download="timemark_free_${Date.now()}.jpg">
+                <button style="background-color: #28a745;">Tải ảnh thành phẩm về máy</button>
+            </a>`;
     });
 </script>
-
 </body>
 </html>
