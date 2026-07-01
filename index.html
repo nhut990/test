@@ -3,210 +3,749 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timemark Free 100%</title>
+    <title>Ứng dụng Chụp Ảnh với Vị Trí</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f0f2f5;
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 20px;
         }
-        #camera-container {
-            position: relative;
+
+        .container {
             width: 100%;
             max-width: 500px;
-            border-radius: 10px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .camera-section {
+            margin-bottom: 20px;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 3/4;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         video {
             width: 100%;
-            display: block;
+            height: 100%;
+            object-fit: cover;
         }
-        #watermark-overlay {
-            position: absolute;
-            bottom: 15px;
-            left: 15px;
-            color: #fff;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+
+        .canvas-container {
+            display: none;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .camera-info {
+            background: #f0f4ff;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
             font-size: 13px;
-            pointer-events: none;
-            line-height: 1.4;
-            background: rgba(0, 0, 0, 0.4);
+            color: #333;
+        }
+
+        .camera-info div {
+            margin-bottom: 8px;
+        }
+
+        .camera-info div:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .button-group-full {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #e0e7ff;
+            color: #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #cdd5ff;
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-success {
+            background: #51cf66;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #40c057;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(81, 207, 102, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .location-section {
+            background: #fff5f5;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .location-info {
+            color: #333;
+        }
+
+        .location-info div {
+            margin-bottom: 8px;
+        }
+
+        .location-info div:last-child {
+            margin-bottom: 0;
+        }
+
+        .location-status {
             padding: 8px;
             border-radius: 5px;
-            max-width: 80%;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 10px;
         }
-        button {
+
+        .status-loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .gallery-section {
             margin-top: 20px;
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: bold;
-            background-color: #007bff;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 20px;
+        }
+
+        .gallery-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+        }
+
+        .gallery-item {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            background: #f0f0f0;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-item-delete {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 107, 107, 0.9);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 50%;
+            font-size: 12px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
-        button:hover { background-color: #0056b3; }
-        #result-image {
-            max-width: 100%;
-            width: 500px;
-            border-radius: 10px;
-            margin-top: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+
+        .gallery-item:hover .gallery-item-delete {
+            opacity: 1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            background: white;
+            border-radius: 15px;
+            overflow: auto;
+        }
+
+        .modal img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 35px;
+            height: 35px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <div class="header">
+            <h1>📸 Chụp Ảnh</h1>
+            <p>Với vị trí địa lý và độ phân giải cao</p>
+        </div>
 
-    <h2>Timemark Free Web Camera</h2>
-    
-    <div id="camera-container">
-        <video id="video" autoplay playsinline></video>
-        <div id="watermark-overlay">Đang xác định vị trí...</div>
+        <div class="content">
+            <div class="error-message" id="errorMessage"></div>
+
+            <!-- Camera Section -->
+            <div class="camera-section">
+                <div class="video-container">
+                    <video id="video" playsinline></video>
+                    <canvas id="canvas" class="canvas-container"></canvas>
+                </div>
+
+                <div class="camera-info" id="cameraInfo">
+                    <div><span class="info-label">📷 Máy ảnh:</span> <span id="cameraResolution">Đang tải...</span></div>
+                    <div><span class="info-label">📊 Độ phân giải:</span> <span id="resolutionDisplay">Tối đa</span></div>
+                </div>
+
+                <!-- Location Section -->
+                <div class="location-section">
+                    <div class="location-status" id="locationStatus">
+                        <span class="loader"></span> Đang lấy vị trí...
+                    </div>
+                    <div class="location-info" id="locationInfo">
+                        <div><span class="info-label">📍 Vĩ độ:</span> <span id="latitude">Đang tải...</span></div>
+                        <div><span class="info-label">📍 Kinh độ:</span> <span id="longitude">Đang tải...</span></div>
+                        <div><span class="info-label">📏 Độ chính xác:</span> <span id="accuracy">Đang tải...</span> m</div>
+                        <div><span class="info-label">🕐 Thời gian:</span> <span id="timestamp">Đang tải...</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Button Group -->
+            <div class="button-group-full">
+                <div class="button-group">
+                    <button id="captureBtn" class="btn-primary" onclick="capturePhoto()">
+                        <span>📸</span> Chụp ảnh
+                    </button>
+                    <button id="switchCameraBtn" class="btn-secondary" onclick="switchCamera()" style="display:none;">
+                        <span>🔄</span> Đổi camera
+                    </button>
+                </div>
+                <button id="downloadAllBtn" class="btn-success" onclick="downloadAllPhotos()" style="display:none;">
+                    <span>⬇️</span> Tải tất cả ảnh
+                </button>
+                <button id="clearAllBtn" class="btn-danger" onclick="clearAllPhotos()" style="display:none;">
+                    <span>🗑️</span> Xóa tất cả
+                </button>
+            </div>
+        </div>
+
+        <!-- Gallery Section -->
+        <div class="gallery-section" id="gallerySection" style="display:none;">
+            <div class="gallery-title">📸 Ảnh đã chụp (<span id="photoCount">0</span>)</div>
+            <div class="gallery" id="gallery"></div>
+        </div>
     </div>
 
-    <button id="snap">Chụp Ảnh</button>
-
-    <canvas id="canvas" style="display:none;"></canvas>
-
-    <h3>Ảnh kết quả:</h3>
-    <div id="result-container">
-        <p>Chưa có ảnh nào được chụp.</p>
+    <!-- Modal for fullscreen view -->
+    <div class="modal" id="photoModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <img id="modalImage" src="" alt="">
+        </div>
     </div>
 
-<script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const snap = document.getElementById('snap');
-    const watermarkOverlay = document.getElementById('watermark-overlay');
-    const resultContainer = document.getElementById('result-container');
-    
-    let lat = 0, lon = 0;
-    let addressStr = "Đang lấy địa chỉ...";
-    let mapImageLoaded = false;
-    const mapImg = new Image();
-    mapImg.crossOrigin = "anonymous"; // Tránh lỗi bảo mật Canvas công cộng
+    <script>
+        let currentStream = null;
+        let facingMode = 'environment'; // 'user' for front, 'environment' for back
+        let photos = [];
+        let currentLocation = null;
+        let maxResolution = { width: 1920, height: 1440 };
 
-    // 1. Lấy vị trí GPS và chuyển thành địa chỉ chữ + Tải Map miễn phí không token
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((position) => {
-            lat = position.coords.latitude;
-            lon = position.coords.longitude;
+        // Get maximum camera resolution
+        async function getMaxResolution() {
+            try {
+                const capabilities = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = capabilities.filter(device => device.kind === 'videoinput');
+                
+                if (videoDevices.length > 0) {
+                    document.getElementById('cameraResolution').textContent = 
+                        `${videoDevices.length} camera(s) available`;
+                }
+                
+                // Try to get higher resolution
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: facingMode,
+                            width: { ideal: 4096 },
+                            height: { ideal: 2160 }
+                        }
+                    });
+                    
+                    const videoTrack = stream.getVideoTracks()[0];
+                    const settings = videoTrack.getSettings();
+                    maxResolution = {
+                        width: settings.width,
+                        height: settings.height
+                    };
+                    
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    document.getElementById('resolutionDisplay').textContent = 
+                        `${maxResolution.width}x${maxResolution.height}`;
+                } catch (e) {
+                    maxResolution = { width: 1920, height: 1440 };
+                    document.getElementById('resolutionDisplay').textContent = 
+                        `${maxResolution.width}x${maxResolution.height}`;
+                }
+            } catch (error) {
+                console.error('Error getting resolution:', error);
+            }
+        }
+
+        // Start camera
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: facingMode,
+                        width: { ideal: maxResolution.width },
+                        height: { ideal: maxResolution.height }
+                    },
+                    audio: false
+                };
+
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const video = document.getElementById('video');
+                video.srcObject = currentStream;
+
+                const videoTrack = currentStream.getVideoTracks()[0];
+                const settings = videoTrack.getSettings();
+                
+                document.getElementById('resolutionDisplay').textContent = 
+                    `${settings.width}x${settings.height}`;
+
+                // Show switch camera button if multiple cameras available
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(d => d.kind === 'videoinput');
+                if (videoDevices.length > 1) {
+                    document.getElementById('switchCameraBtn').style.display = 'flex';
+                }
+
+                showError('');
+            } catch (error) {
+                showError('Không thể truy cập máy ảnh: ' + error.message);
+                console.error('Camera error:', error);
+            }
+        }
+
+        // Get location
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        currentLocation = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy,
+                            timestamp: new Date().toLocaleString('vi-VN')
+                        };
+
+                        document.getElementById('latitude').textContent = 
+                            currentLocation.latitude.toFixed(6);
+                        document.getElementById('longitude').textContent = 
+                            currentLocation.longitude.toFixed(6);
+                        document.getElementById('accuracy').textContent = 
+                            currentLocation.accuracy.toFixed(2);
+                        document.getElementById('timestamp').textContent = 
+                            currentLocation.timestamp;
+                        
+                        document.getElementById('locationStatus').className = 'location-status status-success';
+                        document.getElementById('locationStatus').textContent = '✓ Đã lấy vị trí';
+                    },
+                    (error) => {
+                        document.getElementById('locationStatus').className = 'location-status status-error';
+                        
+                        let errorMsg = 'Lỗi lấy vị trí: ';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMsg += 'Bạn chưa cho phép truy cập vị trí';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMsg += 'Không thể xác định vị trí';
+                                break;
+                            case error.TIMEOUT:
+                                errorMsg += 'Hết thời gian chờ';
+                                break;
+                        }
+                        
+                        document.getElementById('locationStatus').textContent = '✗ ' + errorMsg;
+                        console.error('Location error:', error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                showError('Trình duyệt không hỗ trợ Geolocation');
+            }
+        }
+
+        // Capture photo
+        async function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
             
-            // API lấy địa chỉ miễn phí từ OpenStreetMap (Nominatim)
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`)
-                .then(res => res.json())
-                .then(data => {
-                    addressStr = data.display_name || `Tọa độ: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-                })
-                .catch(() => {
-                    addressStr = `Tọa độ: ${lat.toFixed(5)}, ${lon.toFixed(5)} (Lỗi tìm địa chỉ)`;
+            if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+                showError('Camera chưa sẵn sàng');
+                return;
+            }
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0);
+
+            // Add location info to image
+            if (currentLocation) {
+                context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                context.fillRect(0, canvas.height - 100, canvas.width, 100);
+                
+                context.fillStyle = '#FFFFFF';
+                context.font = 'bold 14px Arial';
+                context.fillText(`📍 ${currentLocation.latitude.toFixed(6)}, ${currentLocation.longitude.toFixed(6)}`, 10, canvas.height - 75);
+                context.font = '12px Arial';
+                context.fillText(`Độ chính xác: ${currentLocation.accuracy.toFixed(2)}m | ${currentLocation.timestamp}`, 10, canvas.height - 55);
+            }
+
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                photos.push({
+                    url: url,
+                    blob: blob,
+                    location: currentLocation,
+                    timestamp: new Date().toLocaleString('vi-VN'),
+                    metadata: {
+                        resolution: `${canvas.width}x${canvas.height}`,
+                        size: (blob.size / 1024).toFixed(2) + ' KB'
+                    }
                 });
 
-            // Sử dụng API Bản đồ tĩnh miễn phí 100% của OpenStreetMap thông qua nhà cung cấp công cộng
-            // Bản đồ này định dạng tiêu chuẩn (Street Map), phóng to mức 15.
-            mapImg.src = `https://static-maps.yandex.ru/1.x/?ll=${lon},${lat}&z=15&l=map&size=200,200&pt=${lon},${lat},pm2blm`;
-            mapImg.onload = () => { mapImageLoaded = true; };
+                updateGallery();
+                showError('');
+            }, 'image/jpeg', 0.95);
+        }
 
-        }, (error) => {
-            addressStr = "Không thể truy cập GPS / Chưa cấp quyền vị trí.";
-        }, { enableHighAccuracy: true });
-    } else {
-        addressStr = "Trình duyệt không hỗ trợ GPS.";
-    }
-
-    // 2. Cập nhật giao diện chữ hiển thị lúc xem camera (Preview)
-    function updateOverlay() {
-        const now = new Date();
-        watermarkOverlay.innerHTML = `<b>Thời gian:</b> ${now.toLocaleString('vi-VN')}<br><b>Địa điểm:</b> ${addressStr}`;
-        requestAnimationFrame(updateOverlay);
-    }
-    updateOverlay();
-
-    // 3. Mở Camera
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
-        .then(stream => { video.srcObject = stream; })
-        .catch(err => { alert("Vui lòng cấp quyền mở Camera!"); });
-
-    // 4. Xử lý Chụp ảnh và ghép Map, Đóng dấu chữ
-    snap.addEventListener('click', () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        
-        // Vẽ ảnh camera gốc
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        // Tỷ lệ font chữ theo kích thước ảnh
-        const fontSize = Math.max(14, Math.floor(canvas.width * 0.03));
-        ctx.font = `bold ${fontSize}px Arial`;
-        ctx.fillStyle = "white";
-        ctx.shadowColor = "black";
-        ctx.shadowBlur = 4;
-
-        const now = new Date();
-        const timeStr = `Thời gian: ${now.toLocaleString('vi-VN')}`;
-        const locStr = `Vị trí: ${addressStr}`;
-
-        // Tính toán kích thước và vị trí bản đồ nhỏ (Mini-map) ở góc dưới bên phải ảnh
-        const mapSize = Math.floor(canvas.width * 0.25); // Chiếm 25% chiều rộng ảnh
-        const marginRight = canvas.width * 0.04;
-        const marginBottom = canvas.height * 0.05;
-        
-        // Vẽ bản đồ nếu đã tải xong
-        if (mapImageLoaded) {
-            ctx.drawImage(mapImg, canvas.width - mapSize - marginRight, canvas.height - mapSize - marginBottom, mapSize, mapSize);
+        // Switch camera
+        async function switchCamera() {
+            facingMode = facingMode === 'user' ? 'environment' : 'user';
             
-            // Vẽ viền trắng mỏng cho bản đồ đẹp hơn
-            ctx.strokeStyle = "white";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(canvas.width - mapSize - marginRight, canvas.height - mapSize - marginBottom, mapSize, mapSize);
-        }
-
-        // Vẽ thông tin chữ (Góc dưới bên trái)
-        const marginLeft = canvas.width * 0.04;
-        
-        // Tự động xuống dòng cho địa chỉ nếu quá dài để tránh tràn viền ảnh
-        function wrapText(context, text, x, y, maxWidth, lineHeight) {
-            const words = text.split(' ');
-            let line = '';
-            for(let n = 0; n < words.length; n++) {
-                let testLine = line + words[n] + ' ';
-                let metrics = context.measureText(testLine);
-                let testWidth = metrics.width;
-                if (testWidth > maxWidth && n > 0) {
-                    context.fillText(line, x, y);
-                    line = words[n] + ' ';
-                    y += lineHeight;
-                } else {
-                    line = testLine;
-                }
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
             }
-            context.fillText(line, x, y);
+            
+            startCamera();
         }
 
-        // Ước lượng vùng chứa chữ (Tránh đè vào khu vực chứa bản đồ bên phải)
-        const maxTextWidth = canvas.width - mapSize - (marginRight * 3);
-        
-        // Vẽ dòng thời gian trước
-        ctx.fillText(timeStr, marginLeft, canvas.height - marginBottom - (fontSize * 3));
-        // Vẽ dòng địa chỉ (tự xuống dòng nếu dài)
-        wrapText(ctx, locStr, marginLeft, canvas.height - marginBottom - fontSize, maxTextWidth, fontSize * 1.3);
+        // Update gallery
+        function updateGallery() {
+            const gallery = document.getElementById('gallery');
+            const gallerySection = document.getElementById('gallerySection');
+            const photoCount = document.getElementById('photoCount');
+            
+            gallery.innerHTML = '';
+            photoCount.textContent = photos.length;
 
-        // Xuất ảnh thành file thành phẩm
-        const dataURL = canvas.toDataURL('image/jpeg');
-        resultContainer.innerHTML = `
-            <img id="result-image" src="${dataURL}">
-            <br>
-            <a href="${dataURL}" download="timemark_free_${Date.now()}.jpg">
-                <button style="background-color: #28a745;">Tải ảnh thành phẩm về máy</button>
-            </a>`;
-    });
-</script>
+            if (photos.length > 0) {
+                gallerySection.style.display = 'block';
+                document.getElementById('downloadAllBtn').style.display = 'flex';
+                document.getElementById('clearAllBtn').style.display = 'flex';
+
+                photos.forEach((photo, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+                    item.innerHTML = `
+                        <img src="${photo.url}" alt="Photo ${index + 1}" onclick="viewPhoto(${index})">
+                        <button class="gallery-item-delete" onclick="deletePhoto(${index})">✕</button>
+                    `;
+                    gallery.appendChild(item);
+                });
+            } else {
+                gallerySection.style.display = 'none';
+                document.getElementById('downloadAllBtn').style.display = 'none';
+                document.getElementById('clearAllBtn').style.display = 'none';
+            }
+        }
+
+        // View photo in modal
+        function viewPhoto(index) {
+            document.getElementById('modalImage').src = photos[index].url;
+            document.getElementById('photoModal').classList.add('active');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('photoModal').classList.remove('active');
+        }
+
+        // Delete photo
+        function deletePhoto(index) {
+            if (confirm('Bạn chắc chắn muốn xóa ảnh này?')) {
+                URL.revokeObjectURL(photos[index].url);
+                photos.splice(index, 1);
+                updateGallery();
+            }
+        }
+
+        // Download all photos
+        function downloadAllPhotos() {
+            if (photos.length === 0) return;
+
+            photos.forEach((photo, index) => {
+                const link = document.createElement('a');
+                const filename = `photo_${currentLocation ? currentLocation.latitude.toFixed(4) + '_' + currentLocation.longitude.toFixed(4) + '_' : ''}${index + 1}_${Date.now()}.jpg`;
+                link.href = photo.url;
+                link.download = filename;
+                link.click();
+            });
+        }
+
+        // Clear all photos
+        function clearAllPhotos() {
+            if (confirm('Bạn chắc chắn muốn xóa tất cả ảnh?')) {
+                photos.forEach(photo => URL.revokeObjectURL(photo.url));
+                photos = [];
+                updateGallery();
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            if (message) {
+                errorElement.textContent = message;
+                errorElement.classList.add('show');
+            } else {
+                errorElement.classList.remove('show');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('photoModal').addEventListener('click', (e) => {
+            if (e.target.id === 'photoModal') {
+                closeModal();
+            }
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            getMaxResolution().then(() => startCamera());
+            getLocation();
+        });
+
+        // Refresh location every 30 seconds
+        setInterval(getLocation, 30000);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
 </body>
 </html>
