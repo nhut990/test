@@ -2,361 +2,166 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>SpessaSynth MIDI Player</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Timemark Camera</title>
     <style>
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a2a3a 0%, #0d1b2a 100%);
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            background-color: #f0f2f5;
             margin: 0;
             padding: 20px;
         }
-        .player-container {
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(10px);
-            border-radius: 32px;
-            padding: 30px;
-            box-shadow: 0 25px 45px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);
-            max-width: 600px;
+        #camera-container {
+            position: relative;
             width: 100%;
-            color: white;
-        }
-        h1 {
-            text-align: center;
-            font-size: 2rem;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #ffd89b, #c7e9fb);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        .sub {
-            text-align: center;
-            opacity: 0.7;
-            margin-bottom: 30px;
-            font-size: 0.85rem;
-        }
-        /* QUAN TRỌNG: nút bấm rõ ràng, dễ chạm trên iPhone */
-        .upload-btn {
-            background: #ffb347;
-            border: none;
-            padding: 16px 20px;
-            border-radius: 60px;
-            color: #1e2a3a;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            width: 100%;
-            margin-bottom: 20px;
-            transition: 0.2s;
-            display: block;
-        }
-        .upload-btn:active {
-            transform: scale(0.97);
-            background: #ff9f1a;
-        }
-        .file-input {
-            display: none;
-        }
-        .controls {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-        button {
-            background: rgba(255,255,255,0.15);
-            border: none;
-            padding: 12px 24px;
-            border-radius: 40px;
-            color: white;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: 0.2s;
-            font-weight: bold;
-            flex: 1;
-            min-width: 80px;
-        }
-        button:active {
-            transform: scale(0.96);
-            background: #ffb347;
-            color: #1e2a3a;
-        }
-        button:disabled {
-            opacity: 0.4;
-            transform: none;
-        }
-        .status {
-            background: #00000066;
-            border-radius: 20px;
-            padding: 12px 18px;
-            font-family: monospace;
-            font-size: 0.8rem;
-            margin: 15px 0;
-            text-align: center;
-            word-break: break-word;
-        }
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: #333;
+            max-width: 500px;
             border-radius: 10px;
             overflow: hidden;
-            margin: 15px 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        .progress-fill {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #ffb347, #ffdd77);
-            transition: width 0.1s linear;
+        video {
+            width: 100%;
+            display: block;
         }
-        .song-info {
-            text-align: center;
-            font-size: 0.85rem;
-            margin-top: 15px;
+        /* Giao diện hiển thị đè chữ lên camera lúc đang xem (Preview) */
+        #watermark-overlay {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            font-size: 14px;
+            pointer-events: none;
+            line-height: 1.4;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        button {
+            margin-top: 20px;
+            padding: 12px 24px;
+            font-size: 16px;
             font-weight: bold;
-            word-break: break-word;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
         }
-        footer {
-            text-align: center;
-            font-size: 0.7rem;
-            margin-top: 25px;
-            opacity: 0.5;
+        button:hover {
+            background-color: #0056b3;
         }
-        .loading {
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 0.6; }
-            100% { opacity: 1; }
+        h3 { margin-top: 30px; }
+        #result-image {
+            max-width: 100%;
+            width: 500px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
-<div class="player-container">
-    <h1>🎹 SpessaSynth Player</h1>
-    <div class="sub">MIDI · SF2 SoundFont · Trình duyệt</div>
 
-    <!-- NÚT BẤM RÕ RÀNG TRỰC TIẾP CHO IPHONE -->
-    <button class="upload-btn" id="openFileBtn">📂 Chọn file MIDI</button>
-    <input type="file" id="midiFileInput" accept=".mid,.midi" class="file-input">
-
-    <div class="controls">
-        <button id="playBtn" disabled>▶ Phát</button>
-        <button id="pauseBtn" disabled>⏸ Tạm dừng</button>
-        <button id="stopBtn" disabled>⏹ Dừng</button>
+    <h2>Timemark Web Camera</h2>
+    
+    <div id="camera-container">
+        <video id="video" autoplay playsinline></video>
+        <div id="watermark-overlay">Đang tải vị trí và thời gian...</div>
     </div>
 
-    <div class="progress-bar">
-        <div class="progress-fill" id="progressFill"></div>
+    <button id="snap">Chụp Ảnh</button>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <h3>Ảnh kết quả:</h3>
+    <div id="result-container">
+        <p style="color: #666;">Chưa có ảnh nào được chụp.</p>
     </div>
 
-    <div class="status" id="statusMsg">
-        ⚙️ Đang khởi tạo SpessaSynth...
-    </div>
-    <div class="song-info" id="songInfo"></div>
-    <footer>
-        Dùng thư viện SpessaSynth | SoundFont: FatBoy (8MB)<br>
-        Có thể thay bằng GeneralUser GS (30MB)
-    </footer>
-</div>
+<script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const snap = document.getElementById('snap');
+    const watermarkOverlay = document.getElementById('watermark-overlay');
+    const resultContainer = document.getElementById('result-container');
 
-<script type="importmap">
-    {
-        "imports": {
-            "spessasynth_lib": "https://unpkg.com/spessasynth_lib@4.2.12/spessasynth_lib.js"
-        }
-    }
-</script>
+    let currentCoords = "Chưa có tọa độ";
 
-<script type="module">
-    import { Synthesizer, Output, Player } from 'spessasynth_lib';
+    // 1. Lấy tọa độ GPS từ trình duyệt
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition((position) => {
+            const lat = position.coords.latitude.toFixed(6);
+            const lon = position.coords.longitude.toFixed(6);
+            currentCoords = `Tọa độ: ${lat}, ${lon}`;
+        }, (error) => {
+            currentCoords = "Không thể lấy vị trí (Chưa cấp quyền)";
+        }, { enableHighAccuracy: true });
+    } else {
+        currentCoords = "Trình duyệt không hỗ trợ GPS";
+    }
 
-    const SOUNDFONT_URL = 'https://cdn.jsdelivr.net/gh/sgossman/FatBoy@master/FatBoy.sf2';
-    // Hoặc dùng bộ chất lượng cao: 'https://spessasus.github.io/SpessaSynth/soundfonts/GeneralUserGS_2_0_3.sf2'
-    
-    let synth = null;
-    let output = null;
-    let player = null;
-    let isSoundFontLoaded = false;
-    let currentMidiData = null;
-    let currentFileName = "";
-    
-    const statusDiv = document.getElementById('statusMsg');
-    const playBtn = document.getElementById('playBtn');
-    const pauseBtn = document.getElementById('pauseBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const progressFill = document.getElementById('progressFill');
-    const songInfoDiv = document.getElementById('songInfo');
-    const fileInput = document.getElementById('midiFileInput');
-    const openFileBtn = document.getElementById('openFileBtn');
-    
-    function setStatus(text, isLoading = false) {
-        statusDiv.innerHTML = text;
-        if (isLoading) {
-            statusDiv.classList.add('loading');
-        } else {
-            statusDiv.classList.remove('loading');
-        }
+    // 2. Cập nhật thời gian thực lên màn hình preview
+    function updateOverlay() {
+        const now = new Date();
+        const timeStr = now.toLocaleString('vi-VN'); // Định dạng ngày giờ VN
+        watermarkOverlay.innerHTML = `${timeStr}<br>${currentCoords}`;
+        requestAnimationFrame(updateOverlay);
     }
-    
-    function enableButtons() {
-        const hasMidi = currentMidiData !== null;
-        playBtn.disabled = !hasMidi || !isSoundFontLoaded;
-        pauseBtn.disabled = !hasMidi || !player || !player.isPlaying;
-        stopBtn.disabled = !hasMidi || !player || !player.isPlaying;
-    }
-    
-    async function initSynth() {
-        setStatus("🎧 Đang tải SoundFont (khoảng 8MB)...", true);
-        try {
-            output = new Output();
-            synth = new Synthesizer(output.audioContext, {});
-            await synth.loadSoundFont(SOUNDFONT_URL);
-            isSoundFontLoaded = true;
-            setStatus("✅ SoundFont sẵn sàng! Nhấn 'Chọn file MIDI'");
-            enableButtons();
-        } catch (e) {
-            console.error(e);
-            setStatus("❌ Lỗi tải SoundFont: " + e.message);
-        }
-    }
-    
-    function createPlayerFromMidi(midiBytes) {
-        if (!synth || !isSoundFontLoaded) return null;
-        try {
-            if (player) {
-                player.stop();
-                player = null;
-            }
-            player = new Player(synth, output);
-            player.loadMIDI(midiBytes);
-            
-            const duration = player.getDuration() || 0;
-            const minutes = Math.floor(duration / 60);
-            const seconds = Math.floor(duration % 60);
-            songInfoDiv.innerHTML = `🎵 ${currentFileName}  |  ⏱ ${minutes}:${seconds.toString().padStart(2,'0')}`;
-            
-            // Cập nhật thanh progress
-            function updateProgress() {
-                if (player && player.isPlaying) {
-                    const current = player.getCurrentTime();
-                    const total = player.getDuration();
-                    if (total > 0) progressFill.style.width = (current / total) * 100 + '%';
-                    requestAnimationFrame(updateProgress);
-                } else if (!player || !player.isPlaying) {
-                    if (player && player.getCurrentTime() >= player.getDuration() - 0.05) {
-                        progressFill.style.width = '0%';
-                    }
-                }
-            }
-            if (window._anim) cancelAnimationFrame(window._anim);
-            window._anim = requestAnimationFrame(function loop() {
-                if (player && player.isPlaying) {
-                    const curr = player.getCurrentTime();
-                    const total = player.getDuration();
-                    if (total > 0) progressFill.style.width = (curr / total) * 100 + '%';
-                    window._anim = requestAnimationFrame(loop);
-                } else {
-                    window._anim = null;
-                }
-            });
-            
-            setStatus(`✅ Đã load: ${currentFileName}`);
-            enableButtons();
-            return player;
-        } catch (err) {
-            setStatus("❌ Lỗi MIDI: " + err.message);
-            return null;
-        }
-    }
-    
-    function handleMidiFile(file) {
-        if (!file) return;
-        if (!file.name.match(/\.(mid|midi)$/i)) {
-            setStatus("❌ Cần file .mid hoặc .midi");
-            return;
-        }
-        currentFileName = file.name;
-        setStatus(`📀 Đang đọc ${file.name}...`, true);
+    updateOverlay();
+
+    // 3. Kích hoạt Camera
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
+        .then((stream) => {
+            video.srcObject = stream;
+        })
+        .catch((err) => {
+            console.error("Lỗi truy cập camera: ", err);
+            alert("Vui lòng cấp quyền truy cập camera!");
+        });
+
+    // 4. Xử lý sự kiện CHỤP ẢNH
+    snap.addEventListener('click', () => {
+        // Đặt kích thước canvas bằng với kích thước thật của luồng video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
         
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            currentMidiData = new Uint8Array(e.target.result);
-            if (isSoundFontLoaded && synth) {
-                createPlayerFromMidi(currentMidiData);
-            } else {
-                const wait = setInterval(() => {
-                    if (isSoundFontLoaded) {
-                        clearInterval(wait);
-                        createPlayerFromMidi(currentMidiData);
-                    }
-                }, 200);
-            }
-        };
-        reader.onerror = () => setStatus("❌ Đọc file thất bại");
-        reader.readAsArrayBuffer(file);
-    }
-    
-    // --- SỰ KIỆN ---
-    // CÁCH 1: click vào nút để mở file (HOẠT ĐỘNG TRÊN IPHONE)
-    openFileBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        fileInput.click();  // kích hoạt input file ẩn
+        const ctx = canvas.getContext('2d');
+        
+        // Vẽ hình ảnh từ video lên canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Thiết lập font chữ và màu sắc cho watermark (tỷ lệ theo kích thước ảnh)
+        const fontSize = Math.max(16, Math.floor(canvas.width * 0.035)); 
+        ctx.font = `bold ${fontSize}px Arial`;
+        ctx.fillStyle = "white";
+        
+        // Tạo đổ bóng cho chữ để dễ đọc trên nền sáng
+        ctx.shadowColor = "black";
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+
+        // Chuẩn bị nội dung chữ
+        const now = new Date();
+        const timeStr = now.toLocaleString('vi-VN');
+        
+        // Vẽ chữ lên góc dưới bên trái của ảnh
+        const marginX = canvas.width * 0.04;
+        const marginY = canvas.height * 0.05;
+        
+        // Vẽ dòng tọa độ trước (dưới cùng) rồi tới dòng thời gian
+        ctx.fillText(currentCoords, marginX, canvas.height - marginY);
+        ctx.fillText(timeStr, marginX, canvas.height - marginY - (fontSize * 1.3));
+
+        // Xuất canvas thành file ảnh (base64) và hiển thị ra màn hình
+        const dataURL = canvas.toDataURL('image/jpeg');
+        resultContainer.innerHTML = `<img id="result-image" src="${dataURL}" alt="Captured Image"><br><a href="${dataURL}" download="timemark_${Date.now()}.jpg"><button style="background-color: #28a745;">Tải ảnh về máy</button></a>`;
     });
-    
-    // CÁCH 2: nếu người dùng chọn file từ input
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            handleMidiFile(e.target.files[0]);
-        }
-        // reset input để có thể chọn cùng file lại lần sau
-        fileInput.value = '';
-    });
-    
-    // Điều khiển phát nhạc
-    playBtn.onclick = () => {
-        if (player && currentMidiData && !player.isPlaying) {
-            player.play();
-            setStatus(`🎵 Đang phát: ${currentFileName}`);
-            enableButtons();
-        } else if (!player && currentMidiData && isSoundFontLoaded) {
-            createPlayerFromMidi(currentMidiData)?.play();
-        }
-    };
-    
-    pauseBtn.onclick = () => {
-        if (player && player.isPlaying) {
-            player.pause();
-            setStatus(`⏸ Tạm dừng: ${currentFileName}`);
-            enableButtons();
-        }
-    };
-    
-    stopBtn.onclick = () => {
-        if (player) {
-            player.stop();
-            progressFill.style.width = '0%';
-            setStatus(`⏹ Đã dừng: ${currentFileName}`);
-            enableButtons();
-            if (window._anim) {
-                cancelAnimationFrame(window._anim);
-                window._anim = null;
-            }
-        }
-    };
-    
-    initSynth();
 </script>
+
 </body>
 </html>
