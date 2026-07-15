@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>NES // Cartridge Player</title>
+<title>NES // Cartridge Player - OPTIMIZED</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg: #100e14;
     --bg-grain: #17141b;
-    --shell: #cfc9ba;       /* toaster-grey plastic */
+    --shell: #cfc9ba;
     --shell-dark: #a8a196;
     --shell-shadow: #6d685f;
     --screen-bezel: #232025;
-    --accent-red: #c8433a;  /* controller red, muted */
+    --accent-red: #c8433a;
     --accent-red-dark: #922e28;
     --ink: #201d22;
     --paper: #ece6d6;
@@ -68,8 +68,15 @@
   }
   .icon-btn:active{ transform: translateY(1px); background:#2a2630; }
   .icon-btn.on{ border-color: var(--accent-red); color: var(--accent-red); }
+  
+  .info-text{
+    font-size: 10px;
+    color: #8a8492;
+    min-width: 150px;
+    text-align: right;
+  }
 
-  /* ---------- Cartridge slot / loader ---------- */
+  /* ---------- Loader ---------- */
   #loader{
     flex: 0 0 auto;
     margin: 0 14px 10px;
@@ -85,7 +92,7 @@
   #loader .slot-sub{ font-size:11px; color:#8a8492; }
   #loader input[type=file]{ display:none; }
 
-  /* ---------- Stage (screen) ---------- */
+  /* ---------- Stage ---------- */
   #stage{
     flex: 1 1 auto;
     display:flex;
@@ -128,25 +135,6 @@
     image-rendering: crisp-edges;
     background:#000;
   }
-  #scanlines{
-    position:absolute; inset:0;
-    pointer-events:none;
-    background: repeating-linear-gradient(
-      to bottom,
-      rgba(0,0,0,0) 0px,
-      rgba(0,0,0,0) 1px,
-      rgba(0,0,0,.20) 2px,
-      rgba(0,0,0,.20) 3px
-    );
-    opacity:.4;
-  }
-  /* Lite mode: strip GPU-heavy effects for low-power / laggy devices */
-  body.lite #scanlines{ display:none; }
-  body.lite #shell{ box-shadow:none; }
-  body.lite #screen-frame{ box-shadow: inset 0 0 0 2px #0b0a0c; }
-  body.lite .ab-btn, body.lite .pill-btn{ box-shadow:none; }
-  body.lite .led.live{ box-shadow:none; }
-  body.lite .dot{ box-shadow:none; }
   #placeholder{
     position:absolute; inset:0;
     display:flex; align-items:center; justify-content:center;
@@ -245,7 +233,6 @@
     padding: 1px 5px; font-size:10px;
   }
 
-  /* Landscape / short screens: put controls beside the screen for max play area */
   @media (orientation: landscape) and (max-height: 560px){
     #app{ flex-direction:column; }
     #loader{ display:none; }
@@ -276,12 +263,12 @@
 
   <header>
     <div class="logo"><span class="dot"></span>NES // CARTRIDGE PLAYER</div>
+    <div class="info-text" id="fps">FPS: 0 | Audio: OK</div>
     <div class="hdr-btns">
       <div class="icon-btn" id="btn-mute" title="Tắt/bật âm">🔊</div>
       <div class="icon-btn" id="btn-pause" title="Tạm dừng">⏸</div>
       <div class="icon-btn" id="btn-reset" title="Reset game">⟲</div>
       <div class="icon-btn" id="btn-fullscreen" title="Toàn màn hình">⛶</div>
-      <div class="icon-btn" id="btn-lite" title="Chế độ hiệu năng (tắt hiệu ứng)">⚡</div>
     </div>
   </header>
 
@@ -301,7 +288,6 @@
         <div id="screen-frame">
           <div id="canvas-wrap">
             <canvas id="screen" width="256" height="240"></canvas>
-            <div id="scanlines"></div>
             <div id="placeholder">CHƯA CÓ BĂNG GAME<br/>NẠP FILE .NES ĐỂ BẮT ĐẦU</div>
           </div>
         </div>
@@ -341,58 +327,95 @@
 (function(){
   "use strict";
 
-  // ---------- Canvas / render setup ----------
+  // ===== CANVAS & RENDER (Optimized for speed) =====
   var canvas = document.getElementById('screen');
-  var ctx = canvas.getContext('2d', { alpha:false, desynchronized:true, willReadFrequently:false });
+  var ctx = canvas.getContext('2d', { 
+    alpha: false, 
+    desynchronized: true, 
+    willReadFrequently: false,
+    antialias: false
+  });
   ctx.imageSmoothingEnabled = false;
-  var imageData = ctx.getImageData(0,0,256,240);
-  var buf = new ArrayBuffer(imageData.data.length);
-  var buf8 = new Uint8ClampedArray(buf);
-  var buf32 = new Uint32Array(buf);
+  
+  // Create persistent ImageData for direct pixel manipulation
+  var imageData = ctx.createImageData(256, 240);
+  var buf32 = new Uint32Array(imageData.data.buffer);
+  
   var placeholder = document.getElementById('placeholder');
   var powerLed = document.getElementById('power-led');
-  var skipRender = false; // when catching up multiple emulated frames per rAF, only draw the last one
+  var fpsDisplay = document.getElementById('fps');
+  
+  var skipRender = false;
+  var frameCount = 0;
+  var lastFpsUpdate = 0;
 
-  // ---------- Audio setup ----------
-  var audioCtx = null, scriptNode = null, gainNode = null, muted = false;
-  var audioL = [], audioR = [];
-  var MAX_QUEUE = 8192;
+  // ===== AUDIO (Improved: better buffer management) =====
+  var audioCtx = null;
+  var scriptNode = null;
+  var gainNode = null;
+  var muted = false;
+  var audioBuffer = {
+    left: new Float32Array(4096),
+    right: new Float32Array(4096),
+    writeIdx: 0,
+    readIdx: 0
+  };
+  var AUDIO_BUFFER_SIZE = 4096;
 
   function ensureAudio(){
     if (audioCtx) return;
     var AC = window.AudioContext || window.webkitAudioContext;
-    audioCtx = new AC();
+    audioCtx = new AC({ sampleRate: 44100 });
+    
     gainNode = audioCtx.createGain();
-    gainNode.gain.value = 1;
+    gainNode.gain.value = muted ? 0 : 0.3; // Softer default volume
+    
     scriptNode = audioCtx.createScriptProcessor(2048, 0, 2);
     scriptNode.onaudioprocess = function(e){
       var outL = e.outputBuffer.getChannelData(0);
       var outR = e.outputBuffer.getChannelData(1);
       var n = outL.length;
-      if (audioL.length >= n){
-        for (var i=0;i<n;i++){ outL[i] = audioL.shift(); outR[i] = audioR.shift(); }
+      var avail = (audioBuffer.writeIdx - audioBuffer.readIdx + AUDIO_BUFFER_SIZE) % AUDIO_BUFFER_SIZE;
+      
+      if (avail >= n){
+        for (var i = 0; i < n; i++){
+          outL[i] = audioBuffer.left[audioBuffer.readIdx];
+          outR[i] = audioBuffer.right[audioBuffer.readIdx];
+          audioBuffer.readIdx = (audioBuffer.readIdx + 1) % AUDIO_BUFFER_SIZE;
+        }
       } else {
-        for (var i=0;i<n;i++){ outL[i]=0; outR[i]=0; }
+        // Underrun - fill with silence
+        for (var i = 0; i < n; i++){
+          outL[i] = 0;
+          outR[i] = 0;
+        }
       }
     };
+    
     scriptNode.connect(gainNode);
     gainNode.connect(audioCtx.destination);
   }
 
-  // ---------- NES core ----------
+  // ===== NES CORE =====
   var nes = new jsnes.NES({
     onFrame: function(frameBuffer){
-      if (skipRender) return; // still ran CPU/PPU/APU, just skip the (expensive) canvas paint
-      for (var i=0;i<256*240;i++){
+      if (skipRender) return;
+      
+      // Direct 32-bit copy (much faster than per-pixel)
+      for (var i = 0; i < 256 * 240; i++){
         buf32[i] = 0xff000000 | frameBuffer[i];
       }
-      imageData.data.set(buf8);
+      
       ctx.putImageData(imageData, 0, 0);
+      frameCount++;
     },
     onAudioSample: function(left, right){
-      if (audioL.length < MAX_QUEUE){
-        audioL.push(left);
-        audioR.push(right);
+      var nextIdx = (audioBuffer.writeIdx + 1) % AUDIO_BUFFER_SIZE;
+      // Only write if buffer not full
+      if (nextIdx !== audioBuffer.readIdx){
+        audioBuffer.left[audioBuffer.writeIdx] = left;
+        audioBuffer.right[audioBuffer.writeIdx] = right;
+        audioBuffer.writeIdx = nextIdx;
       }
     },
     sampleRate: 44100
@@ -401,31 +424,53 @@
   var romLoaded = false;
   var running = false;
   var rafId = null;
-  var FRAME_MS = 1000/60.0988;
-  var MAX_CATCHUP_FRAMES = 4; // cap so a slow device can't spiral into unbounded work
+  var FRAME_MS = 1000 / 60.0988; // NES accurate rate
+  var MAX_CATCHUP_FRAMES = 3; // Reduced from 4 for stability
   var lastRomData = null;
   var accumulator = 0;
   var lastTime = 0;
 
+  // Performance monitoring
+  var perfData = { fps: 0, audioStatus: 'OK' };
+  setInterval(function(){
+    perfData.fps = frameCount;
+    frameCount = 0;
+    fpsDisplay.textContent = 'FPS: ' + perfData.fps + ' | Audio: ' + perfData.audioStatus;
+  }, 1000);
+
   function tick(now){
     rafId = requestAnimationFrame(tick);
-    if (!running) return;
+    if (!running || !romLoaded) return;
+    
     if (!lastTime) lastTime = now;
     var delta = now - lastTime;
     lastTime = now;
-    // if the tab was backgrounded or a big hitch happened, don't try to replay it all at once
+    
+    // Clamp delta to avoid spiral on tab resume
     if (delta > 250) delta = 250;
+    if (delta < 0) delta = 0;
+    
     accumulator += delta;
-
+    
     var framesToRun = 0;
     while (accumulator >= FRAME_MS && framesToRun < MAX_CATCHUP_FRAMES){
       accumulator -= FRAME_MS;
       framesToRun++;
     }
+    
     if (framesToRun === 0) return;
+    
     for (var i = 0; i < framesToRun; i++){
-      skipRender = (i < framesToRun - 1); // only paint the most recent emulated frame
+      skipRender = (i < framesToRun - 1);
       nes.frame();
+    }
+    
+    // Update audio status
+    if (audioCtx){
+      var avail = (audioBuffer.writeIdx - audioBuffer.readIdx + AUDIO_BUFFER_SIZE) % AUDIO_BUFFER_SIZE;
+      if (avail < 512) perfData.audioStatus = 'LOW';
+      else if (avail > 3500) perfData.audioStatus = 'HIGH';
+      else perfData.audioStatus = 'OK';
     }
   }
 
@@ -437,90 +482,118 @@
     powerLed.classList.add('live');
     if (rafId === null) rafId = requestAnimationFrame(tick);
   }
+
   function stopLoop(){
     running = false;
     powerLed.classList.remove('live');
   }
 
   function loadRom(data){
-    try{
+    try {
       nes.loadROM(data);
       lastRomData = data;
       romLoaded = true;
       placeholder.style.display = 'none';
+      
       ensureAudio();
       if (audioCtx.state === 'suspended') audioCtx.resume();
+      
       startLoop();
       document.getElementById('loader').classList.add('hidden');
-    }catch(err){
-      alert('Không đọc được ROM này: ' + err.message);
+    } catch(err){
+      alert('Không đọc đ��ợc ROM này: ' + err.message);
     }
   }
 
-  // ---------- File loading (picker + drag/drop) ----------
+  // ===== FILE LOADING =====
   var loaderEl = document.getElementById('loader');
   var fileInput = document.getElementById('rom-input');
+  
   loaderEl.addEventListener('click', function(){ fileInput.click(); });
+  
   fileInput.addEventListener('change', function(){
     var f = fileInput.files[0];
     if (!f) return;
     readFile(f);
   });
+  
   ['dragover'].forEach(function(evt){
-    loaderEl.addEventListener(evt, function(e){ e.preventDefault(); loaderEl.classList.add('drag'); });
+    loaderEl.addEventListener(evt, function(e){ 
+      e.preventDefault(); 
+      loaderEl.classList.add('drag'); 
+    });
   });
+  
   ['dragleave','drop'].forEach(function(evt){
-    loaderEl.addEventListener(evt, function(e){ e.preventDefault(); loaderEl.classList.remove('drag'); });
+    loaderEl.addEventListener(evt, function(e){ 
+      e.preventDefault(); 
+      loaderEl.classList.remove('drag'); 
+    });
   });
+  
   loaderEl.addEventListener('drop', function(e){
     e.preventDefault();
     var f = e.dataTransfer.files[0];
     if (f) readFile(f);
   });
+  
   function readFile(f){
+    // Use ArrayBuffer instead of deprecated readAsBinaryString
     var reader = new FileReader();
-    reader.onload = function(){ loadRom(reader.result); };
-    reader.readAsBinaryString(f);
+    reader.onload = function(){
+      var arr = new Uint8Array(reader.result);
+      loadRom(arr);
+    };
+    reader.readAsArrayBuffer(f);
   }
 
-  // ---------- Header buttons ----------
+  // ===== HEADER BUTTONS =====
   document.getElementById('btn-mute').addEventListener('click', function(e){
     ensureAudio();
     muted = !muted;
-    gainNode.gain.value = muted ? 0 : 1;
+    gainNode.gain.value = muted ? 0 : 0.3;
     e.currentTarget.textContent = muted ? '🔇' : '🔊';
     e.currentTarget.classList.toggle('on', muted);
   });
+  
   document.getElementById('btn-pause').addEventListener('click', function(e){
     if (!romLoaded) return;
-    if (running){ stopLoop(); e.currentTarget.textContent = '▶'; e.currentTarget.classList.add('on'); }
-    else { startLoop(); e.currentTarget.textContent = '⏸'; e.currentTarget.classList.remove('on'); }
+    if (running){
+      stopLoop();
+      e.currentTarget.textContent = '▶';
+      e.currentTarget.classList.add('on');
+    } else {
+      startLoop();
+      e.currentTarget.textContent = '⏸';
+      e.currentTarget.classList.remove('on');
+    }
   });
+  
   document.getElementById('btn-reset').addEventListener('click', function(){
-    if (lastRomData){ stopLoop(); loadRom(lastRomData); }
+    if (lastRomData){
+      stopLoop();
+      loadRom(lastRomData);
+    }
   });
-  document.getElementById('btn-lite').addEventListener('click', function(e){
-    var lite = document.body.classList.toggle('lite');
-    e.currentTarget.classList.toggle('on', lite);
-  });
+  
   document.getElementById('btn-fullscreen').addEventListener('click', function(e){
     var el = document.getElementById('app');
     if (!document.fullscreenElement){
-      (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+      el.requestFullscreen?.call(el) || el.webkitRequestFullscreen?.call(el);
       e.currentTarget.classList.add('on');
     } else {
-      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      document.exitFullscreen?.call(document) || document.webkitExitFullscreen?.call(document);
       e.currentTarget.classList.remove('on');
     }
   });
 
-  // ---------- Controller helpers ----------
+  // ===== CONTROLLER =====
   var C = jsnes.Controller;
   function vibrate(ms){ if (navigator.vibrate) navigator.vibrate(ms); }
   function down(btn){ nes.buttonDown(1, btn); }
   function up(btn){ nes.buttonUp(1, btn); }
 
-  // ---------- D-Pad: single touch surface, 8-way angle detection ----------
+  // D-Pad: 8-way angle detection
   var dpadTouch = document.getElementById('dpad-touch');
   var dpadActivePointer = null;
   var dpadState = { up:false, down:false, left:false, right:false };
@@ -535,32 +608,48 @@
     if (dpadState[dir] === active) return;
     dpadState[dir] = active;
     var map = { up:C.BUTTON_UP, down:C.BUTTON_DOWN, left:C.BUTTON_LEFT, right:C.BUTTON_RIGHT };
-    if (active){ down(map[dir]); arrowEls[dir].classList.add('active'); }
-    else { up(map[dir]); arrowEls[dir].classList.remove('active'); }
+    if (active){
+      down(map[dir]);
+      arrowEls[dir].classList.add('active');
+    } else {
+      up(map[dir]);
+      arrowEls[dir].classList.remove('active');
+    }
   }
+
   function clearDpad(){
-    setDir('up', false); setDir('down', false); setDir('left', false); setDir('right', false);
+    setDir('up', false);
+    setDir('down', false);
+    setDir('left', false);
+    setDir('right', false);
   }
+
   function updateDpadFromPoint(clientX, clientY){
     var rect = dpadTouch.getBoundingClientRect();
-    var cx = rect.left + rect.width/2;
-    var cy = rect.top + rect.height/2;
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
     var dx = clientX - cx;
     var dy = clientY - cy;
     var dist = Math.sqrt(dx*dx + dy*dy);
     var deadzone = rect.width * 0.16;
-    if (dist < deadzone){ clearDpad(); return; }
-    var angle = Math.atan2(dy, dx) * 180 / Math.PI; // -180..180, 0=right, 90=down
-    // 8-way sectors, 45deg wide centered on each direction
+    
+    if (dist < deadzone){
+      clearDpad();
+      return;
+    }
+    
+    var angle = Math.atan2(dy, dx) * 180 / Math.PI;
     var up = angle < -22.5 && angle > -157.5;
     var down = angle > 22.5 && angle < 157.5;
     var right = angle >= -67.5 && angle <= 67.5;
     var left = angle >= 112.5 || angle <= -112.5;
+    
     setDir('up', up);
     setDir('down', down);
     setDir('left', left);
     setDir('right', right);
   }
+
   dpadTouch.addEventListener('pointerdown', function(e){
     if (dpadActivePointer !== null) return;
     dpadActivePointer = e.pointerId;
@@ -568,26 +657,26 @@
     updateDpadFromPoint(e.clientX, e.clientY);
     vibrate(8);
   });
+
   dpadTouch.addEventListener('pointermove', function(e){
     if (e.pointerId !== dpadActivePointer) return;
     updateDpadFromPoint(e.clientX, e.clientY);
   });
+
   function dpadRelease(e){
     if (e.pointerId !== dpadActivePointer) return;
     dpadActivePointer = null;
     clearDpad();
   }
+
   dpadTouch.addEventListener('pointerup', dpadRelease);
   dpadTouch.addEventListener('pointercancel', dpadRelease);
-  dpadTouch.addEventListener('pointerleave', function(e){
-    // only clear if pointer truly released outside without pointerup captured elsewhere
-    if (e.pointerId === dpadActivePointer && e.buttons === 0) dpadRelease(e);
-  });
 
-  // ---------- Generic button binder (supports multitouch + mouse + keyboard) ----------
+  // Button binding (supports multitouch)
   function bindButton(el, jsBtn, opts){
     opts = opts || {};
     var activePointers = new Set();
+    
     function press(id){
       if (activePointers.has(id)) return;
       activePointers.add(id);
@@ -597,6 +686,7 @@
         vibrate(opts.strong ? 15 : 8);
       }
     }
+    
     function release(id){
       if (!activePointers.has(id)) return;
       activePointers.delete(id);
@@ -605,11 +695,21 @@
         el.classList.remove('pressed');
       }
     }
-    el.addEventListener('pointerdown', function(e){ el.setPointerCapture(e.pointerId); press(e.pointerId); });
+    
+    el.addEventListener('pointerdown', function(e){
+      el.setPointerCapture(e.pointerId);
+      press(e.pointerId);
+    });
     el.addEventListener('pointerup', function(e){ release(e.pointerId); });
     el.addEventListener('pointercancel', function(e){ release(e.pointerId); });
-    el.addEventListener('pointerleave', function(e){ if (e.buttons === 0) release(e.pointerId); });
-    return { press: function(){ press('kbd'); }, release: function(){ release('kbd'); } };
+    el.addEventListener('pointerleave', function(e){
+      if (e.buttons === 0) release(e.pointerId);
+    });
+    
+    return { 
+      press: function(){ press('kbd'); },
+      release: function(){ release('kbd'); }
+    };
   }
 
   var btnA = bindButton(document.getElementById('btn-a'), C.BUTTON_A, { strong:true });
@@ -617,27 +717,37 @@
   var btnStart = bindButton(document.getElementById('btn-start'), C.BUTTON_START);
   var btnSelect = bindButton(document.getElementById('btn-select'), C.BUTTON_SELECT);
 
-  // ---------- Keyboard (desktop) ----------
+  // Keyboard support
   var keyMap = {
     ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right'
   };
+  
   window.addEventListener('keydown', function(e){
-    if (keyMap[e.key]){ setDir(keyMap[e.key], true); e.preventDefault(); return; }
-    if (e.key === 'x' || e.key === 'X'){ btnA.press(); }
-    else if (e.key === 'z' || e.key === 'Z'){ btnB.press(); }
-    else if (e.key === 'Enter'){ btnStart.press(); }
-    else if (e.key === 'Shift'){ btnSelect.press(); }
+    if (keyMap[e.key]){
+      setDir(keyMap[e.key], true);
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'x' || e.key === 'X'){ btnA.press(); e.preventDefault(); }
+    else if (e.key === 'z' || e.key === 'Z'){ btnB.press(); e.preventDefault(); }
+    else if (e.key === 'Enter'){ btnStart.press(); e.preventDefault(); }
+    else if (e.key === 'Shift'){ btnSelect.press(); e.preventDefault(); }
   });
+  
   window.addEventListener('keyup', function(e){
-    if (keyMap[e.key]){ setDir(keyMap[e.key], false); e.preventDefault(); return; }
-    if (e.key === 'x' || e.key === 'X'){ btnA.release(); }
-    else if (e.key === 'z' || e.key === 'Z'){ btnB.release(); }
-    else if (e.key === 'Enter'){ btnStart.release(); }
-    else if (e.key === 'Shift'){ btnSelect.release(); }
+    if (keyMap[e.key]){
+      setDir(keyMap[e.key], false);
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'x' || e.key === 'X'){ btnA.release(); e.preventDefault(); }
+    else if (e.key === 'z' || e.key === 'Z'){ btnB.release(); e.preventDefault(); }
+    else if (e.key === 'Enter'){ btnStart.release(); e.preventDefault(); }
+    else if (e.key === 'Shift'){ btnSelect.release(); e.preventDefault(); }
   });
 
-  // Resume audio context on first user gesture (mobile autoplay policies)
-  document.body.addEventListener('pointerdown', function unlock(){
+  // Audio context unlock on first interaction
+  document.body.addEventListener('pointerdown', function(){
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   }, { passive:true });
 
