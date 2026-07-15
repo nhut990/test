@@ -102,8 +102,19 @@
     user-select: none;
   }
   #loader.drag{ border-color: var(--accent-red); background: rgba(200,67,58,0.08); }
-  #loader .slot-title{ font-family: var(--font-pixel); font-size: 10px; color:var(--paper); margin-bottom:6px; }
-  #loader .slot-sub{ font-size:11px; color:#8a8492; }
+  /* Sửa font cho tiêu đề loader - dùng font hệ thống để hỗ trợ tiếng Việt */
+  #loader .slot-title{
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    color:var(--paper);
+    margin-bottom:6px;
+    letter-spacing: 0.5px;
+  }
+  #loader .slot-sub{
+    font-size:11px;
+    color:#8a8492;
+  }
   #loader .download-link{
     display:inline-block;
     margin-top: 10px;
@@ -170,16 +181,18 @@
     background:#000;
     pointer-events: none;
   }
+  /* Sửa font cho placeholder - dùng font hệ thống để hiển thị tiếng Việt */
   #placeholder{
     position:absolute; inset:0;
     display:flex; align-items:center; justify-content:center;
     flex-direction:column; gap:8px;
     color:#5b5764;
-    font-family: var(--font-pixel);
-    font-size: 9px;
+    font-family: var(--font-body);
+    font-size: 12px;
     text-align:center;
     padding: 10px;
     pointer-events: none;
+    line-height: 1.5;
   }
   .shell-row{ display:flex; align-items:center; justify-content:space-between; padding: 0 4px; }
   .brand{ font-family: var(--font-pixel); font-size:8px; color: var(--shell-shadow); letter-spacing:1px; }
