@@ -22,7 +22,13 @@
     --font-pixel: 'Press Start 2P', monospace;
     --font-mono: 'JetBrains Mono', monospace;
   }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { 
+    box-sizing: border-box; 
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
   html, body {
     margin:0; padding:0; height:100%; overscroll-behavior:none;
     background:
@@ -65,6 +71,8 @@
     font-size:15px;
     display:flex; align-items:center; justify-content:center;
     cursor:pointer;
+    -webkit-user-select: none;
+    user-select: none;
   }
   .icon-btn:active{ transform: translateY(1px); background:#2a2630; }
   .icon-btn.on{ border-color: var(--accent-red); color: var(--accent-red); }
@@ -74,6 +82,8 @@
     color: #8a8492;
     min-width: 150px;
     text-align: right;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   /* ---------- Loader ---------- */
@@ -86,6 +96,8 @@
     text-align:center;
     cursor:pointer;
     transition: border-color .15s, background .15s;
+    -webkit-user-select: none;
+    user-select: none;
   }
   #loader.drag{ border-color: var(--accent-red); background: rgba(200,67,58,0.08); }
   #loader .slot-title{ font-family: var(--font-pixel); font-size: 10px; color:var(--paper); margin-bottom:6px; }
@@ -112,6 +124,7 @@
     display:flex;
     flex-direction:column;
     gap:8px;
+    pointer-events: auto;
   }
   #screen-frame{
     background: var(--screen-bezel);
@@ -120,12 +133,14 @@
     position:relative;
     box-shadow: inset 0 0 0 2px #0b0a0c, inset 0 2px 10px rgba(0,0,0,.6);
     display:flex;
+    pointer-events: auto;
   }
   #canvas-wrap{
     position:relative;
     line-height:0;
     max-width: 100%;
     max-height: calc(100dvh - 220px);
+    pointer-events: none;
   }
   canvas{
     display:block;
@@ -134,6 +149,7 @@
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     background:#000;
+    pointer-events: none;
   }
   #placeholder{
     position:absolute; inset:0;
@@ -144,6 +160,7 @@
     font-size: 9px;
     text-align:center;
     padding: 10px;
+    pointer-events: none;
   }
   .shell-row{ display:flex; align-items:center; justify-content:space-between; padding: 0 4px; }
   .brand{ font-family: var(--font-pixel); font-size:8px; color: var(--shell-shadow); letter-spacing:1px; }
@@ -170,6 +187,7 @@
   #dpad .arrow.active{ fill: var(--accent-red); }
   #dpad-touch{
     position:absolute; inset:0; border-radius:50%;
+    touch-action: none;
   }
   #dpad-center-dot{
     position:absolute; left:50%; top:50%; width:14px; height:14px;
@@ -190,6 +208,9 @@
     text-align:center;
     box-shadow: 0 3px 0 #423e48, 0 4px 6px rgba(0,0,0,.4);
     cursor:pointer;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
   .pill-btn:active, .pill-btn.pressed{
     transform: translateY(2px);
@@ -211,7 +232,9 @@
     color:#f2e3d8;
     background: radial-gradient(circle at 35% 30%, var(--accent-red), var(--accent-red-dark));
     box-shadow: 0 4px 0 #661f1a, 0 6px 10px rgba(0,0,0,.45);
-    touch-action:none;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
   .ab-btn:active, .ab-btn.pressed{
     transform: translateY(3px);
@@ -227,6 +250,8 @@
     font-size: 10px;
     color:#5b5764;
     padding: 0 10px 8px;
+    -webkit-user-select: none;
+    user-select: none;
   }
   footer kbd{
     background:#221f27; border:1px solid #3a3540; border-radius:4px;
@@ -501,7 +526,7 @@
       startLoop();
       document.getElementById('loader').classList.add('hidden');
     } catch(err){
-      alert('Không đọc đ��ợc ROM này: ' + err.message);
+      alert('Không đọc được ROM này: ' + err.message);
     }
   }
 
@@ -656,23 +681,26 @@
     dpadTouch.setPointerCapture(e.pointerId);
     updateDpadFromPoint(e.clientX, e.clientY);
     vibrate(8);
+    e.preventDefault();
   });
 
   dpadTouch.addEventListener('pointermove', function(e){
     if (e.pointerId !== dpadActivePointer) return;
     updateDpadFromPoint(e.clientX, e.clientY);
+    e.preventDefault();
   });
 
   function dpadRelease(e){
     if (e.pointerId !== dpadActivePointer) return;
     dpadActivePointer = null;
     clearDpad();
+    e.preventDefault();
   }
 
   dpadTouch.addEventListener('pointerup', dpadRelease);
   dpadTouch.addEventListener('pointercancel', dpadRelease);
 
-  // Button binding (supports multitouch)
+  // Button binding (supports multitouch) - NO double-tap zoom
   function bindButton(el, jsBtn, opts){
     opts = opts || {};
     var activePointers = new Set();
@@ -699,12 +727,23 @@
     el.addEventListener('pointerdown', function(e){
       el.setPointerCapture(e.pointerId);
       press(e.pointerId);
+      e.preventDefault();
     });
-    el.addEventListener('pointerup', function(e){ release(e.pointerId); });
-    el.addEventListener('pointercancel', function(e){ release(e.pointerId); });
+    el.addEventListener('pointerup', function(e){ 
+      release(e.pointerId); 
+      e.preventDefault();
+    });
+    el.addEventListener('pointercancel', function(e){ 
+      release(e.pointerId); 
+      e.preventDefault();
+    });
     el.addEventListener('pointerleave', function(e){
       if (e.buttons === 0) release(e.pointerId);
+      e.preventDefault();
     });
+    
+    // Prevent context menu
+    el.addEventListener('contextmenu', function(e){ e.preventDefault(); });
     
     return { 
       press: function(){ press('kbd'); },
@@ -750,6 +789,17 @@
   document.body.addEventListener('pointerdown', function(){
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   }, { passive:true });
+  
+  // Disable double-tap zoom on entire page
+  var lastTouchTime = 0;
+  document.addEventListener('touchstart', function(e) {
+    var currentTime = new Date().getTime();
+    var tapLength = currentTime - lastTouchTime;
+    if (tapLength < 300 && tapLength > 0) {
+      e.preventDefault();
+    }
+    lastTouchTime = currentTime;
+  }, false);
 
 })();
 </script>
