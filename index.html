@@ -2,1006 +2,310 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Chia sẻ vị trí thời gian thực</title>
-
-  <!-- Leaflet -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  >
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cài Đặt Ứng Dụng iOS Phiên Bản Cũ</title>
   <style>
-    :root {
-      --bg: #edf2ee;
-      --card: rgba(255, 255, 255, 0.94);
-      --text: #26372d;
-      --muted: #68766d;
-      --line: #d4ded6;
-
-      --share: #3f8558;
-      --share-hover: #2e6c45;
-
-      --view: #2877bd;
-      --view-hover: #1c609d;
-
-      --stop: #bd4b4b;
-      --stop-hover: #a83c3c;
-
-      --gray: #738078;
-      --gray-hover: #606d65;
-
-      --notice-bg: #fff8e8;
-      --notice-line: #ead6a7;
-      --notice-text: #77511c;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
     body {
-      margin: 0;
-      padding: 18px 12px 25px;
-      color: var(--text);
       font-family: Arial, sans-serif;
-      text-align: center;
-      background:
-        radial-gradient(circle at top, #fafdfb 0%, #edf2ee 50%, #e3eae5 100%);
-    }
-
-    .app {
-      width: 100%;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      margin: 5px 0 8px;
-      font-size: clamp(22px, 5vw, 30px);
-    }
-
-    .subtitle {
-      max-width: 650px;
-      margin: 0 auto 16px;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .panel,
-    #guide {
-      padding: 14px;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      box-shadow: 0 5px 20px rgba(42, 58, 48, 0.08);
-    }
-
-    .input-row,
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: stretch;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    input,
-    button {
-      min-height: 44px;
-      border-radius: 8px;
-      font: inherit;
-    }
-
-    input {
-      flex: 1 1 240px;
-      width: 100%;
-      max-width: 430px;
-      padding: 10px 12px;
-      color: var(--text);
-      background: #fff;
-      border: 1px solid #becac1;
-      outline: none;
-    }
-
-    input:focus {
-      border-color: var(--view);
-      box-shadow: 0 0 0 3px rgba(40, 119, 189, 0.14);
-    }
-
-    button {
-      padding: 10px 14px;
+      background: radial-gradient(ellipse at top left, #232526 0%, #434343 70%, #000 100%);
       color: #fff;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: 0.18s ease;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
     }
-
-    button:active {
-      transform: scale(0.98);
-    }
-
-    .share-btn {
-      background: var(--share);
-    }
-
-    .share-btn:hover {
-      background: var(--share-hover);
-    }
-
-    .view-btn {
-      background: var(--view);
-    }
-
-    .view-btn:hover {
-      background: var(--view-hover);
-    }
-
-    .secondary-btn {
-      background: var(--gray);
-    }
-
-    .secondary-btn:hover {
-      background: var(--gray-hover);
-    }
-
-    .stop-btn {
-      display: none;
-      background: var(--stop);
-    }
-
-    .stop-btn:hover {
-      background: var(--stop-hover);
-    }
-
-    .input-note {
-      margin: 9px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    #info {
-      min-height: 49px;
-      margin: 14px 0;
-      padding: 12px;
-      line-height: 1.6;
-      white-space: pre-line;
-      background: rgba(255, 255, 255, 0.78);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-    }
-
-    #info.error {
-      color: #a53636;
-      font-weight: bold;
-    }
-
-    .map-wrap {
-      position: relative;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      box-shadow: 0 5px 20px rgba(42, 58, 48, 0.1);
-    }
-
-    #map {
-      height: min(68vh, 620px);
-      min-height: 390px;
-      background: #d5ddd8;
-    }
-
-    #locateMeBtn {
-      position: absolute;
-      z-index: 1000;
-      bottom: 20px;
-      left: 12px;
-      display: grid;
-      width: 46px;
-      height: 46px;
-      min-height: 46px;
-      padding: 0;
-      place-items: center;
-      background: #fff;
-      border: 2px solid #fff;
-      border-radius: 50%;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
-
-    #locateMeBtn:hover {
-      background: #edf3ef;
-    }
-
-    #locateMeBtn svg {
-      width: 26px;
-      height: 26px;
-      fill: #50779a;
-    }
-
-    #guide {
-      display: none;
-      margin-top: 14px;
-      text-align: left;
-      line-height: 1.65;
-    }
-
-    #guide h2 {
-      margin: 0 0 10px;
-      font-size: 19px;
-    }
-
-    #guide h3 {
-      margin: 15px 0 5px;
-      font-size: 16px;
-    }
-
-    #guide ol {
-      margin: 7px 0;
-      padding-left: 23px;
-    }
-
-    #guide li {
-      margin: 6px 0;
-    }
-
-    .notice-box {
-      margin-top: 15px;
-      padding: 11px;
-      color: var(--notice-text);
-      font-size: 14px;
-      line-height: 1.6;
-      background: var(--notice-bg);
-      border: 1px solid var(--notice-line);
-      border-radius: 9px;
-    }
-
-    .route-buttons {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 7px;
-      margin-top: 10px;
-    }
-
-    .route-btn {
-      display: inline-block;
-      padding: 7px 10px;
-      color: #fff;
-      font-size: 14px;
-      text-decoration: none;
-      background: var(--view);
-      border-radius: 7px;
-    }
-
-    .route-btn:hover {
-      background: var(--view-hover);
-    }
-
-    #foundUserMsg {
-      position: fixed;
-      z-index: 3000;
-      top: 16px;
-      left: 50%;
-      display: none;
-      max-width: calc(100vw - 28px);
-      padding: 11px 17px;
-      color: #fff;
-      font-weight: bold;
-      background: var(--share);
-      border-radius: 9px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.22);
-      transform: translateX(-50%);
-      transition: opacity 0.7s ease;
-    }
-
-    @media (max-width: 520px) {
-      body {
-        padding: 12px 8px 18px;
-      }
-
-      .panel,
-      #guide {
-        padding: 12px;
-      }
-
-      .button-row button {
-        flex: 1 1 100%;
-      }
-
-      #map {
-        min-height: 360px;
-      }
+    .container { max-width: 600px; margin: auto; }
+    .title-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 25px;}
+    .title-row img { width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 2px 8px #fff8); background: #fff; border-radius: 14px; padding: 4px; box-shadow: 0 2px 16px #0007;}
+    h1 { margin: 0; color: #ff5555; font-size: 2.1rem; font-weight: bold; text-align: center; letter-spacing: 1px; text-shadow: 0 2px 6px #000c;}
+    .app-list { display: flex; flex-direction: column; gap: 15px;}
+    .app { background: rgba(255, 255, 255, 0.10); border-radius: 10px; padding: 12px 14px; margin: 0; box-shadow: 0 0 8px 2px rgba(0,0,0,0.25); max-width: 600px; margin-left: auto; margin-right: auto; width: 100%; transition: box-shadow 0.15s;}
+    .app-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;}
+    .app-header h2 { font-size: 1.15rem; margin: 0; font-weight: 600; letter-spacing: 0.5px; display: flex; align-items: center; gap: 10px;}
+    .app-header span { font-size: 1.2rem; margin-left: 10px; transition: transform 0.2s;}
+    .app-header:hover { color: #64b5f6;}
+    .app-icon { width: 32px; height: 32px; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 12px #0005; background: #fff; margin-right: 2px;}
+    .versions { display: none; margin-top: 8px;}
+    .version { background: rgba(255,255,255,0.15); border-radius: 7px; padding: 7px 9px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;}
+    .version-info { display: flex; flex-direction: column; }
+    .version .ver-icon { width: 24px; height: 24px; object-fit: contain; border-radius: 6px; background: #fff; margin-right: 8px; vertical-align: middle; box-shadow: 0 2px 8px #0003;}
+    .ios-support { color: #90caf9; font-size: 0.98em; font-weight: 400; margin-top: 2px; }
+    .btn { background: #64b5f6; color: #000; border: none; border-radius: 7px; padding: 4px 10px; cursor: pointer; font-weight: bold; font-size: 0.97em; transition: background 0.15s;}
+    .btn:active { background: #43a047; color: #fff;}
+    .btn:hover { background: #90caf9;}
+    .footer { text-align: center; margin-top: 40px; font-size: 1.16em; color: #fff; letter-spacing: 1px; opacity: 0.8; user-select: none;}
+    .blinker { display: inline-block; animation: blink 1.2s infinite alternate; font-weight: bold;}
+    .blinker2 { display: inline-block; animation: blink2 1.2s infinite alternate; font-weight: bold;}
+    @keyframes blink { from { color: #ff5555; text-shadow: 0 0 10px #ff555599; } to { color: #64b5f6; text-shadow: 0 0 10px #64b5f699; } }
+    @keyframes blink2 { from { color: #64b5f6; text-shadow: 0 0 10px #64b5f699; } to { color: #ff5555; text-shadow: 0 0 10px #ff555599; } }
+    .back-home { display: inline-block; margin-bottom: 10px; padding: 9px 16px; background: #fff2; color: #64b5f6; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.04em; box-shadow: 0 2px 8px #0006; transition: background 0.18s, color 0.18s;}
+    .back-home:hover { background: #64b5f6; color: #fff;}
+    .page2-link { display: inline-block; margin-bottom: 10px; margin-left: 0; padding: 9px 16px; background: #fff2; color: #ff5555; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.04em; box-shadow: 0 2px 8px #0006; transition: background 0.18s, color 0.18s;}
+    .page2-link:hover { background: #ff5555; color: #fff;}
+    .note-app-id { text-align: center; color: #bbb; font-size: 1.04em; margin: 24px 0 0 0; font-style: italic; letter-spacing: 0.5px; user-select: none;}
+    @media (max-width: 700px) {
+      .container { max-width: 98vw; }
+      .app { max-width: 98vw; }
+      .footer { font-size: 1em; }
+      .back-home { font-size: 0.98em; }
+      .page2-link { font-size: 0.98em; }
+      h1 { font-size: 1.35rem; }
     }
   </style>
 </head>
-
 <body>
-  <main class="app">
-    <h1>📍 Chia sẻ vị trí thời gian thực</h1>
-
-    <p class="subtitle">
-      Nhập mã để chia sẻ vị trí hoặc xem vị trí đã được chia sẻ.
-    </p>
-
-    <section class="panel">
-      <div class="input-row">
-        <input
-          id="shareCode"
-          type="text"
-          maxlength="40"
-          autocomplete="off"
-          placeholder="Nhập mã chia sẻ, ví dụ Nhut123"
-        >
-      </div>
-
-      <div class="button-row" style="margin-top: 8px;">
-        <button id="shareBtn" class="share-btn">📡 Bắt đầu chia sẻ</button>
-        <button id="viewBtn" class="view-btn">👁 Xem vị trí</button>
-        <button id="guideBtn" class="secondary-btn">📘 Hướng dẫn</button>
-        <button id="stopShareBtn" class="stop-btn">Dừng và xóa dữ liệu</button>
-      </div>
-
-      <p class="input-note">
-        Mã phân biệt chữ hoa/chữ thường.
-      </p>
-    </section>
-
-    <section id="guide">
-      <h2>📘 Hướng dẫn sử dụng</h2>
-
-      <h3>1. Chia sẻ vị trí</h3>
-      <ol>
-        <li>Nhập một mã chia sẻ, ví dụ: <strong>Nhut123</strong>.</li>
-        <li>Nên sao chép hoặc ghi lại mã này để dùng lại khi cần.</li>
-        <li>Bấm <strong>“Bắt đầu chia sẻ”</strong>.</li>
-        <li>Cho phép quyền vị trí khi trình duyệt yêu cầu.</li>
-        <li>Gửi mã đó cho người cần xem vị trí.</li>
-      </ol>
-
-      <h3>2. Xem vị trí</h3>
-      <ol>
-        <li>Nhập đúng mã mà người chia sẻ đã gửi.</li>
-        <li>Bấm <strong>“Xem vị trí”</strong>.</li>
-        <li>Bản đồ sẽ hiển thị vị trí gần nhất và đường đi đã lưu.</li>
-      </ol>
-
-      <h3>3. Dừng chia sẻ và xóa dữ liệu</h3>
-      <ol>
-        <li>Khi không muốn chia sẻ nữa, bấm <strong>“Dừng và xóa dữ liệu”</strong>.</li>
-        <li>Vị trí và đường đi của mã đó sẽ được xóa khỏi hệ thống.</li>
-      </ol>
-
-      <h3>4. Nếu mất mạng hoặc đóng trang</h3>
-      <ol>
-        <li>Dữ liệu sẽ <strong>không tự xóa</strong>; người xem vẫn có thể thấy vị trí cuối cùng.</li>
-        <li>Muốn xóa sau đó, hãy mở lại trang, nhập đúng mã ban đầu.</li>
-        <li>Bấm <strong>“Bắt đầu chia sẻ”</strong>, rồi bấm <strong>“Dừng và xóa dữ liệu”</strong>.</li>
-      </ol>
-
-      <div class="notice-box">
-        Vị trí, thời gian cập nhật và đường đi được lưu tạm trên
-        <strong>Firebase Realtime Database của Google</strong>
-        để hệ thống có thể hiển thị vị trí cho người nhập đúng mã.
-      </div>
-
-      <div style="margin-top: 12px;">
-        <button id="closeGuideBtn" class="secondary-btn">Đóng hướng dẫn</button>
-      </div>
-    </section>
-
-    <div id="info">
-      Nhập mã chia sẻ rồi chọn chức năng bạn muốn dùng.
+  <div class="container">
+    <div class="title-row">
+      <img src="https://github.com/nhut990/files/releases/download/V2.0-icon/100px-Apple_logo.png" alt="Apple Logo" />
+      <h1>Cài Đặt Ứng Dụng iOS Phiên Bản Cũ</h1>
     </div>
-
-    <div class="map-wrap">
-      <div id="map"></div>
-
-      <button
-        id="locateMeBtn"
-        title="Xem vị trí của tôi"
-        aria-label="Xem vị trí của tôi"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="8"></circle>
-          <circle cx="12" cy="12" r="2" fill="#ffffff"></circle>
-        </svg>
-      </button>
+    <div id="apps" class="app-list"></div>
+    <div class="note-app-id">
+      <em>Lưu ý: Các ứng dụng bên trên chỉ sử dụng được khi bạn có ID Apple của người tạo ra app</em>
     </div>
-  </main>
+  </div>
+  <div class="footer">
+    <a class="page2-link" href="https://nhut990.github.io/appcuios/page2/">Trang sau</a>
+    <br>
+    <a class="back-home" href="https://nhut990.github.io/">← Quay về trang chủ</a>
+    <br>
+    Created by <span class="blinker">Minh</span> <span class="blinker2">Nhut</span><br>
+    &copy; 2025
+  </div>
+  <script type="text/javascript">
+    var apps = [
+      // 1. Documents
+      {
+        name: "1. Documents",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Documents.jpg",
+        versions: [
+          { version: "1.0.0.1", ios: "iOS 3.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents1001.plist" },
+          { version: "1.5.0", ios: "iOS 3.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents150.plist" },
+          { version: "1.7.1", ios: "iOS 3.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents171.plist" },
+          { version: "3.2",   ios: "iOS 4.3 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents32.plist" },
+          { version: "4.4",   ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents44.plist" },
+          { version: "5.5.2", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/4TEST.plist" },
+          { version: "6.0.2", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents602.plist" },
+          { version: "6.5.2", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Documents652.plist" },
+          { version: "6.9",   ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/TEST.plist" },
+          { version: "7.6.1", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1TEST.plist" },
+          { version: "8.1.18", ios: "iOS 14.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2TEST.plist" },
+          { version: "8.12.5", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3TEST.plist" }
+        ]
+      },
+      // 2. Facebook
+      {
+        name: "2. Facebook",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Facebook.jpg",
+        versions: [
+          { version: "37.0", ios: "iOS 7.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.37.0.plist" },
+          { version: "67.0", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.67.0.plist" },
+          { version: "138.0", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.138.0.plist" },
+          { version: "226.0", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.226.0.plist" },
+          { version: "301.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1Nhut.plist" },
+          { version: "323.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Facebook.323.0.plist" },
+          { version: "335.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.335.0.plist" },
+          { version: "371.1", ios: "iOS 12.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2Nhut.plist" },
+          { version: "390.1", ios: "iOS 13.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Facebook.390.1.plist" },
+          { version: "419.0", ios: "iOS 13.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3Nhut.plist" },
+          { version: "435.2", ios: "iOS 13.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Facebook.435.2.plist" },
+          { version: "452.0.0", ios: "iOS 13.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.452.0.0.plist" },
+          { version: "463.0.4", ios: "iOS 13.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Facebook.463.0.4.plist" },
+          { version: "491.1.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/4Nhut.plist" },
+          { version: "506.1.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/5Nhut.plist" },
+          { version: "513.1.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.513.1.0.plist" },
+          { version: "523.0.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.523.0.0.plist" },
+          { version: "546.0.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.546.0.0.plist" },
+          { version: "551.1.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.551.1.0.plist" },
+          { version: "576.0.0", ios: "iOS 15.1 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Facebook.576.0.0.plist" }
+        ]
+      },
+      // 3. UC.Browser
+      {
+        name: "3. UC.Browser",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/UC.Browser.jpg",
+        versions: [
+          { version: "10.3.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1ucbrowse.plist" },
+          { version: "11.3.5", ios: "iOS 7.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2ucbrowse.plist" }
+        ]
+      },
+      // 4. Chợ Tốt
+      {
+        name: "4. Chợ Tốt",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Chotot.jpg",
+        versions: [
+          { version: "4.9.1", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/1chotot4.9.1.plist" },
+          { version: "4.36.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/chotot4.36.0.plist" },
+          { version: "4.38.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Cho-tot-4.38.01.plist" },
+          { version: "5.5.1", ios: "iOS 14.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/ChoTot_5.5.1.plist" },
+          { version: "5.20.0", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/ChoTot_5.20.0.plist" }
+        ]
+      },
+      // 5. Google Maps
+      {
+        name: "5. Google Maps",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Google.Maps.jpg",
+        versions: [
+          { version: "1.1.6", ios: "iOS 3.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.1.1.6.plist" },
+          { version: "2.2.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.2.2.0.plist" },
+          { version: "3.0.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/5maps.plist" },
+          { version: "4.2.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.4.2.0.plist" },
+          { version: "4.3.0", ios: "iOS 6.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/maps.plist" },
+          { version: "4.56.0", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.4.56.0.plist" },
+          { version: "5.55.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1maps.plist" },
+          { version: "6.1.0", ios: "iOS 12.2 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/re versionleases/download/v1.0_test.plis2/Google.Maps.6.1.0.plist" },
+          { version: "6.17.0", ios: "iOS 13.4 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Google.Maps.6.17.0.plist" },
+          {: "6.85.0", ios: "iOS 14.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3maps.plist" },
+          { version: "6.142.0", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2maps.plist" },
+          { version: "24.48.0", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/4maps.plist" },
+          { version: "25.37.1", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Google.Maps.25.37.1.plist" },
+          { version: "26.03.1", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Google.Maps.26.03.1.plist" },
+          { version: "26.10.2", ios: "iOS 16.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/Google.Maps.26.10.2.plist" }
+        ]
+      },
+      // 6. TikTok
+      {
+        name: "6. TikTok",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Tiktok.jpg",
+        versions: [
+          { version: "1.4.0", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/4tiktok.plist" },
+          { version: "17.6.0", ios: "iOS 9.3 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/TikTok.17.6.0.plist" },
+          { version: "18.3.0", ios: "iOS 9.3 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/TikTok.18.3.0.plist" },
+          { version: "22.1.0", ios: "iOS 9.3 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/TikTok.22.1.0.plist" },
+          { version: "23.7.1", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/tiktok.plist" },
+          { version: "24.9.0", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1tiktok.plist" },
+          { version: "30.7.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2tiktok.plist" },
+          { version: "34.5.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3tiktok.plist" },
+          { version: "37.1.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/TikTok.37.1.0.plist" },
+          { version: "40.4.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/TikTok.40.4.0.plist" },
+          { version: "43.9.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/TikTok.43.9.0.plist" }
+        ]
+      },
+      // 7. Tiktok China (抖音 Douyin)
+      {
+        name: "7. Tiktok China (抖音 Douyin)",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Tiktok.jpg",
+        versions: [
+          { version: "1.0.0", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin340.plist" },
+          { version: "8.7.1", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin871.plist" },
+          { version: "13.6.0", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin13.60.plist" },
+          { version: "21.0.0", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin21.00.plist" },
+          { version: "22.0.0", ios: "iOS 10.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin22.00.plist" },
+          { version: "23.8.0", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin23.80.plist" },
+          { version: "28.9.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin28.90.plist" },
+          { version: "29.8.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin29.80.plist" },
+          { version: "33.6.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin33.60.plist" },
+          { version: "35.4.0", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plis2/Douyin35.40.plist" }
+        ]
+      },
+      // 8. BODAPLAY AI
+      {
+        name: "8. BODAPLAY AI",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/BODAPLAY.AI.jpg",
+        versions: [
+          { version: "1.4.1", ios: "iOS 13.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1Vodaplay.plist" },
+          { version: "1.6.0", ios: "iOS 13.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2Vodaplay.plist" },
+          { version: "1.6.2", ios: "iOS 13.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/3Vodaplay.plist" }
+        ]
+      },
+      // 9. Telegram
+      {
+        name: "9. Telegram",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Telegram.jpg",
+        versions: [
+          { version: "9.2.1", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/Telegram.9.2.1.plist" },
+          { version: "10.1", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/Telegram.10.1.plist" },
+          { version: "10.10.1", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/Telegram.10.10.1.plist" },
+          { version: "11.5", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1Telegram.plist" },
+          { version: "11.10", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/Telegram.plist" },
+          { version: "11.12.1", ios: "iOS 12.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/Telegram.11.12.1.plist" },
+          { version: "12.1.1", ios: "iOS 13.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2Telegram.plist" }
+        ]
+      },
+      // 10. Cốc Cốc
+      {
+        name: "10. Cốc Cốc",
+        icon: "https://github.com/nhut990/files/releases/download/V2.0-icon/Cococ.jpg",
+        versions: [
+          { version: "60.3.73", ios: "iOS 8.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/cococ.plist" },
+          { version: "70.4.210", ios: "iOS 9.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/1cococ.plist" },
+          { version: "83.0.208", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_TEST.plist/2cococ.plist" },
+          { version: "83.0.222", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/CocCoc_83.0.222.plist" },
+          { version: "89.0.70", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/CocCoc_89.0.70.plist" },
+          { version: "89.0.96", ios: "iOS 11.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/nhut990/files/releases/download/v1.0_test.plist3/CocCoc_89.0.96.plist" },
+          { version: "104.0.370", ios: "iOS 14.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/CocCoc_104.0.370.plist" },
+          { version: "130.0.176", ios: "iOS 15.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/CocCoc_130.0.176.plist" },
+          { version: "142.0.148", ios: "iOS 16.0 or later", link: "itms-services://?action=download-manifest&url=https://github.com/Nhut11790/ipanhut117117/releases/download/V1.Test-plist/CocCoc_142.0.148.plist" }
+        ]
+      }
+    ];
 
-  <div id="foundUserMsg"></div>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDbAhdrKAiv_0VFj8nS2b9-aM6nwbtZXaA",
-      authDomain: "mapgps-6fa8a.firebaseapp.com",
-      databaseURL: "https://mapgps-6fa8a-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "mapgps-6fa8a",
-      storageBucket: "mapgps-6fa8a.appspot.com",
-      messagingSenderId: "237570405681",
-      appId: "1:237570405681:web:583749449110d7e1896c10"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-
-    const db = firebase.database();
-    const $ = (id) => document.getElementById(id);
-
-    let map = null;
-    let sharedMarker = null;
-    let myLocationMarker = null;
-    let trackPolyline = null;
-
-    let geoWatchId = null;
-    let activeShareCode = "";
-
-    let viewingHistoryRef = null;
-    let viewingLastRef = null;
-    let historyListener = null;
-    let lastListener = null;
-
-    let lastSentTime = 0;
-    let lastSentLat = null;
-    let lastSentLng = null;
-
-    let hasCenteredShareMap = false;
-    let hasCenteredViewMap = false;
-
-    const MAX_HISTORY_POINTS = 500;
-    const SEND_AFTER_METERS = 20;
-    const SEND_AFTER_SECONDS = 10;
-
-    const blueIcon = new L.Icon({
-      iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
-      shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
-
-    const redIcon = new L.Icon({
-      iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
-      shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
-
-    function initMap() {
-      if (map) return;
-
-      const satelliteLayer = L.tileLayer(
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        {
-          maxZoom: 19,
-          attribution: "Tiles © Esri"
+    // Hàm sort version tăng dần dùng chung cho tất cả app
+    function sortVersions(versions) {
+      return versions.sort(function(a, b) {
+        var va = a.version.split('.').map(Number);
+        var vb = b.version.split('.').map(Number);
+        for (var k = 0; k < Math.max(va.length, vb.length); k++) {
+          var pa = va[k] || 0;
+          var pb = vb[k] || 0;
+          if (pa < pb) return -1;
+          if (pa > pb) return 1;
         }
-      );
-
-      map = L.map("map", {
-        center: [16.2, 107.8],
-        zoom: 6,
-        layers: [satelliteLayer]
+        return 0;
       });
     }
 
-    function showInfo(message, isError = false) {
-      const info = $("info");
-      info.textContent = message;
-      info.className = isError ? "error" : "";
-    }
+    var appsContainer = document.getElementById("apps");
+    for (var i = 0; i < apps.length; i++) {
+      var app = apps[i];
 
-    function getShareCode() {
-      return $("shareCode").value.trim();
-    }
+      // Áp dụng sort tăng dần cho TẤT CẢ 10 app
+      sortVersions(app.versions);
 
-    function validateShareCode() {
-      const code = getShareCode();
-
-      if (!code) {
-        showInfo("Vui lòng nhập mã chia sẻ.", true);
-        return null;
+      var appDiv = document.createElement("div");
+      appDiv.className = "app";
+      var versionsHtml = "";
+      for (var j = 0; j < app.versions.length; j++) {
+        var v = app.versions[j];
+        versionsHtml += '<div class="version">' +
+          '<div class="version-info">' +
+            '<span>' +
+              '<img src="' + app.icon + '" alt="icon" class="ver-icon"> Phiên bản <b>' + v.version + '</b>' +
+            '</span>' +
+            '<span class="ios-support">(' + v.ios + ')</span>' +
+          '</div>' +
+          '<button class="btn" onclick="install(\'' + v.link + '\')">Cài đặt</button>' +
+        '</div>';
       }
-
-      if (code.length > 40 || /[.#$\[\]/]/.test(code)) {
-        showInfo("Mã không được chứa các ký tự: . # $ [ ] /", true);
-        return null;
-      }
-
-      return code;
+      appDiv.innerHTML =
+        '<div class="app-header" onclick="toggleVersions(' + i + ')">' +
+          '<h2>' +
+            '<span>' + app.name.split(' ')[0] + '</span>' +
+            '<img src="' + app.icon + '" alt="icon" class="app-icon">' +
+            app.name.substring(app.name.indexOf(' ') + 1) +
+          '</h2>' +
+          '<span id="arrow-' + i + '">⬇️</span>' +
+        '</div>' +
+        '<div class="versions" id="versions-' + i + '">' +
+          versionsHtml +
+        '</div>';
+      appsContainer.appendChild(appDiv);
     }
 
-    function getDistanceKm(lat1, lng1, lat2, lng2) {
-      const earthRadius = 6371;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLng = (lng2 - lng1) * Math.PI / 180;
-
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * Math.PI / 180) *
-        Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLng / 2) * Math.sin(dLng / 2);
-
-      return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
-    function shouldSendLocation(lat, lng, timestamp) {
-      if (lastSentLat === null || lastSentLng === null) {
-        return true;
-      }
-
-      const movedMeters =
-        getDistanceKm(lastSentLat, lastSentLng, lat, lng) * 1000;
-
-      const passedSeconds = (timestamp - lastSentTime) / 1000;
-
-      return movedMeters >= SEND_AFTER_METERS || passedSeconds >= SEND_AFTER_SECONDS;
-    }
-
-    function clearSharedMapObjects() {
-      if (sharedMarker) {
-        map.removeLayer(sharedMarker);
-        sharedMarker = null;
-      }
-
-      if (trackPolyline) {
-        map.removeLayer(trackPolyline);
-        trackPolyline = null;
+    window.toggleVersions = function(index) {
+      var div = document.getElementById("versions-" + index);
+      var arrow = document.getElementById("arrow-" + index);
+      if (div.style.display === "" || div.style.display === "none") {
+        div.style.display = "block";
+        if (arrow) arrow.style.transform = "rotate(180deg)";
+      } else {
+        div.style.display = "none";
+        if (arrow) arrow.style.transform = "";
       }
     }
 
-    function stopView() {
-      if (viewingHistoryRef && historyListener) {
-        viewingHistoryRef.off("value", historyListener);
-      }
-
-      if (viewingLastRef && lastListener) {
-        viewingLastRef.off("value", lastListener);
-      }
-
-      viewingHistoryRef = null;
-      viewingLastRef = null;
-      historyListener = null;
-      lastListener = null;
-      hasCenteredViewMap = false;
+    window.install = function(link) {
+      window.location.href = link;
     }
-
-    function handleLocationError(error) {
-      let message = "Không thể lấy vị trí hiện tại.";
-
-      if (error.code === 1) {
-        message = "Bạn chưa cho phép quyền vị trí.";
-      } else if (error.code === 2) {
-        message = "Không xác định được vị trí. Hãy kiểm tra GPS hoặc mạng.";
-      } else if (error.code === 3) {
-        message = "Lấy vị trí quá lâu. Hãy thử lại.";
-      }
-
-      showInfo(message, true);
-    }
-
-    async function trimOldHistory(historyRef) {
-      try {
-        const snapshot = await historyRef.once("value");
-        const data = snapshot.val();
-
-        if (!data) return;
-
-        const entries = Object.entries(data)
-          .filter(([, point]) => point && Number.isFinite(point.timestamp))
-          .sort((a, b) => a[1].timestamp - b[1].timestamp);
-
-        const excess = entries.length - MAX_HISTORY_POINTS;
-
-        if (excess <= 0) return;
-
-        const updates = {};
-
-        for (let i = 0; i < excess; i++) {
-          updates[entries[i][0]] = null;
-        }
-
-        await historyRef.update(updates);
-      } catch (error) {
-        console.warn("Không thể dọn lịch sử cũ:", error);
-      }
-    }
-
-    async function startShare() {
-      initMap();
-      stopView();
-
-      const code = validateShareCode();
-      if (!code) return;
-
-      if (!navigator.geolocation) {
-        showInfo("Thiết bị này không hỗ trợ định vị.", true);
-        return;
-      }
-
-      if (geoWatchId !== null && activeShareCode === code) {
-        showInfo("Bạn đang chia sẻ vị trí bằng mã này.");
-        return;
-      }
-
-      if (geoWatchId !== null && activeShareCode !== code) {
-        navigator.geolocation.clearWatch(geoWatchId);
-        geoWatchId = null;
-      }
-
-      activeShareCode = code;
-      lastSentTime = 0;
-      lastSentLat = null;
-      lastSentLng = null;
-      hasCenteredShareMap = false;
-
-      clearSharedMapObjects();
-
-      const locationRef = db.ref(`locations/${activeShareCode}`);
-      const lastRef = locationRef.child("last");
-      const historyRef = locationRef.child("history");
-
-      /*
-        Không dùng onDisconnect().remove().
-        Vì vậy nếu mất mạng, tắt máy hoặc đóng trang,
-        dữ liệu sẽ vẫn còn trên Firebase.
-      */
-
-      $("stopShareBtn").style.display = "inline-block";
-      showInfo("Đang chờ GPS để bắt đầu chia sẻ...");
-
-      geoWatchId = navigator.geolocation.watchPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          const accuracy = position.coords.accuracy;
-          const timestamp = Date.now();
-
-          if (!shouldSendLocation(lat, lng, timestamp)) return;
-
-          lastSentTime = timestamp;
-          lastSentLat = lat;
-          lastSentLng = lng;
-
-          if (!sharedMarker) {
-            sharedMarker = L.marker([lat, lng], {
-              icon: blueIcon
-            }).addTo(map);
-          }
-
-          sharedMarker
-            .setLatLng([lat, lng])
-            .bindPopup("Tôi đang chia sẻ vị trí");
-
-          if (!hasCenteredShareMap) {
-            map.setView([lat, lng], 16);
-            hasCenteredShareMap = true;
-          }
-
-          const locationData = { lat, lng, timestamp };
-
-          try {
-            await lastRef.set(locationData);
-            await historyRef.push(locationData);
-
-            trimOldHistory(historyRef);
-
-            const accuracyText = accuracy
-              ? ` — sai số khoảng ${Math.round(accuracy)} m`
-              : "";
-
-            showInfo(`✅ Đang chia sẻ vị trí${accuracyText}`);
-          } catch (error) {
-            console.error(error);
-            showInfo("Không thể lưu vị trí lên Firebase. Hãy kiểm tra mạng.", true);
-          }
-        },
-        handleLocationError,
-        {
-          enableHighAccuracy: true,
-          maximumAge: 5000,
-          timeout: 15000
-        }
-      );
-    }
-
-    async function stopShare() {
-      if (geoWatchId !== null) {
-        navigator.geolocation.clearWatch(geoWatchId);
-        geoWatchId = null;
-      }
-
-      $("stopShareBtn").style.display = "none";
-
-      if (!activeShareCode) {
-        showInfo("Chưa có lượt chia sẻ nào đang hoạt động.", true);
-        return;
-      }
-
-      try {
-        await db.ref(`locations/${activeShareCode}`).remove();
-
-        activeShareCode = "";
-        lastSentTime = 0;
-        lastSentLat = null;
-        lastSentLng = null;
-        hasCenteredShareMap = false;
-
-        clearSharedMapObjects();
-
-        showInfo("Đã dừng chia sẻ và xóa toàn bộ dữ liệu của mã này.");
-      } catch (error) {
-        console.error(error);
-        showInfo(
-          "Đã dừng GPS nhưng không thể xóa dữ liệu. Hãy kiểm tra mạng rồi thử lại.",
-          true
-        );
-      }
-    }
-
-    function showFoundUserMsg(code) {
-      const message = $("foundUserMsg");
-
-      message.textContent = `Đã tìm thấy vị trí của mã: ${code}`;
-      message.style.display = "block";
-      message.style.opacity = "1";
-
-      setTimeout(() => {
-        message.style.opacity = "0";
-
-        setTimeout(() => {
-          message.style.display = "none";
-        }, 700);
-      }, 3000);
-    }
-
-    function updateViewerInfo(data, viewerPosition) {
-      const ageMinutes = Math.floor((Date.now() - data.timestamp) / 60000);
-
-      let text =
-        `📍 Vị trí: ${data.lat.toFixed(5)}, ${data.lng.toFixed(5)}\n` +
-        `⏱ Cập nhật: ${new Date(data.timestamp).toLocaleTimeString("vi-VN")}`;
-
-      if (viewerPosition) {
-        const distance = getDistanceKm(
-          viewerPosition.lat,
-          viewerPosition.lng,
-          data.lat,
-          data.lng
-        ).toFixed(2);
-
-        text += `\n🧭 Cách bạn khoảng: ${distance} km`;
-      }
-
-      if (ageMinutes >= 2) {
-        text += `\n⚠️ Vị trí này đã không cập nhật khoảng ${ageMinutes} phút.`;
-      }
-
-      $("info").textContent = text;
-      $("info").className = "";
-
-      const routeButtons = document.createElement("div");
-      routeButtons.className = "route-buttons";
-
-      const googleMaps = document.createElement("a");
-      googleMaps.className = "route-btn";
-      googleMaps.target = "_blank";
-      googleMaps.rel = "noopener";
-      googleMaps.href =
-        `https://www.google.com/maps/dir/?api=1&destination=${data.lat},${data.lng}`;
-      googleMaps.textContent = "🗺 Chỉ đường bằng Google Maps";
-
-      routeButtons.appendChild(googleMaps);
-      $("info").appendChild(routeButtons);
-    }
-
-    function subscribeToLocation(code, viewerPosition = null) {
-      stopView();
-      clearSharedMapObjects();
-
-      let foundShown = false;
-
-      viewingHistoryRef = db.ref(`locations/${code}/history`);
-      viewingLastRef = db.ref(`locations/${code}/last`);
-
-      historyListener = (snapshot) => {
-        const historyData = snapshot.val();
-
-        if (!historyData) {
-          if (trackPolyline) {
-            map.removeLayer(trackPolyline);
-            trackPolyline = null;
-          }
-          return;
-        }
-
-        const points = Object.values(historyData)
-          .filter((point) =>
-            point &&
-            Number.isFinite(point.lat) &&
-            Number.isFinite(point.lng) &&
-            Number.isFinite(point.timestamp)
-          )
-          .sort((a, b) => a.timestamp - b.timestamp)
-          .slice(-MAX_HISTORY_POINTS)
-          .map((point) => [point.lat, point.lng]);
-
-        if (trackPolyline) {
-          map.removeLayer(trackPolyline);
-          trackPolyline = null;
-        }
-
-        if (points.length > 1) {
-          trackPolyline = L.polyline(points, {
-            color: "#d14343",
-            weight: 4,
-            opacity: 0.8
-          }).addTo(map);
-        }
-      };
-
-      lastListener = (snapshot) => {
-        const data = snapshot.val();
-
-        if (
-          !data ||
-          !Number.isFinite(data.lat) ||
-          !Number.isFinite(data.lng) ||
-          !Number.isFinite(data.timestamp)
-        ) {
-          showInfo("Không tìm thấy dữ liệu vị trí của mã này.", true);
-          foundShown = false;
-          return;
-        }
-
-        if (!sharedMarker) {
-          sharedMarker = L.marker([data.lat, data.lng], {
-            icon: redIcon
-          }).addTo(map);
-        }
-
-        sharedMarker
-          .setLatLng([data.lat, data.lng])
-          .bindPopup(`Vị trí của mã: ${code}`);
-
-        if (!hasCenteredViewMap) {
-          map.setView([data.lat, data.lng], 16);
-          hasCenteredViewMap = true;
-        }
-
-        updateViewerInfo(data, viewerPosition);
-
-        if (!foundShown) {
-          showFoundUserMsg(code);
-          foundShown = true;
-        }
-      };
-
-      viewingHistoryRef.on("value", historyListener);
-      viewingLastRef.on("value", lastListener);
-    }
-
-    function startView() {
-      initMap();
-
-      const code = validateShareCode();
-      if (!code) return;
-
-      showInfo(`Đang tìm vị trí của mã: ${code}...`);
-
-      if (!navigator.geolocation) {
-        subscribeToLocation(code);
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const viewerPosition = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-
-          if (!myLocationMarker) {
-            myLocationMarker = L.marker(
-              [viewerPosition.lat, viewerPosition.lng],
-              { icon: blueIcon }
-            ).addTo(map);
-          }
-
-          myLocationMarker
-            .setLatLng([viewerPosition.lat, viewerPosition.lng])
-            .bindPopup("Vị trí của tôi");
-
-          subscribeToLocation(code, viewerPosition);
-        },
-        () => {
-          subscribeToLocation(code);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 12000,
-          maximumAge: 10000
-        }
-      );
-    }
-
-    function showMyLocation() {
-      initMap();
-
-      if (!navigator.geolocation) {
-        showInfo("Thiết bị này không hỗ trợ định vị.", true);
-        return;
-      }
-
-      showInfo("Đang lấy vị trí của bạn...");
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-
-          if (!myLocationMarker) {
-            myLocationMarker = L.marker([lat, lng], {
-              icon: blueIcon
-            }).addTo(map);
-          }
-
-          myLocationMarker
-            .setLatLng([lat, lng])
-            .bindPopup("Vị trí của tôi");
-
-          map.setView([lat, lng], 16);
-
-          showInfo(`Vị trí của bạn: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-        },
-        handleLocationError,
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 10000
-        }
-      );
-    }
-
-    function toggleGuide() {
-      const guide = $("guide");
-      guide.style.display = guide.style.display === "block" ? "none" : "block";
-    }
-
-    $("shareBtn").addEventListener("click", startShare);
-    $("viewBtn").addEventListener("click", startView);
-    $("stopShareBtn").addEventListener("click", stopShare);
-    $("guideBtn").addEventListener("click", toggleGuide);
-
-    $("closeGuideBtn").addEventListener("click", () => {
-      $("guide").style.display = "none";
-    });
-
-    $("locateMeBtn").addEventListener("click", showMyLocation);
-
-    $("shareCode").addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        startView();
-      }
-    });
-
-    window.addEventListener("beforeunload", () => {
-      stopView();
-
-      /*
-        Không gọi stopShare() ở đây.
-        Vì vậy đóng tab hoặc mất mạng sẽ không xóa dữ liệu.
-      */
-    });
-
-    initMap();
   </script>
 </body>
 </html>
