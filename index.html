@@ -217,12 +217,10 @@ async function processIPAFromURL() {
 
   try {
     pText.textContent = 'Đang trích xuất thông tin siêu tốc...';
-    // Thử chạy phương pháp tải siêu tốc (Range Request)
     await processIPAFastRange(proxyUrl, ipaUrl);
   } catch (rangeErr) {
-    console.warn("Range Request thất bại, tự động chuyển sang tải toàn bộ file...", rangeErr);
+    console.warn("Range Request thất bại, chuyển sang tải toàn bộ...", rangeErr);
     pText.textContent = 'Đang tải toàn bộ file (dự phòng)...';
-    // Nếu lỗi, tự động nhảy sang tải toàn bộ file
     try {
       await processIPAFullDownload(proxyUrl, ipaUrl);
     } catch (fullErr) {
@@ -240,7 +238,6 @@ async function processIPAFastRange(proxyUrl, ipaUrl) {
     return await res.arrayBuffer();
   };
 
-  // 1. Tải 64KB cuối cùng
   const resEnd = await fetch(proxyUrl, { headers: { Range: 'bytes=-65536' } });
   if (resEnd.status !== 206) throw new Error("Máy chủ không hỗ trợ tải từng phần (Range).");
   
@@ -257,7 +254,6 @@ async function processIPAFastRange(proxyUrl, ipaUrl) {
   const cdOffset = dvEnd.getUint32(eocdOffset + 16, true);
   const totalEntries = dvEnd.getUint16(eocdOffset + 10, true);
 
-  // 2. Tải Central Directory
   const bufCd = await fetchRange(cdOffset, cdOffset + cdSize - 1);
   const dvCd = new DataView(bufCd);
   let offset = 0;
@@ -274,8 +270,14 @@ async function processIPAFastRange(proxyUrl, ipaUrl) {
     
     const filename = new TextDecoder().decode(new Uint8Array(bufCd, offset + 46, fnameLen));
 
-    if (filename.match(/^Payload\/[^\/]+\.app\/Info\.plist$/i)) infoPlist = { localOffset, compSize, compMethod };
-    else if (filename === 'iTunesMetadata.plist') metaPlist = { localOffset, compSize, compMethod };
+    // TÌM KIẾM LINH HOẠT: Ưu tiên chuẩn, sau đó fallback cho các cấu trúc IPA lạ
+    if (filename.match(/^Payload\/[^\/]+\.app\/Info\.plist$/i)) {
+      infoPlist = { localOffset, compSize, compMethod };
+    } else if (!infoPlist && filename.endsWith('Info.plist') && filename.startsWith('Payload/') && filename.split('/').length <= 4) {
+      infoPlist = { localOffset, compSize, compMethod };
+    }
+    
+    if (filename === 'iTunesMetadata.plist') metaPlist = { localOffset, compSize, compMethod };
     
     offset += 46 + fnameLen + extraLen + commLen;
   }
@@ -352,7 +354,14 @@ async function processIPAFullDownload(proxyUrl, ipaUrl) {
 
   const zip = await JSZip.loadAsync(buf);
   const files = Object.keys(zip.files);
-  const infoPath = files.find(p => /^Payload\/[^/]+\.app\/Info\.plist$/i.test(p));
+  
+  // TÌM KIẾM LINH HOẠT (FULL DOWNLOAD)
+  let infoPath = files.find(p => /^Payload\/[^/]+\.app\/Info\.plist$/i.test(p));
+  if (!infoPath) {
+      infoPath = files.find(p => p.startsWith('Payload/') && p.endsWith('Info.plist') && p.split('/').length <= 4);
+  }
+  if (!infoPath) infoPath = files.find(p => p.endsWith('Info.plist'));
+
   if (!infoPath) throw new Error('Không tìm thấy Info.plist.');
 
   const infoBytes = await zip.file(infoPath).async('uint8array');
@@ -365,6 +374,31 @@ async function processIPAFullDownload(proxyUrl, ipaUrl) {
 
   let filename = ipaUrl.split('/').pop().split('?')[0] || 'Unknown.ipa';
   renderUI(filename, info, meta, itemId);
+}
+
+// ── XỬ LÝ PLIST & ZIP TRUYỀN THỐNG ──
+async function parseIPAData(buf, filename) {
+  try {
+    const zip = await JSZip.loadAsync(buf);
+    const files = Object.keys(zip.files);
+    
+    // TÌM KIẾM LINH HOẠT (OFFLINE FILE)
+    let infoPath = files.find(p => /^Payload\/[^/]+\.app\/Info\.plist$/i.test(p));
+    if (!infoPath) {
+        infoPath = files.find(p => p.startsWith('Payload/') && p.endsWith('Info.plist') && p.split('/').length <= 4);
+    }
+    if (!infoPath) infoPath = files.find(p => p.endsWith('Info.plist'));
+
+    if (!infoPath) throw new Error('Không tìm thấy Info.plist.');
+
+    const info = await parsePlist(await zip.file(infoPath).async('uint8array'));
+    let meta = null, itemId = null;
+    if (files.includes('iTunesMetadata.plist')) {
+      meta = await parsePlist(await zip.file('iTunesMetadata.plist').async('uint8array'));
+      if (meta && meta['itemId'] !== undefined) itemId = String(meta['itemId']);
+    }
+    renderUI(filename, info, meta, itemId);
+  } catch (err) { throw err; }
 }
 
 // ── HIỂN THỊ KẾT QUẢ ──
@@ -395,23 +429,6 @@ function renderUI(filename, info, meta, itemId) {
 
   showProgress(false);
   showResult(true);
-}
-
-// ── XỬ LÝ PLIST & ZIP TRUYỀN THỐNG ──
-async function parseIPAData(buf, filename) {
-  try {
-    const zip = await JSZip.loadAsync(buf);
-    const files = Object.keys(zip.files);
-    const infoPath = files.find(p => /^Payload\/[^/]+\.app\/Info\.plist$/i.test(p));
-    if (!infoPath) throw new Error('Không tìm thấy Info.plist.');
-    const info = await parsePlist(await zip.file(infoPath).async('uint8array'));
-    let meta = null, itemId = null;
-    if (files.includes('iTunesMetadata.plist')) {
-      meta = await parsePlist(await zip.file('iTunesMetadata.plist').async('uint8array'));
-      if (meta && meta['itemId'] !== undefined) itemId = String(meta['itemId']);
-    }
-    renderUI(filename, info, meta, itemId);
-  } catch (err) { throw err; }
 }
 
 async function parsePlist(bytes) {
