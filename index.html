@@ -63,7 +63,7 @@
   .url-input-group input {
     flex: 1; padding: 12px 15px; border: 1px solid #cbd5e1; border-radius: 8px;
     font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;
-    min-width: 0; /* Tránh tràn trên mobile */
+    min-width: 0; 
   }
   .url-input-group input:focus { border-color: #007aff; }
   .url-input-group button {
@@ -298,7 +298,7 @@ async function processIPAFile(file) {
   }
 }
 
-// ── LUỒNG 2: ĐỌC TỪ LINK URL QUA CORSPROXY.IO ──
+// ── LUỒNG 2: ĐỌC TỪ LINK URL QUA CLOUDFLARE WORKER ──
 async function processIPAFromURL() {
   const ipaUrl = urlInput.value.trim();
   if (!ipaUrl) {
@@ -310,28 +310,25 @@ async function processIPAFromURL() {
   showResult(false);
   showProgress(true);
   
-  btnFetch.disabled = true; // Khóa nút để tránh bấm nhiều lần
+  btnFetch.disabled = true;
   const fake = startFakeProgress();
 
   try {
-    // Sử dụng corsproxy.io
-    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(ipaUrl)}`;
+    // Sử dụng link Cloudflare Worker của bạn
+    const proxyUrl = `https://ipa.vannhut9090.workers.dev/?url=${encodeURIComponent(ipaUrl)}`;
     const response = await fetch(proxyUrl);
-    
+
     if (!response.ok) {
-      throw new Error(`Máy chủ proxy trả về mã lỗi HTTP ${response.status}. Có thể file quá lớn hoặc link bị chặn.`);
+      throw new Error(`Máy chủ proxy trả về mã lỗi HTTP ${response.status}.`);
     }
 
     const buf = await response.arrayBuffer();
-    
-    // Lấy tên file từ URL (bỏ phần query string nếu có)
     let filename = ipaUrl.split('/').pop().split('?')[0] || 'Unknown.ipa';
-    
     await parseIPAData(buf, filename);
 
   } catch (err) {
     if (err instanceof TypeError) {
-      handleError(err, 'Lỗi mạng/CORS. Hãy kiểm tra lại link hoặc thử proxy khác. Chi tiết: ');
+      handleError(err, 'Lỗi mạng/CORS. Chi tiết: ');
     } else {
       handleError(err, 'Lỗi khi tải IPA từ URL: ');
     }
@@ -397,11 +394,11 @@ async function parseIPAData(buf, filename) {
     showResult(true);
 
   } catch (err) {
-    throw err; // Ném lỗi lên hàm gọi bên trên để xử lý
+    throw err;
   }
 }
 
-/* ── PLIST PARSER LOGIC (Giữ nguyên bản gốc của bạn) ── */
+/* ── PLIST PARSER LOGIC ── */
 async function parsePlist(bytes) {
   const isBinary = bytes[0]===0x62 && bytes[1]===0x70 && bytes[2]===0x6c && bytes[3]===0x69;
   if (isBinary) {
