@@ -17,10 +17,18 @@
       background: #fff;
       border-radius: 12px;
       padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
     }
-    h1 { font-size: 20px; margin: 0 0 16px; }
-    label { display: block; font-weight: 600; margin-top: 12px; font-size: 14px; }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 16px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-top: 12px;
+      font-size: 14px;
+    }
     input {
       width: 100%;
       box-sizing: border-box;
@@ -30,7 +38,49 @@
       border-radius: 8px;
       font-size: 14px;
     }
-    .row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      align-items: stretch;
+    }
+    .input-group input {
+      margin-top: 0;
+      flex: 1;
+    }
+    .btn-fetch {
+      padding: 0 14px;
+      border-radius: 8px;
+      border: 1px solid #0969da;
+      background: #eff6ff;
+      color: #0969da;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-fetch:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #57606a;
+      min-height: 18px;
+    }
+    .status.ok {
+      color: #1a7f37;
+    }
+    .status.err {
+      color: #cf222e;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
     button, a.btn {
       padding: 10px 16px;
       border-radius: 8px;
@@ -41,9 +91,18 @@
       text-decoration: none;
       display: inline-block;
     }
-    .btn-primary { background: #0969da; color: #fff; }
-    .btn-install { background: #1a7f37; color: #fff; }
-    .btn-copy { background: #eef2f7; color: #1f2328; }
+    .btn-primary {
+      background: #0969da;
+      color: #fff;
+    }
+    .btn-install {
+      background: #1a7f37;
+      color: #fff;
+    }
+    .btn-copy {
+      background: #eef2f7;
+      color: #1f2328;
+    }
     .out {
       margin-top: 16px;
       padding: 12px;
@@ -59,16 +118,23 @@
     <h1>Tạo link cài IPA qua Cloudflare Worker</h1>
 
     <label>Link file .ipa (bắt buộc https://)</label>
-    <input id="ipaUrl" type="url" placeholder="https://github.com/.../App.ipa" />
+    <div class="input-group">
+      <input id="ipaUrl" type="url" placeholder="https://github.com/.../App.ipa" />
+      <button class="btn-fetch" id="btnFetchInfo" type="button">Lấy thông tin</button>
+    </div>
+    <div class="status" id="statusText"></div>
 
     <label>Tên hiển thị (Title)</label>
-    <input id="title" type="text" placeholder="Tự lấy theo tên file nếu để trống" />
+    <input id="title" type="text" placeholder="Tự lấy theo tên file hoặc Info.plist" />
 
     <label>Bundle ID</label>
     <input id="bundleId" type="text" placeholder="Ví dụ: com.burbn.instagram" />
 
     <label>Phiên bản (Version)</label>
     <input id="version" type="text" placeholder="Ví dụ: 240.0" />
+
+    <label>iOS hỗ trợ tối thiểu (Minimum OS Version)</label>
+    <input id="minOs" type="text" placeholder="Ví dụ: 13.0" />
 
     <label>Link icon hiển thị (Image)</label>
     <input id="imageUrl" type="url" value="https://raw.githubusercontent.com/nhut990/files/refs/heads/main/hinh/logo_minhnhut.PNG" />
@@ -88,6 +154,12 @@
   <script>
     const WORKER_BASE = "https://cai-ipa.vannhut9090.workers.dev/";
 
+    function setStatus(msg, type = "") {
+      const el = document.getElementById("statusText");
+      el.textContent = msg;
+      el.className = "status" + (type ? " " + type : "");
+    }
+
     function guessTitleFromUrl(urlStr) {
       try {
         const last = decodeURIComponent(new URL(urlStr).pathname.split("/").pop() || "");
@@ -97,17 +169,290 @@
       }
     }
 
+    function readUtf8(bytes, start, end) {
+      return new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(start, end));
+    }
+
+    function readAscii(bytes, start, end) {
+      let s = "";
+      for (let i = start; i < end; i++) s += String.fromCharCode(bytes[i]);
+      return s;
+    }
+
+    function readUint16LE(bytes, offset) {
+      return bytes[offset] | (bytes[offset + 1] << 8);
+    }
+
+    function readUint32LE(bytes, offset) {
+      return (
+        (bytes[offset] |
+          (bytes[offset + 1] << 8) |
+          (bytes[offset + 2] << 16) |
+          (bytes[offset + 3] << 24)) >>>
+        0
+      );
+    }
+
+    async function fetchRangeOrFull(url, start, end, cache) {
+      if (cache.fullBytes) {
+        return cache.fullBytes.subarray(start, Math.min(end + 1, cache.fullBytes.length));
+      }
+
+      const resp = await fetch(url, {
+        headers: { Range: `bytes=${start}-${end}` },
+      });
+
+      if (resp.status === 206) {
+        return new Uint8Array(await resp.arrayBuffer());
+      }
+
+      if (resp.status === 200) {
+        cache.fullBytes = new Uint8Array(await resp.arrayBuffer());
+        return cache.fullBytes.subarray(start, Math.min(end + 1, cache.fullBytes.length));
+      }
+
+      throw new Error(`Không tải được file (HTTP ${resp.status})`);
+    }
+
+    async function getFileSizeSmart(url, cache) {
+      try {
+        const head = await fetch(url, { method: "HEAD" });
+        const cl = head.headers.get("content-length");
+        if (cl && /^\d+$/.test(cl) && Number(cl) > 0) return Number(cl);
+      } catch {}
+
+      try {
+        const probe = await fetch(url, { headers: { Range: "bytes=0-0" } });
+        const cr = probe.headers.get("content-range");
+        if (cr) {
+          const m = cr.match(/\/(\d+)$/);
+          if (m && Number(m[1]) > 0) return Number(m[1]);
+        }
+        if (probe.status === 200) {
+          cache.fullBytes = new Uint8Array(await probe.arrayBuffer());
+          return cache.fullBytes.length;
+        }
+      } catch {}
+
+      const full = await fetch(url);
+      if (!full.ok) throw new Error(`Không tải được file .ipa (HTTP ${full.status})`);
+      cache.fullBytes = new Uint8Array(await full.arrayBuffer());
+      return cache.fullBytes.length;
+    }
+
+    async function inflateZipEntry(compressedBytes, method) {
+      if (method === 0) return compressedBytes;
+      if (method === 8) {
+        const ds = new DecompressionStream("deflate-raw");
+        const writer = ds.writable.getWriter();
+        writer.write(compressedBytes);
+        writer.close();
+        const out = await new Response(ds.readable).arrayBuffer();
+        return new Uint8Array(out);
+      }
+      throw new Error(`Phương thức nén ZIP không hỗ trợ: ${method}`);
+    }
+
+    function parseXmlPlist(xmlText) {
+      const result = {};
+      const dictMatch = xmlText.match(/<dict>([\s\S]*?)<\/dict>/i);
+      if (!dictMatch) return result;
+
+      const body = dictMatch[1];
+      const pairRegex =
+        /<key>([\s\S]*?)<\/key>\s*<(string|integer|real|true|false)([\s\S]*?)<\/\2>|<(true|false)\s*\/>/gi;
+      let m;
+      while ((m = pairRegex.exec(body)) !== null) {
+        const key = (m[1] || "").trim();
+        if (!key) continue;
+        const tag = (m[2] || m[4] || "").toLowerCase();
+        const raw = m[3] ?? "";
+        if (tag === "string" || tag === "integer" || tag === "real") {
+          result[key] = raw
+            .replace(/&amp;/g, "&")
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .replace(/&quot;/g, '"')
+            .replace(/&apos;/g, "'")
+            .trim();
+        } else if (tag === "true") {
+          result[key] = true;
+        } else if (tag === "false") {
+          result[key] = false;
+        }
+      }
+      return result;
+    }
+
+    function parseBinaryPlist(bytes) {
+      if (readAscii(bytes, 0, 8) !== "bplist00") {
+        throw new Error("Không phải bplist00");
+      }
+      const trailerOffset = bytes.length - 32;
+      const offsetIntSize = bytes[trailerOffset + 6];
+      const objectRefSize = bytes[trailerOffset + 7];
+
+      function readBEInt(offset, size) {
+        let val = 0n;
+        for (let i = 0; i < size; i++) val = (val << 8n) | BigInt(bytes[offset + i]);
+        return Number(val);
+      }
+
+      const numObjects = readBEInt(trailerOffset + 8, 8);
+      const topObject = readBEInt(trailerOffset + 16, 8);
+      const offsetTableOffset = readBEInt(trailerOffset + 24, 8);
+
+      const offsets = new Array(numObjects);
+      for (let i = 0; i < numObjects; i++) {
+        offsets[i] = readBEInt(offsetTableOffset + i * offsetIntSize, offsetIntSize);
+      }
+
+      function parseObject(idx, depth = 0) {
+        if (depth > 25) return null;
+        const pos = offsets[idx];
+        if (pos === undefined || pos >= bytes.length) return null;
+        const marker = bytes[pos];
+        const type = marker & 0xf0;
+        let info = marker & 0x0f;
+        let cursor = pos + 1;
+
+        function readCount() {
+          if (info < 0x0f) return info;
+          const lenMarker = bytes[cursor++];
+          const lenSize = 1 << (lenMarker & 0x0f);
+          const count = readBEInt(cursor, lenSize);
+          cursor += lenSize;
+          return count;
+        }
+
+        switch (type) {
+          case 0x00:
+            if (info === 0x08) return false;
+            if (info === 0x09) return true;
+            return null;
+          case 0x10:
+            return readBEInt(cursor, 1 << info);
+          case 0x40: {
+            const len = readCount();
+            return readAscii(bytes, cursor, cursor + len);
+          }
+          case 0x50: {
+            const len = readCount();
+            return readUtf8(bytes, cursor, cursor + len);
+          }
+          case 0x60: {
+            const charCount = readCount();
+            const byteLen = charCount * 2;
+            const buf = bytes.slice(cursor, cursor + byteLen);
+            for (let i = 0; i < byteLen; i += 2) {
+              const tmp = buf[i];
+              buf[i] = buf[i + 1];
+              buf[i + 1] = tmp;
+            }
+            return new TextDecoder("utf-16le").decode(buf);
+          }
+          case 0xa0: {
+            const count = readCount();
+            const arr = [];
+            for (let i = 0; i < count; i++) {
+              arr.push(parseObject(readBEInt(cursor + i * objectRefSize, objectRefSize), depth + 1));
+            }
+            return arr;
+          }
+          case 0xd0: {
+            const count = readCount();
+            const dict = {};
+            const keyBase = cursor;
+            const valBase = cursor + count * objectRefSize;
+            for (let i = 0; i < count; i++) {
+              const k = parseObject(readBEInt(keyBase + i * objectRefSize, objectRefSize), depth + 1);
+              const v = parseObject(readBEInt(valBase + i * objectRefSize, objectRefSize), depth + 1);
+              if (typeof k === "string") dict[k] = v;
+            }
+            return dict;
+          }
+          default:
+            return null;
+        }
+      }
+
+      return parseObject(topObject, 0) || {};
+    }
+
+    function parsePlistBytes(bytes) {
+      if (readAscii(bytes, 0, 8) === "bplist00") {
+        return parseBinaryPlist(bytes);
+      }
+      return parseXmlPlist(readUtf8(bytes, 0, bytes.length));
+    }
+
+    async function extractIpaMetadata(ipaUrl) {
+      const cache = { fullBytes: null };
+      const fileSize = await getFileSizeSmart(ipaUrl, cache);
+
+      const tailLen = Math.min(fileSize, 524288);
+      const tailStart = fileSize - tailLen;
+      const tailBytes = await fetchRangeOrFull(ipaUrl, tailStart, fileSize - 1, cache);
+
+      let eocdPos = -1;
+      for (let i = tailBytes.length - 22; i >= 0; i--) {
+        if (readUint32LE(tailBytes, i) === 0x06054b50) {
+          const commentLen = readUint16LE(tailBytes, i + 20);
+          if (i + 22 + commentLen <= tailBytes.length) {
+            eocdPos = i;
+            break;
+          }
+        }
+      }
+      if (eocdPos === -1) throw new Error("Không tìm thấy EOCD trong file .ipa");
+
+      const cdSize = readUint32LE(tailBytes, eocdPos + 12);
+      const cdOffset = readUint32LE(tailBytes, eocdPos + 16);
+      const cdBytes = await fetchRangeOrFull(ipaUrl, cdOffset, cdOffset + cdSize - 1, cache);
+
+      let entry = null;
+      let cursor = 0;
+      while (cursor + 46 <= cdBytes.length) {
+        if (readUint32LE(cdBytes, cursor) !== 0x02014b50) break;
+        const method = readUint16LE(cdBytes, cursor + 10);
+        const compressedSize = readUint32LE(cdBytes, cursor + 20);
+        const nameLen = readUint16LE(cdBytes, cursor + 28);
+        const extraLen = readUint16LE(cdBytes, cursor + 30);
+        const commentLen = readUint16LE(cdBytes, cursor + 32);
+        const localHeaderOffset = readUint32LE(cdBytes, cursor + 42);
+        const entryName = readUtf8(cdBytes, cursor + 46, cursor + 46 + nameLen);
+
+        if (/^Payload\/[^/]+\.app\/Info\.plist$/i.test(entryName)) {
+          entry = { method, compressedSize, localHeaderOffset };
+          break;
+        }
+        cursor += 46 + nameLen + extraLen + commentLen;
+      }
+
+      if (!entry) throw new Error("Không tìm thấy Info.plist trong Payload/*.app");
+
+      const lh = await fetchRangeOrFull(
+        ipaUrl,
+        entry.localHeaderOffset,
+        entry.localHeaderOffset + 30 + 512,
+        cache
+      );
+      if (readUint32LE(lh, 0) !== 0x04034b50) throw new Error("Local file header không hợp lệ");
+
+      const lhNameLen = readUint16LE(lh, 26);
+      const lhExtraLen = readUint16LE(lh, 28);
+      const dataStart = entry.localHeaderOffset + 30 + lhNameLen + lhExtraLen;
+      const compressed = await fetchRangeOrFull(ipaUrl, dataStart, dataStart + entry.compressedSize - 1, cache);
+      const plistBytes = await inflateZipEntry(compressed, entry.method);
+      return parsePlistBytes(plistBytes);
+    }
+
     function buildLinks() {
       const ipa = document.getElementById("ipaUrl").value.trim();
       const image = document.getElementById("imageUrl").value.trim();
       const bundleId = document.getElementById("bundleId").value.trim();
       const version = document.getElementById("version").value.trim();
-      let title = document.getElementById("title").value.trim();
-
-      if (!title && ipa) {
-        title = guessTitleFromUrl(ipa);
-        document.getElementById("title").value = title;
-      }
+      const title = document.getElementById("title").value.trim();
 
       const params = new URLSearchParams();
       if (ipa) params.set("ipa", ipa);
@@ -125,12 +470,52 @@
       return itmsUrl;
     }
 
-    document.getElementById("ipaUrl").addEventListener("change", () => {
+    document.getElementById("btnFetchInfo").addEventListener("click", async () => {
       const ipa = document.getElementById("ipaUrl").value.trim();
-      if (ipa && !document.getElementById("title").value.trim()) {
-        document.getElementById("title").value = guessTitleFromUrl(ipa);
+      if (!ipa || !ipa.startsWith("https://")) {
+        setStatus("Vui lòng nhập link .ipa hợp lệ bắt đầu bằng https://", "err");
+        return;
       }
-      buildLinks();
+
+      const btn = document.getElementById("btnFetchInfo");
+      btn.disabled = true;
+      setStatus("Đang đọc thông tin từ file .ipa...");
+
+      try {
+        const info = await extractIpaMetadata(ipa);
+        const bundleId = info.CFBundleIdentifier || "";
+        const version = info.CFBundleShortVersionString || info.CFBundleVersion || "";
+        const minOs = info.MinimumOSVersion ? String(info.MinimumOSVersion) : "";
+        const title =
+          info.CFBundleDisplayName ||
+          info.CFBundleName ||
+          guessTitleFromUrl(ipa) ||
+          "";
+
+        if (title) document.getElementById("title").value = title;
+        if (bundleId) document.getElementById("bundleId").value = bundleId;
+        if (version) document.getElementById("version").value = version;
+        if (minOs) document.getElementById("minOs").value = minOs;
+
+        buildLinks();
+        setStatus(
+          `Đã lấy thông tin: Bundle ID (${bundleId || "trống"}), Phiên bản (${version || "trống"}), iOS tối thiểu (${minOs || "trống"})`,
+          "ok"
+        );
+      } catch (err) {
+        const fallbackTitle = guessTitleFromUrl(ipa);
+        if (fallbackTitle && !document.getElementById("title").value.trim()) {
+          document.getElementById("title").value = fallbackTitle;
+        }
+        buildLinks();
+        setStatus(`Không tự đọc được hết Info.plist (${err.message || err}). Bạn có thể kiểm tra CORS host hoặc nhập tay.`, "err");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    ["ipaUrl", "title", "bundleId", "version", "minOs", "imageUrl"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", buildLinks);
     });
 
     document.getElementById("btnGenerate").addEventListener("click", buildLinks);
@@ -139,11 +524,13 @@
       const link = buildLinks();
       try {
         await navigator.clipboard.writeText(link);
-        alert("Đã copy link cài đặt!");
+        setStatus("Đã copy link cài đặt!", "ok");
       } catch {
         prompt("Copy link dưới đây:", link);
       }
     });
+
+    buildLinks();
   </script>
 </body>
 </html>
