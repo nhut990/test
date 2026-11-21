@@ -3,342 +3,499 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Xem mã nguồn trang web</title>
+<title>Trình đọc thông tin IPA</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#0f1216; --panel:#171b22; --panel2:#1e242e;
-    --border:#2b323d; --text:#dfe4ec; --muted:#8b95a5;
-    --accent:#4da3ff; --accent2:#2f7fd6; --mark:#ffd54f;
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f7f9fc;
+    margin: 0; padding: 0;
+    color: #1d1d1f;
   }
-  *{box-sizing:border-box}
-  body{
-    margin:0; padding:24px 16px 60px;
-    background:radial-gradient(1200px 600px at 50% -200px,#1b2634,#0f1216 60%);
-    color:var(--text);
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    min-height:100vh;
+  header {
+    background: linear-gradient(135deg, #007aff, #3b82f6);
+    color: white;
+    text-align: center;
+    padding: 18px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
   }
-  .wrap{max-width:1100px;margin:0 auto}
-  h1{font-size:20px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
-  h1 span{font-size:22px}
-  .sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+  header img { width: 28px; height: 28px; border-radius: 6px; }
+  main {
+    max-width: 720px;
+    margin: 30px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  }
+  
+  /* Vùng kéo thả file */
+  .drop-zone {
+    width: 100%;
+    padding: 28px 16px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    box-sizing: border-box;
+  }
+  .drop-zone:hover, .drop-zone.dragging { border-color: #007aff; background: #eff6ff; }
+  .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-zone-icon { font-size: 2rem; margin-bottom: 8px; }
+  .drop-zone-text { font-size: 0.95rem; color: #64748b; }
+  .drop-zone-text b { color: #007aff; }
 
-  .panel{
-    background:var(--panel);border:1px solid var(--border);
-    border-radius:14px;padding:14px;margin-bottom:14px;
+  /* Vùng nhập Link URL mới */
+  .divider { text-align: center; margin: 20px 0; color: #94a3b8; font-size: 0.85rem; position: relative; text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
+  .divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 42%; height: 1px; background: #e2e8f0; }
+  .divider::before { left: 0; }
+  .divider::after { right: 0; }
+  
+  .url-input-group { display: flex; gap: 10px; }
+  .url-input-group input {
+    flex: 1; padding: 12px 15px; border: 1px solid #cbd5e1; border-radius: 8px;
+    font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;
+    min-width: 0; /* Tránh tràn trên mobile */
   }
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .grow{flex:1 1 320px;min-width:220px}
+  .url-input-group input:focus { border-color: #007aff; }
+  .url-input-group button {
+    background: #007aff; color: white; border: none; padding: 0 20px;
+    border-radius: 8px; font-weight: 600; font-family: inherit;
+    cursor: pointer; transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .url-input-group button:hover { background: #0062cc; }
+  .url-input-group button:disabled { background: #93c5fd; cursor: not-allowed; }
 
-  input[type=text],select{
-    width:100%;padding:11px 13px;border-radius:10px;
-    border:1px solid var(--border);background:var(--panel2);
-    color:var(--text);font-size:14px;outline:none;transition:.15s;
-  }
-  input[type=text]:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(77,163,255,.15)}
-  input::placeholder{color:#5c6577}
+  .progress-container { width: 100%; background: #e5e7eb; border-radius: 8px; height: 8px; margin-top: 12px; overflow: hidden; display: none; }
+  .progress-bar { width: 0%; height: 8px; background: linear-gradient(90deg, #60a5fa, #2563eb); transition: width 0.4s ease; }
 
-  button{
-    padding:11px 16px;border-radius:10px;border:1px solid var(--border);
-    background:var(--panel2);color:var(--text);font-size:14px;
-    cursor:pointer;transition:.15s;white-space:nowrap;
+  .result {
+    margin-top: 22px;
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    display: none;
+    animation: fadeIn 0.3s ease;
   }
-  button:hover{background:#28313d;border-color:#3a4453}
-  button:active{transform:translateY(1px)}
-  button.primary{
-    background:linear-gradient(180deg,var(--accent),var(--accent2));
-    border-color:var(--accent2);color:#fff;font-weight:600;
-  }
-  button.primary:hover{filter:brightness(1.08)}
-  button:disabled{opacity:.5;cursor:not-allowed}
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
-  .label{font-size:12px;color:var(--muted);margin-bottom:5px;display:block}
+  .result-row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #f1f5f9; }
+  .result-row:last-child { border-bottom: none; }
+  .result-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+  .icon-blue   { background: #dbeafe; }
+  .icon-green  { background: #dcfce7; }
+  .icon-purple { background: #ede9fe; }
+  .icon-orange { background: #ffedd5; }
+  .icon-pink   { background: #fce7f3; }
+  .icon-teal   { background: #ccfbf1; }
+  .result-label { font-size: 0.78rem; color: #007aff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
+  .result-value { font-size: 0.97rem; font-weight: 600; color: #111827; word-break: break-all; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .copy-btn { background: none; border: none; cursor: pointer; color: #9ca3af; padding: 2px 5px; border-radius: 4px; font-size: 0.75rem; transition: color 0.15s, background 0.15s; flex-shrink: 0; }
+  .copy-btn:hover { color: #007aff; background: #eff6ff; }
 
-  .status{
-    font-size:13px;padding:9px 12px;border-radius:9px;margin-top:12px;
-    display:none;
+  /* Nút App Store */
+  .btn-appstore {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #007aff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s, transform 0.1s;
+    flex-shrink: 0;
   }
-  .status.show{display:block}
-  .status.loading{background:#1c2735;color:#7fb6ff;border:1px solid #2a3f5c}
-  .status.ok{background:#12291c;color:#66d99a;border:1px solid #1e4732}
-  .status.err{background:#2b1418;color:#ff8b8b;border:1px solid #55232b}
+  .btn-appstore:hover { background: #0062cc; transform: translateY(-1px); }
+  .btn-appstore:active { transform: translateY(0); }
+  .btn-appstore svg { width: 13px; height: 13px; }
 
-  /* Khung mã nguồn */
-  .code-box{
-    border:1px solid var(--border);border-radius:12px;
-    background:#12161c;overflow:hidden;display:none;
-  }
-  .code-box.show{display:block}
-  .code-head{
-    display:flex;gap:8px;align-items:center;flex-wrap:wrap;
-    padding:9px 12px;background:var(--panel2);border-bottom:1px solid var(--border);
-    font-size:12px;color:var(--muted);
-  }
-  .code-head .spacer{flex:1}
-  .code-head button{padding:6px 11px;font-size:12px;border-radius:8px}
+  .badge-notfound { font-size: 0.75rem; font-weight: 500; color: #92400e; background: #fef3c7; border-radius: 6px; padding: 2px 8px; }
 
-  .scroller{
-    display:flex;max-height:70vh;overflow:auto;
-    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
-    font-size:13px;line-height:20px;
-  }
-  #gutter{
-    position:sticky;left:0;z-index:2;
-    padding:12px 10px;text-align:right;
-    color:#525c6b;background:#161b22;border-right:1px solid var(--border);
-    user-select:none;white-space:pre;flex:0 0 auto;
-  }
-  #code{
-    margin:0;padding:12px 14px;flex:1 1 auto;
-    white-space:pre;overflow:visible;color:#c9d4e3;
-    tab-size:4;
-  }
-  #code.wrap{white-space:pre-wrap;word-break:break-word}
-  mark{background:var(--mark);color:#1a1a1a;border-radius:3px;padding:0 1px}
+  .error-box { display: none; margin-top: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; color: #dc2626; font-size: 0.9rem; line-height: 1.4; }
 
-  .tips{font-size:12.5px;color:var(--muted);line-height:1.75}
-  .tips code{background:#222a35;padding:1.5px 6px;border-radius:5px;color:#9ecbff;font-size:12px}
-  .tips b{color:#cdd7e5}
-  .tips li{margin-bottom:4px}
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(14px); background: #111827; color: #fff; padding: 10px 22px; border-radius: 99px; font-size: 0.85rem; font-weight: 500; opacity: 0; pointer-events: none; transition: all 0.25s; white-space: nowrap; z-index: 999;}
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  footer { text-align: center; color: #777; margin: 20px 0; font-size: 0.9rem; }
+  footer a { display: inline-block; margin-bottom: 5px; color: #007aff; text-decoration: none; font-weight: 600; }
+  footer a:hover { text-decoration: underline; }
+
+  /* Responsive cho điện thoại nhỏ */
+  @media (max-width: 480px) {
+    .url-input-group { flex-direction: column; }
+    .url-input-group button { padding: 12px; }
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <h1><span>🔎</span> Xem mã nguồn trang web</h1>
-  <p class="sub">Nhập URL để tải và xem toàn bộ HTML nguồn của trang.</p>
+<header>
+  <img src="https://github.com/nhut990/files/releases/download/V2.0-icon/IMG_5906.png" alt="icon">
+  Trình đọc thông tin IPA
+</header>
 
-  <!-- Thanh điều khiển -->
-  <div class="panel">
-    <div class="row">
-      <div class="grow">
-        <label class="label" for="url">Địa chỉ trang web</label>
-        <input id="url" type="text" placeholder="https://example.com" spellcheck="false">
+<main>
+  <!-- CÁCH 1: KÉO THẢ FILE -->
+  <div class="drop-zone" id="drop-zone">
+    <input type="file" id="ipaFile" accept=".ipa">
+    <div class="drop-zone-icon">📦</div>
+    <div class="drop-zone-text">Kéo thả file IPA vào đây hoặc <b>nhấn để chọn</b></div>
+  </div>
+
+  <div class="divider">Hoặc</div>
+
+  <!-- CÁCH 2: NHẬP LINK URL -->
+  <div class="url-input-group">
+    <input type="url" id="ipaUrlInput" placeholder="Dán link IPA (GitHub, v.v...)" autocomplete="off">
+    <button id="btnFetchUrl" onclick="processIPAFromURL()">Đọc từ URL</button>
+  </div>
+
+  <div class="progress-container" id="progressContainer">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="result" id="result">
+    <div class="result-row">
+      <div class="result-icon icon-blue">📁</div>
+      <div style="flex:1;min-width:0">
+        <div class="result-label">Tên file</div>
+        <div class="result-value"><span id="val-filename">—</span></div>
       </div>
-      <div style="flex:0 1 240px;min-width:180px">
-        <label class="label" for="proxy">Kênh tải (proxy CORS)</label>
-        <select id="proxy">
-          <option value="allorigins">AllOrigins (ổn định)</option>
-          <option value="codetabs">CodeTabs</option>
-          <option value="corsproxy">corsproxy.io</option>
-          <option value="direct">Trực tiếp (chỉ site cho phép CORS)</option>
-        </select>
+    </div>
+    <div class="result-row">
+      <div class="result-icon icon-purple">🆔</div>
+      <div style="flex:1;min-width:0">
+        <div class="result-label">Bundle ID</div>
+        <div class="result-value">
+          <span id="val-bundle">—</span>
+          <button class="copy-btn" onclick="copyVal('val-bundle')">📋</button>
+        </div>
       </div>
     </div>
-
-    <div class="row" style="margin-top:10px">
-      <button class="primary" id="btnFetch">⬇ Tải mã nguồn</button>
-      <button id="btnDemo">Dùng thử example.com</button>
-      <button id="btnOpen" title="Mở trang gốc ở tab mới">↗ Mở trang gốc</button>
+    <div class="result-row">
+      <div class="result-icon icon-green">🏷️</div>
+      <div style="flex:1;min-width:0">
+        <div class="result-label">Tên ứng dụng</div>
+        <div class="result-value">
+          <span id="val-appname">—</span>
+          <button class="copy-btn" onclick="copyVal('val-appname')">📋</button>
+        </div>
+      </div>
     </div>
-
-    <div class="status" id="status"></div>
-  </div>
-
-  <!-- Kết quả -->
-  <div class="code-box" id="codeBox">
-    <div class="code-head">
-      <span id="info">—</span>
-      <span class="spacer"></span>
-      <input id="find" type="text" placeholder="Tìm trong mã…" spellcheck="false"
-             style="width:170px;padding:6px 10px;font-size:12px;border-radius:8px">
-      <button id="btnWrap">Xuống dòng: Tắt</button>
-      <button id="btnCopy">📋 Sao chép</button>
-      <button id="btnDownload">💾 Tải .html</button>
+    <div class="result-row">
+      <div class="result-icon icon-orange">🔢</div>
+      <div style="flex:1;min-width:0">
+        <div class="result-label">Phiên bản</div>
+        <div class="result-value">
+          <span id="val-version">—</span>
+          <button class="copy-btn" onclick="copyVal('val-version')">📋</button>
+        </div>
+      </div>
     </div>
-    <div class="scroller">
-      <div id="gutter">1</div>
-      <pre id="code"></pre>
+    <div class="result-row">
+      <div class="result-icon icon-pink">📱</div>
+      <div style="flex:1;min-width:0">
+        <div class="result-label">iOS tối thiểu</div>
+        <div class="result-value">
+          <span id="val-ios">—</span>
+          <button class="copy-btn" onclick="copyVal('val-ios')">📋</button>
+        </div>
+        <div style="font-size:0.75rem;color:#94a3b8;margin-top:3px;">Yêu cầu iOS <span id="val-ios-note">—</span> trở lên để cài đặt</div>
+      </div>
+    </div>
+    <div class="result-row">
+      <div class="result-icon icon-blue">👤</div>
+      <div style="flex:1;min-width:0">
+        <div class="result-label">Nhà phát triển</div>
+        <div class="result-value">
+          <span id="val-developer">—</span>
+          <button class="copy-btn" onclick="copyVal('val-developer')">📋</button>
+        </div>
+      </div>
+    </div>
+    <div class="result-row">
+      <div class="result-icon icon-teal">🛒</div>
+      <div style="flex:1;min-width:0">
+        <div class="result-label">Item ID (App Store)</div>
+        <div class="result-value">
+          <span id="val-itemid">—</span>
+          <button class="copy-btn" id="btn-copy-itemid" onclick="copyVal('val-itemid')" style="display:none">📋</button>
+          <a class="btn-appstore" id="btn-appstore" href="#" target="_blank" style="display:none">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+            App Store
+          </a>
+        </div>
+      </div>
     </div>
   </div>
+</main>
 
-  <!-- Ghi chú -->
-  <div class="panel tips">
-    <b>Vì sao cần proxy?</b>
-    <ul style="margin:8px 0 0;padding-left:18px">
-      <li>Trình duyệt chặn đọc nội dung trang khác domain (<b>CORS</b>). Vì vậy công cụ này dùng proxy công khai để tải hộ.</li>
-      <li>Proxy miễn phí có thể chậm, giới hạn dung lượng hoặc bị chặn với một số trang (Cloudflare, trang cần đăng nhập).</li>
-      <li>Trang có JavaScript render nội dung (React/Vue SPA) sẽ chỉ trả về HTML gốc, không có nội dung đã render.</li>
-      <li>Không xem được <code>view-source:</code> qua fetch — hãy dùng cách thủ công bên dưới.</li>
-    </ul>
-    <b style="display:block;margin-top:10px">Cách xem nhanh không cần công cụ:</b>
-    <ul style="margin:6px 0 0;padding-left:18px">
-      <li>Gõ <code>view-source:https://example.com</code> vào thanh địa chỉ (Chrome/Edge/Firefox).</li>
-      <li>Nhấn <code>Ctrl+U</code> (Windows) / <code>Cmd+Option+U</code> (Mac).</li>
-      <li>Nhấn <code>F12</code> → tab <b>Elements</b> để xem DOM sau khi JS chạy.</li>
-    </ul>
-  </div>
+<footer>
+  <a href="https://nhut990.github.io" target="_blank">Trang chủ</a><br>
+  © 2025 — IPA Info Reader
+</footer>
 
-</div>
+<div class="toast" id="toast">✓ Đã sao chép</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/plist@3.0.6/dist/plist.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bplist-parser@0.3.2/dist/bplist-parser.min.js"></script>
 
 <script>
-(function () {
-  const $ = id => document.getElementById(id);
-  const urlInput = $('url'), proxySel = $('proxy'), statusEl = $('status');
-  const codeBox = $('codeBox'), codeEl = $('code'), gutterEl = $('gutter'), infoEl = $('info');
-  const findInput = $('find');
+const dropZone  = document.getElementById('drop-zone');
+const fileInput = document.getElementById('ipaFile');
+const urlInput  = document.getElementById('ipaUrlInput');
+const btnFetch  = document.getElementById('btnFetchUrl');
 
-  let rawText = '';      // nội dung gốc
-  let currentUrl = '';   // url đang xem
-  let wrapOn = false;
+// Xử lý kéo thả file offline
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragging'); });
+dropZone.addEventListener('dragleave', e => { if (!dropZone.contains(e.relatedTarget)) dropZone.classList.remove('dragging'); });
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('dragging');
+  const f = e.dataTransfer.files[0];
+  if (f) processIPAFile(f);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) processIPAFile(fileInput.files[0]); });
 
-  /* ---------- Tiện ích ---------- */
-  const escapeHtml = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const escapeRegExp = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// Bắt sự kiện nhấn Enter ở ô nhập link
+urlInput.addEventListener('keypress', e => {
+  if (e.key === 'Enter') processIPAFromURL();
+});
 
-  function setStatus(msg, type) {
-    statusEl.textContent = msg;
-    statusEl.className = 'status show ' + (type || '');
+// ── LUỒNG 1: ĐỌC TỪ FILE OFFLINE ──
+async function processIPAFile(file) {
+  showError('');
+  showResult(false);
+  showProgress(true);
+
+  const fake = startFakeProgress();
+
+  try {
+    const buf = await file.arrayBuffer();
+    await parseIPAData(buf, file.name);
+  } catch (err) {
+    handleError(err, 'Lỗi khi đọc file IPA: ');
   }
-  function hideStatus() { statusEl.className = 'status'; }
+}
 
-  function normalizeUrl(u) {
-    u = u.trim();
-    if (!u) return '';
-    if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
-    return u;
+// ── LUỒNG 2: ĐỌC TỪ LINK URL QUA CORSPROXY.IO ──
+async function processIPAFromURL() {
+  const ipaUrl = urlInput.value.trim();
+  if (!ipaUrl) {
+    showError('Vui lòng dán link IPA vào ô trống.');
+    return;
   }
 
-  function buildTarget(url) {
-    const p = proxySel.value;
-    const e = encodeURIComponent(url);
-    if (p === 'allorigins') return 'https://api.allorigins.win/raw?url=' + e;
-    if (p === 'codetabs')   return 'https://api.codetabs.com/v1/proxy?quest=' + e;
-    if (p === 'corsproxy')  return 'https://corsproxy.io/?url=' + e;
-    return url; // direct
-  }
+  showError('');
+  showResult(false);
+  showProgress(true);
+  
+  btnFetch.disabled = true; // Khóa nút để tránh bấm nhiều lần
+  const fake = startFakeProgress();
 
-  /* ---------- Hiển thị ---------- */
-  function render() {
-    const q = findInput.value.trim();
-    const lines = rawText.split('\n');
+  try {
+    // Sử dụng corsproxy.io
+    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(ipaUrl)}`;
+    const response = await fetch(proxyUrl);
+    
+    if (!response.ok) {
+      throw new Error(`Máy chủ proxy trả về mã lỗi HTTP ${response.status}. Có thể file quá lớn hoặc link bị chặn.`);
+    }
 
-    // Số dòng
-    gutterEl.textContent = lines.map((_, i) => i + 1).join('\n');
+    const buf = await response.arrayBuffer();
+    
+    // Lấy tên file từ URL (bỏ phần query string nếu có)
+    let filename = ipaUrl.split('/').pop().split('?')[0] || 'Unknown.ipa';
+    
+    await parseIPAData(buf, filename);
 
-    // Nội dung (có highlight nếu đang tìm)
-    if (q) {
-      const safeQ = escapeHtml(q);
-      const re = new RegExp(escapeRegExp(safeQ), 'gi');
-      let html = escapeHtml(rawText);
-      const count = (html.match(re) || []).length;
-      html = html.replace(re, m => '<mark>' + m + '</mark>');
-      codeEl.innerHTML = html;
-      infoEl.textContent = `🔍 ${count} kết quả cho "${q}"`;
+  } catch (err) {
+    if (err instanceof TypeError) {
+      handleError(err, 'Lỗi mạng/CORS. Hãy kiểm tra lại link hoặc thử proxy khác. Chi tiết: ');
     } else {
-      codeEl.textContent = rawText; // an toàn tuyệt đối
-      const size = new Blob([rawText]).size;
-      infoEl.textContent = `${lines.length} dòng · ${(size / 1024).toFixed(1)} KB`;
+      handleError(err, 'Lỗi khi tải IPA từ URL: ');
     }
+  } finally {
+    btnFetch.disabled = false;
   }
+}
 
-  function showResult(text, url) {
-    rawText = text;
-    currentUrl = url;
-    codeBox.classList.add('show');
-    findInput.value = '';
-    render();
-  }
+// ── HÀM LÕI: XỬ LÝ DỮ LIỆU IPA (Dùng chung cho cả 2 luồng) ──
+async function parseIPAData(buf, filename) {
+  try {
+    const zip = await JSZip.loadAsync(buf);
+    const files = Object.keys(zip.files);
 
-  /* ---------- Tải dữ liệu ---------- */
-  async function fetchSource() {
-    const url = normalizeUrl(urlInput.value);
-    if (!url) { setStatus('⚠️ Vui lòng nhập địa chỉ trang web.', 'err'); return; }
-    urlInput.value = url;
+    // 1. Tìm Info.plist
+    const infoPath = files.find(p => /^Payload\/[^/]+\.app\/Info\.plist$/i.test(p));
+    if (!infoPath) throw new Error('Không tìm thấy Info.plist trong gói IPA.');
+    const infoBytes = await zip.file(infoPath).async('uint8array');
+    const info = await parsePlist(infoBytes);
 
-    const btn = $('btnFetch');
-    btn.disabled = true;
-    setStatus('⏳ Đang tải mã nguồn từ ' + url + ' …', 'loading');
-    codeBox.classList.remove('show');
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 30000);
-
-    try {
-      const res = await fetch(buildTarget(url), {
-        signal: controller.signal,
-        redirect: 'follow',
-        headers: { 'Accept': 'text/html,application/xhtml+xml,*/*' }
-      });
-      clearTimeout(timer);
-
-      if (!res.ok) throw new Error('Máy chủ trả về HTTP ' + res.status);
-
-      const text = await res.text();
-      if (!text || !text.trim()) throw new Error('Nội dung trả về rỗng.');
-
-      showResult(text, url);
-      setStatus('✅ Đã tải xong (' + (new Blob([text]).size / 1024).toFixed(1) + ' KB).', 'ok');
-    } catch (err) {
-      clearTimeout(timer);
-      let m = err.name === 'AbortError'
-        ? 'Hết thời gian chờ (30s). Trang quá chậm hoặc proxy không phản hồi.'
-        : 'Không tải được: ' + err.message;
-      m += ' → Thử đổi "Kênh tải" khác, hoặc dùng view-source / Ctrl+U.';
-      setStatus('❌ ' + m, 'err');
-    } finally {
-      btn.disabled = false;
+    // 2. Tìm iTunesMetadata.plist (lấy thông tin App Store)
+    let itemId = null;
+    let meta = null;
+    const metaPath = files.find(p => p === 'iTunesMetadata.plist');
+    if (metaPath) {
+      try {
+        const metaBytes = await zip.file(metaPath).async('uint8array');
+        meta = await parsePlist(metaBytes);
+        if (meta['itemId'] !== undefined && meta['itemId'] !== null)
+          itemId = String(meta['itemId']);
+      } catch (_) {}
     }
-  }
 
-  /* ---------- Sự kiện ---------- */
-  $('btnFetch').addEventListener('click', fetchSource);
+    // 3. Đổ dữ liệu ra UI
+    set('val-filename', filename);
+    set('val-bundle',   info['CFBundleIdentifier'] || '(không có)');
+    set('val-appname',  info['CFBundleDisplayName'] || info['CFBundleName'] || '(không có)');
+    set('val-version',  info['CFBundleShortVersionString'] || info['CFBundleVersion'] || '(không có)');
+    
+    const iosVer = info['MinimumOSVersion'] || info['LSMinimumSystemVersion'] || '';
+    set('val-ios',      iosVer || '(không có)');
+    set('val-ios-note', iosVer || '?');
+    set('val-developer', meta ? (meta['artistName'] || '(không có)') : '(không có)');
 
-  urlInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') fetchSource();
-  });
+    // 4. Nút App Store
+    const itemIdEl = document.getElementById('val-itemid');
+    const btnCopy  = document.getElementById('btn-copy-itemid');
+    const btnStore = document.getElementById('btn-appstore');
 
-  $('btnDemo').addEventListener('click', () => {
-    urlInput.value = 'https://example.com';
-    fetchSource();
-  });
-
-  $('btnOpen').addEventListener('click', () => {
-    const u = normalizeUrl(urlInput.value);
-    if (u) window.open(u, '_blank', 'noopener');
-    else setStatus('⚠️ Chưa có địa chỉ để mở.', 'err');
-  });
-
-  findInput.addEventListener('input', () => {
-    if (rawText) render();
-  });
-
-  $('btnWrap').addEventListener('click', () => {
-    wrapOn = !wrapOn;
-    codeEl.classList.toggle('wrap', wrapOn);
-    $('btnWrap').textContent = 'Xuống dòng: ' + (wrapOn ? 'Bật' : 'Tắt');
-  });
-
-  $('btnCopy').addEventListener('click', async () => {
-    if (!rawText) return;
-    try {
-      await navigator.clipboard.writeText(rawText);
-      setStatus('📋 Đã sao chép toàn bộ mã nguồn vào clipboard.', 'ok');
-    } catch {
-      setStatus('❌ Trình duyệt không cho phép sao chép tự động.', 'err');
+    if (itemId) {
+      itemIdEl.textContent  = itemId;
+      btnCopy.style.display = '';
+      btnStore.href         = `https://apps.apple.com/app/id${itemId}`;
+      btnStore.style.display = '';
+    } else {
+      itemIdEl.innerHTML    = '<span class="badge-notfound">Không có (IPA không qua App Store)</span>';
+      btnCopy.style.display = 'none';
+      btnStore.style.display = 'none';
     }
-  });
 
-  $('btnDownload').addEventListener('click', () => {
-    if (!rawText) return;
-    let name = 'source.html';
+    // 5. Hoàn tất
+    finishProgress();
+    showResult(true);
+
+  } catch (err) {
+    throw err; // Ném lỗi lên hàm gọi bên trên để xử lý
+  }
+}
+
+/* ── PLIST PARSER LOGIC (Giữ nguyên bản gốc của bạn) ── */
+async function parsePlist(bytes) {
+  const isBinary = bytes[0]===0x62 && bytes[1]===0x70 && bytes[2]===0x6c && bytes[3]===0x69;
+  if (isBinary) {
+    try { const r = parseBinaryPlist(bytes); if (r && typeof r==='object') return r; } catch(_){}
     try {
-      const u = new URL(currentUrl);
-      name = (u.hostname + u.pathname).replace(/[^\w.\-]+/g, '_').replace(/_+$/, '') || 'source';
-      if (!/\.html?$/i.test(name)) name += '.html';
-    } catch (_) {}
-    const blob = new Blob([rawText], { type: 'text/html;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = name;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
-    setStatus('💾 Đã tải xuống: ' + name, 'ok');
-  });
+      if (window.bplistParser) {
+        const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset+bytes.byteLength);
+        const p = window.bplistParser.parseBuffer(ab);
+        if (p && p[0]) return p[0];
+      }
+    } catch(_){}
+    try { const r = plist.parse(new TextDecoder('utf-8',{fatal:false}).decode(bytes)); if(r) return r; } catch(_){}
+    throw new Error('Không thể parse binary plist.');
+  } else {
+    try { const r = parseXMLPlist(new TextDecoder().decode(bytes)); if(r && Object.keys(r).length>0) return r; } catch(_){}
+    try { return plist.parse(new TextDecoder().decode(bytes)); }
+    catch(e) { throw new Error('Không thể parse XML plist: '+e.message); }
+  }
+}
 
-  // Gợi ý sẵn
-  urlInput.focus();
-})();
+function parseBinaryPlist(bytes) {
+  const dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  const len=bytes.length, to=len-32;
+  const ois=bytes[to+6], ors=bytes[to+7];
+  const nObj=ri64(dv,to+8), topObj=ri64(dv,to+16), otOff=ri64(dv,to+24);
+  const offs=[];
+  for(let i=0;i<nObj;i++) offs.push(riN(dv,otOff+i*ois,ois));
+  function rObj(idx){
+    const off=offs[idx],mk=bytes[off],hi=(mk&0xF0)>>4,lo=mk&0x0F;
+    if(mk===0x00)return null; if(mk===0x08)return false; if(mk===0x09)return true;
+    if(hi===0x1)return riN(dv,off+1,1<<lo);
+    if(hi===0x2)return lo===3?dv.getFloat64(off+1,false):dv.getFloat32(off+1,false);
+    if(mk===0x33)return new Date((dv.getFloat64(off+1,false)+978307200)*1000).toISOString();
+    if(hi===0x4){const[s]=ds(lo,off);return'[Data '+s+']';}
+    if(hi===0x5){const[s,e]=ds(lo,off);let r='';for(let i=0;i<s;i++)r+=String.fromCharCode(bytes[off+1+e+i]);return r;}
+    if(hi===0x6){const[s,e]=ds(lo,off);let r='';for(let i=0;i<s;i++)r+=String.fromCodePoint(dv.getUint16(off+1+e+i*2,false));return r;}
+    if(hi===0xA){const[s,e]=ds(lo,off);const a=[];for(let i=0;i<s;i++)a.push(rObj(riN(dv,off+1+e+i*ors,ors)));return a;}
+    if(hi===0xD){
+      const[s,e]=ds(lo,off);const o={};
+      for(let i=0;i<s;i++){const k=rObj(riN(dv,off+1+e+i*ors,ors));const v=rObj(riN(dv,off+1+e+(s+i)*ors,ors));o[k]=v;}
+      return o;
+    }
+    return null;
+  }
+  function ds(lo,off){if(lo!==0x0F)return[lo,0];const is=1<<(bytes[off+1]&0x0F);return[riN(dv,off+2,is),1+is];}
+  return rObj(topObj);
+}
+function riN(dv,off,n){let v=0;for(let i=0;i<n;i++)v=v*256+dv.getUint8(off+i);return v;}
+function ri64(dv,off){return dv.getUint32(off,false)*0x100000000+dv.getUint32(off+4,false);}
+
+function parseXMLPlist(text){const doc=new DOMParser().parseFromString(text,'application/xml');const root=doc.querySelector('plist > dict');return root?parseDict(root):{};}
+function parseDict(node){const o={},c=[...node.children];for(let i=0;i<c.length;i+=2)if(c[i].tagName==='key'&&c[i+1])o[c[i].textContent]=parseNode(c[i+1]);return o;}
+function parseNode(n){switch(n.tagName){case'string':return n.textContent;case'integer':return parseInt(n.textContent,10);case'real':return parseFloat(n.textContent);case'true':return true;case'false':return false;case'dict':return parseDict(n);case'array':return[...n.children].map(parseNode);default:return n.textContent;}}
+
+/* ── UI HELPERS & TRẠNG THÁI ── */
+let progressInterval = null;
+
+function startFakeProgress() {
+  let progress = 0;
+  setProgress(0);
+  progressInterval = setInterval(() => {
+    if (progress < 88) { progress += 5; setProgress(progress); }
+  }, 150);
+  return progressInterval;
+}
+
+function finishProgress() {
+  clearInterval(progressInterval);
+  setProgress(100);
+  setTimeout(() => { showProgress(false); setProgress(0); }, 400);
+}
+
+function handleError(err, prefix) {
+  clearInterval(progressInterval); 
+  setProgress(0);
+  setTimeout(() => showProgress(false), 300);
+  showError('❌ ' + prefix + (err.message || err));
+}
+
+function set(id,val){document.getElementById(id).textContent=val;}
+function showProgress(on){document.getElementById('progressContainer').style.display=on?'block':'none';}
+function setProgress(v){document.getElementById('progressBar').style.width=v+'%';}
+function showResult(on){document.getElementById('result').style.display=on?'block':'none';}
+function showError(msg){const eb=document.getElementById('errorBox');eb.textContent=msg;eb.style.display=msg?'block':'none';}
+function copyVal(id){
+  const textToCopy = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(textToCopy).then(()=>{
+    const t=document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1800);
+  }).catch(() => {
+    alert('Không thể sao chép. Vui lòng copy thủ công.');
+  });
+}
 </script>
 </body>
 </html>
