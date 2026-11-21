@@ -151,8 +151,13 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/plist@3.0.6/dist/plist.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bplist-parser@0.3.2/dist/bplist-parser.min.js"></script>
+
   <script>
-    const WORKER_BASE = "https://cai-ipa.vannhut9090.workers.dev/";
+    const WORKER_PLIST = "https://cai-ipa.vannhut9090.workers.dev/";
+    const WORKER_PROXY = "https://ipa.vannhut9090.workers.dev/?url=";
 
     function setStatus(msg, type = "") {
       const el = document.getElementById("statusText");
@@ -169,282 +174,246 @@
       }
     }
 
-    function readUtf8(bytes, start, end) {
-      return new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(start, end));
+    function parseTotalSizeFromContentRange(rangeHeader) {
+      if (!rangeHeader) return null;
+      const match = rangeHeader.match(/\/(\d+)$/);
+      return match ? Number(match[1]) : null;
     }
 
-    function readAscii(bytes, start, end) {
-      let s = "";
-      for (let i = start; i < end; i++) s += String.fromCharCode(bytes[i]);
-      return s;
-    }
-
-    function readUint16LE(bytes, offset) {
-      return bytes[offset] | (bytes[offset + 1] << 8);
-    }
-
-    function readUint32LE(bytes, offset) {
-      return (
-        (bytes[offset] |
-          (bytes[offset + 1] << 8) |
-          (bytes[offset + 2] << 16) |
-          (bytes[offset + 3] << 24)) >>>
-        0
-      );
-    }
-
-    async function fetchRangeOrFull(url, start, end, cache) {
-      if (cache.fullBytes) {
-        return cache.fullBytes.subarray(start, Math.min(end + 1, cache.fullBytes.length));
+    function findEOCD(tailBuf) {
+      const dv = new DataView(tailBuf.buffer, tailBuf.byteOffset, tailBuf.byteLength);
+      const minPos = Math.max(0, tailBuf.length - 65557);
+      for (let i = tailBuf.length - 22; i >= minPos; i--) {
+        if (dv.getUint32(i, true) === 0x06054b50) {
+          const commentLen = dv.getUint16(i + 20, true);
+          if (i + 22 + commentLen <= tailBuf.length) {
+            const cdSize = dv.getUint32(i + 12, true);
+            const cdOffset = dv.getUint32(i + 16, true);
+            if (cdSize !== 0xffffffff && cdOffset !== 0xffffffff) {
+              return { cdSize, cdOffset };
+            }
+          }
+        }
       }
+      return null;
+    }
 
-      const resp = await fetch(url, {
-        headers: { Range: `bytes=${start}-${end}` },
+    function parseCentralDirectory(cdBuf) {
+      const dv = new DataView(cdBuf.buffer, cdBuf.byteOffset, cdBuf.byteLength);
+      const entries = [];
+      let pos = 0;
+
+      while (pos + 46 <= cdBuf.length) {
+        if (dv.getUint32(pos, true) !== 0x02014b50) break;
+
+        const compressionMethod = dv.getUint16(pos + 10, true);
+        const compressedSize = dv.getUint32(pos + 20, true);
+        const fileNameLen = dv.getUint16(pos + 28, true);
+        const extraFieldLen = dv.getUint16(pos + 30, true);
+        const commentLen = dv.getUint16(pos + 32, true);
+        const localHeaderOffset = dv.getUint32(pos + 42, true);
+
+        const name = new TextDecoder().decode(cdBuf.subarray(pos + 46, pos + 46 + fileNameLen));
+        entries.push({ name, compressionMethod, compressedSize, localHeaderOffset });
+
+        pos += 46 + fileNameLen + extraFieldLen + commentLen;
+      }
+      return entries;
+    }
+
+    async function extractEntryByRange(proxiedUrl, entry) {
+      const headerStart = entry.localHeaderOffset;
+      const approxEnd = headerStart + 30 + entry.name.length + 128 + entry.compressedSize - 1;
+
+      const resp = await fetch(proxiedUrl, {
+        headers: { Range: `bytes=${headerStart}-${approxEnd}` },
       });
-
-      if (resp.status === 206) {
-        return new Uint8Array(await resp.arrayBuffer());
+      if (resp.status !== 206) {
+        if (resp.body) await resp.body.cancel();
+        throw new Error(`Không lấy được dữ liệu của ${entry.name}`);
       }
 
-      if (resp.status === 200) {
-        cache.fullBytes = new Uint8Array(await resp.arrayBuffer());
-        return cache.fullBytes.subarray(start, Math.min(end + 1, cache.fullBytes.length));
+      const buf = new Uint8Array(await resp.arrayBuffer());
+      const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+
+      if (dv.getUint32(0, true) !== 0x04034b50) {
+        throw new Error(`Sai cấu trúc file trong ZIP cho ${entry.name}`);
       }
 
-      throw new Error(`Không tải được file (HTTP ${resp.status})`);
+      const fnLen = dv.getUint16(26, true);
+      const extraLen = dv.getUint16(28, true);
+      const dataStart = 30 + fnLen + extraLen;
+      const compressedData = buf.subarray(dataStart, dataStart + entry.compressedSize);
+
+      if (entry.compressionMethod === 0) {
+        return compressedData;
+      }
+      if (entry.compressionMethod === 8) {
+        if (typeof DecompressionStream !== "undefined") {
+          const ds = new DecompressionStream("deflate-raw");
+          const writer = ds.writable.getWriter();
+          writer.write(compressedData);
+          writer.close();
+          const outBuf = await new Response(ds.readable).arrayBuffer();
+          return new Uint8Array(outBuf);
+        }
+        throw new Error("Trình duyệt không hỗ trợ giải nén Deflate.");
+      }
+
+      throw new Error(`Không hỗ trợ kiểu nén ZIP mã ${entry.compressionMethod}`);
     }
 
-    async function getFileSizeSmart(url, cache) {
-      try {
-        const head = await fetch(url, { method: "HEAD" });
-        const cl = head.headers.get("content-length");
-        if (cl && /^\d+$/.test(cl) && Number(cl) > 0) return Number(cl);
-      } catch {}
-
-      try {
-        const probe = await fetch(url, { headers: { Range: "bytes=0-0" } });
-        const cr = probe.headers.get("content-range");
-        if (cr) {
-          const m = cr.match(/\/(\d+)$/);
-          if (m && Number(m[1]) > 0) return Number(m[1]);
-        }
-        if (probe.status === 200) {
-          cache.fullBytes = new Uint8Array(await probe.arrayBuffer());
-          return cache.fullBytes.length;
-        }
-      } catch {}
-
-      const full = await fetch(url);
-      if (!full.ok) throw new Error(`Không tải được file .ipa (HTTP ${full.status})`);
-      cache.fullBytes = new Uint8Array(await full.arrayBuffer());
-      return cache.fullBytes.length;
-    }
-
-    async function inflateZipEntry(compressedBytes, method) {
-      if (method === 0) return compressedBytes;
-      if (method === 8) {
-        const ds = new DecompressionStream("deflate-raw");
-        const writer = ds.writable.getWriter();
-        writer.write(compressedBytes);
-        writer.close();
-        const out = await new Response(ds.readable).arrayBuffer();
-        return new Uint8Array(out);
-      }
-      throw new Error(`Phương thức nén ZIP không hỗ trợ: ${method}`);
-    }
-
-    function parseXmlPlist(xmlText) {
-      const result = {};
-      const dictMatch = xmlText.match(/<dict>([\s\S]*?)<\/dict>/i);
-      if (!dictMatch) return result;
-
-      const body = dictMatch[1];
-      const pairRegex =
-        /<key>([\s\S]*?)<\/key>\s*<(string|integer|real|true|false)([\s\S]*?)<\/\2>|<(true|false)\s*\/>/gi;
-      let m;
-      while ((m = pairRegex.exec(body)) !== null) {
-        const key = (m[1] || "").trim();
-        if (!key) continue;
-        const tag = (m[2] || m[4] || "").toLowerCase();
-        const raw = m[3] ?? "";
-        if (tag === "string" || tag === "integer" || tag === "real") {
-          result[key] = raw
-            .replace(/&amp;/g, "&")
-            .replace(/&lt;/g, "<")
-            .replace(/&gt;/g, ">")
-            .replace(/&quot;/g, '"')
-            .replace(/&apos;/g, "'")
-            .trim();
-        } else if (tag === "true") {
-          result[key] = true;
-        } else if (tag === "false") {
-          result[key] = false;
+    async function parsePlist(bytes) {
+      const isBinary = bytes[0] === 0x62 && bytes[1] === 0x70 && bytes[2] === 0x6c && bytes[3] === 0x69;
+      if (isBinary) {
+        try {
+          const r = parseBinaryPlist(bytes);
+          if (r && typeof r === "object") return r;
+        } catch (_) {}
+        try {
+          if (window.bplistParser) {
+            const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+            const p = window.bplistParser.parseBuffer(ab);
+            if (p && p[0]) return p[0];
+          }
+        } catch (_) {}
+        try {
+          const r = plist.parse(new TextDecoder("utf-8", { fatal: false }).decode(bytes));
+          if (r) return r;
+        } catch (_) {}
+        throw new Error("Không thể parse binary plist.");
+      } else {
+        try {
+          const r = parseXMLPlist(new TextDecoder().decode(bytes));
+          if (r && Object.keys(r).length > 0) return r;
+        } catch (_) {}
+        try {
+          return plist.parse(new TextDecoder().decode(bytes));
+        } catch (e) {
+          throw new Error("Không thể parse XML plist: " + e.message);
         }
       }
-      return result;
     }
 
     function parseBinaryPlist(bytes) {
-      if (readAscii(bytes, 0, 8) !== "bplist00") {
-        throw new Error("Không phải bplist00");
-      }
-      const trailerOffset = bytes.length - 32;
-      const offsetIntSize = bytes[trailerOffset + 6];
-      const objectRefSize = bytes[trailerOffset + 7];
-
-      function readBEInt(offset, size) {
-        let val = 0n;
-        for (let i = 0; i < size; i++) val = (val << 8n) | BigInt(bytes[offset + i]);
-        return Number(val);
-      }
-
-      const numObjects = readBEInt(trailerOffset + 8, 8);
-      const topObject = readBEInt(trailerOffset + 16, 8);
-      const offsetTableOffset = readBEInt(trailerOffset + 24, 8);
-
-      const offsets = new Array(numObjects);
-      for (let i = 0; i < numObjects; i++) {
-        offsets[i] = readBEInt(offsetTableOffset + i * offsetIntSize, offsetIntSize);
-      }
-
-      function parseObject(idx, depth = 0) {
-        if (depth > 25) return null;
-        const pos = offsets[idx];
-        if (pos === undefined || pos >= bytes.length) return null;
-        const marker = bytes[pos];
-        const type = marker & 0xf0;
-        let info = marker & 0x0f;
-        let cursor = pos + 1;
-
-        function readCount() {
-          if (info < 0x0f) return info;
-          const lenMarker = bytes[cursor++];
-          const lenSize = 1 << (lenMarker & 0x0f);
-          const count = readBEInt(cursor, lenSize);
-          cursor += lenSize;
-          return count;
+      const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      const len = bytes.length, to = len - 32;
+      const ois = bytes[to + 6], ors = bytes[to + 7];
+      const nObj = ri64(dv, to + 8), topObj = ri64(dv, to + 16), otOff = ri64(dv, to + 24);
+      const offs = [];
+      for (let i = 0; i < nObj; i++) offs.push(riN(dv, otOff + i * ois, ois));
+      function rObj(idx) {
+        const off = offs[idx], mk = bytes[off], hi = (mk & 0xf0) >> 4, lo = mk & 0x0f;
+        if (mk === 0x00) return null;
+        if (mk === 0x08) return false;
+        if (mk === 0x09) return true;
+        if (hi === 0x1) return riN(dv, off + 1, 1 << lo);
+        if (hi === 0x2) return lo === 3 ? dv.getFloat64(off + 1, false) : dv.getFloat32(off + 1, false);
+        if (mk === 0x33) return new Date((dv.getFloat64(off + 1, false) + 978307200) * 1000).toISOString();
+        if (hi === 0x4) { const [s] = ds(lo, off); return "[Data " + s + "]"; }
+        if (hi === 0x5) { const [s, e] = ds(lo, off); let r = ""; for (let i = 0; i < s; i++) r += String.fromCharCode(bytes[off + 1 + e + i]); return r; }
+        if (hi === 0x6) { const [s, e] = ds(lo, off); let r = ""; for (let i = 0; i < s; i++) r += String.fromCodePoint(dv.getUint16(off + 1 + e + i * 2, false)); return r; }
+        if (hi === 0xa) { const [s, e] = ds(lo, off); const a = []; for (let i = 0; i < s; i++) a.push(rObj(riN(dv, off + 1 + e + i * ors, ors))); return a; }
+        if (hi === 0xd) {
+          const [s, e] = ds(lo, off); const o = {};
+          for (let i = 0; i < s; i++) {
+            const k = rObj(riN(dv, off + 1 + e + i * ors, ors));
+            const v = rObj(riN(dv, off + 1 + e + (s + i) * ors, ors));
+            o[k] = v;
+          }
+          return o;
         }
-
-        switch (type) {
-          case 0x00:
-            if (info === 0x08) return false;
-            if (info === 0x09) return true;
-            return null;
-          case 0x10:
-            return readBEInt(cursor, 1 << info);
-          case 0x40: {
-            const len = readCount();
-            return readAscii(bytes, cursor, cursor + len);
-          }
-          case 0x50: {
-            const len = readCount();
-            return readUtf8(bytes, cursor, cursor + len);
-          }
-          case 0x60: {
-            const charCount = readCount();
-            const byteLen = charCount * 2;
-            const buf = bytes.slice(cursor, cursor + byteLen);
-            for (let i = 0; i < byteLen; i += 2) {
-              const tmp = buf[i];
-              buf[i] = buf[i + 1];
-              buf[i + 1] = tmp;
-            }
-            return new TextDecoder("utf-16le").decode(buf);
-          }
-          case 0xa0: {
-            const count = readCount();
-            const arr = [];
-            for (let i = 0; i < count; i++) {
-              arr.push(parseObject(readBEInt(cursor + i * objectRefSize, objectRefSize), depth + 1));
-            }
-            return arr;
-          }
-          case 0xd0: {
-            const count = readCount();
-            const dict = {};
-            const keyBase = cursor;
-            const valBase = cursor + count * objectRefSize;
-            for (let i = 0; i < count; i++) {
-              const k = parseObject(readBEInt(keyBase + i * objectRefSize, objectRefSize), depth + 1);
-              const v = parseObject(readBEInt(valBase + i * objectRefSize, objectRefSize), depth + 1);
-              if (typeof k === "string") dict[k] = v;
-            }
-            return dict;
-          }
-          default:
-            return null;
-        }
+        return null;
       }
+      function ds(lo, off) {
+        if (lo !== 0x0f) return [lo, 0];
+        const is = 1 << (bytes[off + 1] & 0x0f);
+        return [riN(dv, off + 2, is), 1 + is];
+      }
+      return rObj(topObj);
+    }
+    function riN(dv, off, n) { let v = 0; for (let i = 0; i < n; i++) v = v * 256 + dv.getUint8(off + i); return v; }
+    function ri64(dv, off) { return dv.getUint32(off, false) * 0x100000000 + dv.getUint32(off + 4, false); }
 
-      return parseObject(topObject, 0) || {};
+    function parseXMLPlist(text) {
+      const doc = new DOMParser().parseFromString(text, "application/xml");
+      const root = doc.querySelector("plist > dict");
+      return root ? parseDict(root) : {};
+    }
+    function parseDict(node) {
+      const o = {}, c = [...node.children];
+      for (let i = 0; i < c.length; i += 2) {
+        if (c[i].tagName === "key" && c[i + 1]) o[c[i].textContent] = parseNode(c[i + 1]);
+      }
+      return o;
+    }
+    function parseNode(n) {
+      switch (n.tagName) {
+        case "string": return n.textContent;
+        case "integer": return parseInt(n.textContent, 10);
+        case "real": return parseFloat(n.textContent);
+        case "true": return true;
+        case "false": return false;
+        case "dict": return parseDict(n);
+        case "array": return [...n.children].map(parseNode);
+        default: return n.textContent;
+      }
     }
 
-    function parsePlistBytes(bytes) {
-      if (readAscii(bytes, 0, 8) === "bplist00") {
-        return parseBinaryPlist(bytes);
-      }
-      return parseXmlPlist(readUtf8(bytes, 0, bytes.length));
-    }
+    async function fetchInfoFromProxyRange(rawUrl) {
+      const proxiedUrl = WORKER_PROXY + encodeURIComponent(rawUrl);
 
-    async function extractIpaMetadata(ipaUrl) {
-      const cache = { fullBytes: null };
-      const fileSize = await getFileSizeSmart(ipaUrl, cache);
-
-      const tailLen = Math.min(fileSize, 524288);
-      const tailStart = fileSize - tailLen;
-      const tailBytes = await fetchRangeOrFull(ipaUrl, tailStart, fileSize - 1, cache);
-
-      let eocdPos = -1;
-      for (let i = tailBytes.length - 22; i >= 0; i--) {
-        if (readUint32LE(tailBytes, i) === 0x06054b50) {
-          const commentLen = readUint16LE(tailBytes, i + 20);
-          if (i + 22 + commentLen <= tailBytes.length) {
-            eocdPos = i;
-            break;
-          }
-        }
-      }
-      if (eocdPos === -1) throw new Error("Không tìm thấy EOCD trong file .ipa");
-
-      const cdSize = readUint32LE(tailBytes, eocdPos + 12);
-      const cdOffset = readUint32LE(tailBytes, eocdPos + 16);
-      const cdBytes = await fetchRangeOrFull(ipaUrl, cdOffset, cdOffset + cdSize - 1, cache);
-
-      let entry = null;
-      let cursor = 0;
-      while (cursor + 46 <= cdBytes.length) {
-        if (readUint32LE(cdBytes, cursor) !== 0x02014b50) break;
-        const method = readUint16LE(cdBytes, cursor + 10);
-        const compressedSize = readUint32LE(cdBytes, cursor + 20);
-        const nameLen = readUint16LE(cdBytes, cursor + 28);
-        const extraLen = readUint16LE(cdBytes, cursor + 30);
-        const commentLen = readUint16LE(cdBytes, cursor + 32);
-        const localHeaderOffset = readUint32LE(cdBytes, cursor + 42);
-        const entryName = readUtf8(cdBytes, cursor + 46, cursor + 46 + nameLen);
-
-        if (/^Payload\/[^/]+\.app\/Info\.plist$/i.test(entryName)) {
-          entry = { method, compressedSize, localHeaderOffset };
-          break;
-        }
-        cursor += 46 + nameLen + extraLen + commentLen;
+      const probeResp = await fetch(proxiedUrl, {
+        headers: { Range: "bytes=0-0" },
+      });
+      if (probeResp.status !== 206) {
+        if (probeResp.body) await probeResp.body.cancel();
+        throw new Error(`Server trả về mã ${probeResp.status} (không hỗ trợ HTTP Range).`);
       }
 
-      if (!entry) throw new Error("Không tìm thấy Info.plist trong Payload/*.app");
+      const totalSize = parseTotalSizeFromContentRange(probeResp.headers.get("Content-Range"));
+      if (probeResp.body) await probeResp.body.cancel();
+      if (!totalSize || totalSize <= 22) {
+        throw new Error("Không xác định được dung lượng file từ Content-Range.");
+      }
 
-      const lh = await fetchRangeOrFull(
-        ipaUrl,
-        entry.localHeaderOffset,
-        entry.localHeaderOffset + 30 + 512,
-        cache
-      );
-      if (readUint32LE(lh, 0) !== 0x04034b50) throw new Error("Local file header không hợp lệ");
+      const tailLen = Math.min(totalSize, 65560);
+      const tailStart = totalSize - tailLen;
+      const tailEnd = totalSize - 1;
 
-      const lhNameLen = readUint16LE(lh, 26);
-      const lhExtraLen = readUint16LE(lh, 28);
-      const dataStart = entry.localHeaderOffset + 30 + lhNameLen + lhExtraLen;
-      const compressed = await fetchRangeOrFull(ipaUrl, dataStart, dataStart + entry.compressedSize - 1, cache);
-      const plistBytes = await inflateZipEntry(compressed, entry.method);
-      return parsePlistBytes(plistBytes);
+      const tailResp = await fetch(proxiedUrl, {
+        headers: { Range: `bytes=${tailStart}-${tailEnd}` },
+      });
+      if (tailResp.status !== 206) {
+        if (tailResp.body) await tailResp.body.cancel();
+        throw new Error("Không đọc được phần cuối file theo dải byte.");
+      }
+
+      const tailBuf = new Uint8Array(await tailResp.arrayBuffer());
+      const eocd = findEOCD(tailBuf);
+      if (!eocd) {
+        throw new Error("Không tìm thấy mục lục ZIP ở cuối file.");
+      }
+
+      const cdStart = eocd.cdOffset;
+      const cdEnd = Math.min(totalSize - 1, cdStart + eocd.cdSize - 1);
+      const cdResp = await fetch(proxiedUrl, {
+        headers: { Range: `bytes=${cdStart}-${cdEnd}` },
+      });
+      if (cdResp.status !== 206) {
+        if (cdResp.body) await cdResp.body.cancel();
+        throw new Error("Không đọc được danh sách mục lục của file IPA.");
+      }
+
+      const cdBuf = new Uint8Array(await cdResp.arrayBuffer());
+      const entries = parseCentralDirectory(cdBuf);
+      const infoEntry = entries.find((e) => /^Payload\/[^/]+\.app\/Info\.plist$/i.test(e.name));
+      if (!infoEntry) {
+        throw new Error("Không tìm thấy Info.plist trong gói IPA.");
+      }
+
+      const infoBytes = await extractEntryByRange(proxiedUrl, infoEntry);
+      return await parsePlist(infoBytes);
     }
 
     function buildLinks() {
@@ -461,7 +430,7 @@
       if (version) params.set("version", version);
       if (title) params.set("title", title);
 
-      const plistUrl = `${WORKER_BASE}?${params.toString()}`;
+      const plistUrl = `${WORKER_PLIST}?${params.toString()}`;
       const itmsUrl = `itms-services://?action=download-manifest&url=${encodeURIComponent(plistUrl)}`;
 
       document.getElementById("plistOut").textContent = plistUrl;
@@ -479,13 +448,13 @@
 
       const btn = document.getElementById("btnFetchInfo");
       btn.disabled = true;
-      setStatus("Đang đọc thông tin từ file .ipa...");
+      setStatus("Đang đọc mục lục & Info.plist qua proxy...");
 
       try {
-        const info = await extractIpaMetadata(ipa);
+        const info = await fetchInfoFromProxyRange(ipa);
         const bundleId = info.CFBundleIdentifier || "";
         const version = info.CFBundleShortVersionString || info.CFBundleVersion || "";
-        const minOs = info.MinimumOSVersion ? String(info.MinimumOSVersion) : "";
+        const minOs = info.MinimumOSVersion || info.LSMinimumSystemVersion || "";
         const title =
           info.CFBundleDisplayName ||
           info.CFBundleName ||
@@ -495,11 +464,13 @@
         if (title) document.getElementById("title").value = title;
         if (bundleId) document.getElementById("bundleId").value = bundleId;
         if (version) document.getElementById("version").value = version;
-        if (minOs) document.getElementById("minOs").value = minOs;
+        if (minOs !== undefined && minOs !== null && String(minOs) !== "") {
+          document.getElementById("minOs").value = String(minOs);
+        }
 
         buildLinks();
         setStatus(
-          `Đã lấy thông tin: Bundle ID (${bundleId || "trống"}), Phiên bản (${version || "trống"}), iOS tối thiểu (${minOs || "trống"})`,
+          `Đã lấy thông tin: Tên (${title || "trống"}), Bundle ID (${bundleId || "trống"}), Phiên bản (${version || "trống"}), iOS tối thiểu (${minOs || "trống"})`,
           "ok"
         );
       } catch (err) {
@@ -508,7 +479,7 @@
           document.getElementById("title").value = fallbackTitle;
         }
         buildLinks();
-        setStatus(`Không tự đọc được hết Info.plist (${err.message || err}). Bạn có thể kiểm tra CORS host hoặc nhập tay.`, "err");
+        setStatus(`Lỗi khi đọc thông tin: ${err.message || err}`, "err");
       } finally {
         btn.disabled = false;
       }
