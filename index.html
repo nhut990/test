@@ -172,7 +172,6 @@
 
 <div class="toast" id="toast">✓ Đã sao chép</div>
 
-<!-- Cần Pako để giải nén ZIP nếu trình duyệt cũ không hỗ trợ DecompressionStream -->
 <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/plist@3.0.6/dist/plist.min.js"></script>
@@ -194,21 +193,16 @@ dropZone.addEventListener('drop', e => {
 fileInput.addEventListener('change', () => { if (fileInput.files[0]) processIPAFile(fileInput.files[0]); });
 urlInput.addEventListener('keypress', e => { if (e.key === 'Enter') processIPAFromURL(); });
 
-// ── HÀM ĐỌC TỪ FILE OFFLINE ──
 async function processIPAFile(file) {
   showError(''); showResult(false); showProgress(true);
   document.getElementById('progressText').textContent = 'Đang đọc file từ thiết bị...';
   setProgress(100);
-
   try {
     const buf = await file.arrayBuffer();
     await parseIPAData(buf, file.name);
-  } catch (err) {
-    handleError(err, 'Lỗi khi đọc file IPA: ');
-  }
+  } catch (err) { handleError(err, 'Lỗi khi đọc file IPA: '); }
 }
 
-// ── HÀM ĐỌC TỪ LINK URL (TỐI ƯU TỐC ĐỘ BẰNG RANGE REQUEST) ──
 async function processIPAFromURL() {
   const ipaUrl = urlInput.value.trim();
   if (!ipaUrl) { showError('Vui lòng dán link IPA vào ô trống.'); return; }
@@ -217,39 +211,39 @@ async function processIPAFromURL() {
   btnFetch.disabled = true;
   const pText = document.getElementById('progressText');
   pText.style.display = 'block';
-  pText.textContent = 'Đang kiểm tra kết nối...';
+  pText.textContent = 'Đang kết nối...';
 
   const proxyUrl = `https://ipa.vannhut9090.workers.dev/?url=${encodeURIComponent(ipaUrl)}`;
 
   try {
-    // 1. Thử tải một phần cực nhỏ (1 byte) để xem Worker có hỗ trợ Range không
-    const testRes = await fetch(proxyUrl, { headers: { 'Range': 'bytes=0-0' } });
-    
-    // Nếu server trả về 206 (Partial Content) => Hỗ trợ Range Request
-    if (testRes.status === 206) {
-      pText.textContent = 'Đang trích xuất thông tin siêu tốc...';
-      await processIPAFastRange(proxyUrl, ipaUrl);
-    } else {
-      // Nếu trả về 200 => Server chưa cập nhật, chạy cách cũ (tải toàn bộ)
-      pText.textContent = 'Đang tải toàn bộ file (có thể lâu)...';
+    pText.textContent = 'Đang trích xuất thông tin siêu tốc...';
+    // Thử chạy phương pháp tải siêu tốc (Range Request)
+    await processIPAFastRange(proxyUrl, ipaUrl);
+  } catch (rangeErr) {
+    console.warn("Range Request thất bại, tự động chuyển sang tải toàn bộ file...", rangeErr);
+    pText.textContent = 'Đang tải toàn bộ file (dự phòng)...';
+    // Nếu lỗi, tự động nhảy sang tải toàn bộ file
+    try {
       await processIPAFullDownload(proxyUrl, ipaUrl);
+    } catch (fullErr) {
+      handleError(fullErr, 'Lỗi tải dữ liệu: ');
     }
-  } catch (err) {
-    handleError(err, 'Lỗi tải dữ liệu: ');
   } finally {
     btnFetch.disabled = false;
   }
 }
 
-// ── CÁCH 1: TẢI SIÊU TỐC (CHỈ TẢI PHẦN INFO.PLIST) ──
+// ── TẢI SIÊU TỐC (CHỈ TẢI PHẦN INFO.PLIST) ──
 async function processIPAFastRange(proxyUrl, ipaUrl) {
   const fetchRange = async (start, end) => {
     const res = await fetch(proxyUrl, { headers: { Range: `bytes=${start}-${end}` } });
     return await res.arrayBuffer();
   };
 
-  // 1. Tải 64KB cuối cùng để tìm EOCD (End of Central Directory)
+  // 1. Tải 64KB cuối cùng
   const resEnd = await fetch(proxyUrl, { headers: { Range: 'bytes=-65536' } });
+  if (resEnd.status !== 206) throw new Error("Máy chủ không hỗ trợ tải từng phần (Range).");
+  
   const bufEnd = await resEnd.arrayBuffer();
   const dvEnd = new DataView(bufEnd);
   
@@ -288,7 +282,6 @@ async function processIPAFastRange(proxyUrl, ipaUrl) {
 
   if (!infoPlist) throw new Error('Không tìm thấy Info.plist trong file IPA.');
 
-  // 3. Hàm giải nén file cụ thể
   const extractFile = async (fileInfo) => {
     if (!fileInfo) return null;
     const bufLh = await fetchRange(fileInfo.localOffset, fileInfo.localOffset + 29);
@@ -312,7 +305,7 @@ async function processIPAFastRange(proxyUrl, ipaUrl) {
     throw new Error('Không hỗ trợ định dạng nén này.');
   };
 
-  pText.textContent = 'Đang giải mã dữ liệu...';
+  document.getElementById('progressText').textContent = 'Đang giải mã dữ liệu...';
   const infoBytes = await extractFile(infoPlist);
   const metaBytes = metaPlist ? await extractFile(metaPlist) : null;
 
@@ -326,7 +319,7 @@ async function processIPAFastRange(proxyUrl, ipaUrl) {
   renderUI(filename, info, meta, itemId);
 }
 
-// ── CÁCH 2: TẢI TOÀN BỘ FILE (Dự phòng) ──
+// ── TẢI TOÀN BỘ FILE (Dự phòng) ──
 async function processIPAFullDownload(proxyUrl, ipaUrl) {
   const pText = document.getElementById('progressText');
   const response = await fetch(proxyUrl);
@@ -374,7 +367,7 @@ async function processIPAFullDownload(proxyUrl, ipaUrl) {
   renderUI(filename, info, meta, itemId);
 }
 
-// ── HIỂN THỊ KẾT QUẢ LÊN UI ──
+// ── HIỂN THỊ KẾT QUẢ ──
 function renderUI(filename, info, meta, itemId) {
   set('val-filename', filename);
   set('val-bundle', info['CFBundleIdentifier'] || '(không có)');
@@ -404,7 +397,7 @@ function renderUI(filename, info, meta, itemId) {
   showResult(true);
 }
 
-// ── CÁC HÀM XỬ LÝ PLIST (Giữ nguyên) ──
+// ── XỬ LÝ PLIST & ZIP TRUYỀN THỐNG ──
 async function parseIPAData(buf, filename) {
   try {
     const zip = await JSZip.loadAsync(buf);
