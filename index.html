@@ -6,57 +6,150 @@
 <title>Trình đọc thông tin IPA</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  body { font-family: 'Inter', sans-serif; background: #f7f9fc; margin: 0; padding: 0; color: #1d1d1f; }
-  header { background: linear-gradient(135deg, #007aff, #3b82f6); color: white; text-align: center; padding: 18px; font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f7f9fc;
+    margin: 0; padding: 0;
+    color: #1d1d1f;
+  }
+  header {
+    background: linear-gradient(135deg, #007aff, #3b82f6);
+    color: white;
+    text-align: center;
+    padding: 18px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
   header img { width: 28px; height: 28px; border-radius: 6px; }
-  main { max-width: 720px; margin: 30px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
-  
-  .drop-zone { width: 100%; padding: 28px 16px; border: 2px dashed #cbd5e1; border-radius: 10px; background: #f8fafc; cursor: pointer; text-align: center; transition: border-color 0.2s, background 0.2s; position: relative; box-sizing: border-box; }
+  main {
+    max-width: 720px;
+    margin: 30px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  }
+  .drop-zone {
+    width: 100%;
+    padding: 28px 16px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    box-sizing: border-box;
+  }
   .drop-zone:hover, .drop-zone.dragging { border-color: #007aff; background: #eff6ff; }
   .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
   .drop-zone-icon { font-size: 2rem; margin-bottom: 8px; }
   .drop-zone-text { font-size: 0.95rem; color: #64748b; }
   .drop-zone-text b { color: #007aff; }
 
-  .divider { text-align: center; margin: 20px 0; color: #94a3b8; font-size: 0.85rem; position: relative; text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
-  .divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 42%; height: 1px; background: #e2e8f0; }
-  .divider::before { left: 0; } .divider::after { right: 0; }
-  
-  .url-input-group { display: flex; gap: 10px; }
-  .url-input-group input { flex: 1; padding: 12px 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; min-width: 0; }
-  .url-input-group input:focus { border-color: #007aff; }
-  .url-input-group button { background: #007aff; color: white; border: none; padding: 0 20px; border-radius: 8px; font-weight: 600; font-family: inherit; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
-  .url-input-group button:hover { background: #0062cc; }
-  .url-input-group button:disabled { background: #93c5fd; cursor: not-allowed; }
+  /* Khu vực nhập link IPA */
+  .url-box {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .url-input {
+    flex: 1;
+    padding: 11px 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 0;
+  }
+  .url-input:focus { border-color: #007aff; }
+  .url-btn {
+    background: #007aff;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0 18px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .url-btn:hover { background: #0062cc; }
+  .url-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+  .url-hint {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-top: 6px;
+  }
 
   .progress-container { width: 100%; background: #e5e7eb; border-radius: 8px; height: 8px; margin-top: 12px; overflow: hidden; display: none; }
-  .progress-bar { width: 0%; height: 8px; background: linear-gradient(90deg, #60a5fa, #2563eb); transition: width 0.2s ease; }
-  .progress-text { display: none; text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 6px; font-weight: 500; }
+  .progress-bar { width: 0%; height: 8px; background: linear-gradient(90deg, #60a5fa, #2563eb); transition: width 0.4s ease; }
 
-  .result { margin-top: 22px; background: #f9fafb; border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden; display: none; animation: fadeIn 0.3s ease; }
+  .result {
+    margin-top: 22px;
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
   @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
   .result-row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #f1f5f9; }
   .result-row:last-child { border-bottom: none; }
   .result-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
-  .icon-blue { background: #dbeafe; } .icon-green { background: #dcfce7; } .icon-purple { background: #ede9fe; } .icon-orange { background: #ffedd5; } .icon-pink { background: #fce7f3; } .icon-teal { background: #ccfbf1; }
+  .icon-blue   { background: #dbeafe; }
+  .icon-green  { background: #dcfce7; }
+  .icon-purple { background: #ede9fe; }
+  .icon-orange { background: #ffedd5; }
+  .icon-pink   { background: #fce7f3; }
+  .icon-teal   { background: #ccfbf1; }
   .result-label { font-size: 0.78rem; color: #007aff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
   .result-value { font-size: 0.97rem; font-weight: 600; color: #111827; word-break: break-all; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .copy-btn { background: none; border: none; cursor: pointer; color: #9ca3af; padding: 2px 5px; border-radius: 4px; font-size: 0.75rem; transition: color 0.15s, background 0.15s; flex-shrink: 0; }
   .copy-btn:hover { color: #007aff; background: #eff6ff; }
 
-  .btn-appstore { display: inline-flex; align-items: center; gap: 5px; background: #007aff; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 0.78rem; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; text-decoration: none; transition: background 0.15s, transform 0.1s; flex-shrink: 0; }
+  /* Nút App Store */
+  .btn-appstore {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #007aff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s, transform 0.1s;
+    flex-shrink: 0;
+  }
   .btn-appstore:hover { background: #0062cc; transform: translateY(-1px); }
+  .btn-appstore:active { transform: translateY(0); }
   .btn-appstore svg { width: 13px; height: 13px; }
 
   .badge-notfound { font-size: 0.75rem; font-weight: 500; color: #92400e; background: #fef3c7; border-radius: 6px; padding: 2px 8px; }
-  .error-box { display: none; margin-top: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; color: #dc2626; font-size: 0.9rem; line-height: 1.4; }
-  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(14px); background: #111827; color: #fff; padding: 10px 22px; border-radius: 99px; font-size: 0.85rem; font-weight: 500; opacity: 0; pointer-events: none; transition: all 0.25s; white-space: nowrap; z-index: 999; }
+
+  .error-box { display: none; margin-top: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; color: #dc2626; font-size: 0.9rem; }
+
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(14px); background: #111827; color: #fff; padding: 10px 22px; border-radius: 99px; font-size: 0.85rem; font-weight: 500; opacity: 0; pointer-events: none; transition: all 0.25s; white-space: nowrap; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
   footer { text-align: center; color: #777; margin: 20px 0; font-size: 0.9rem; }
   footer a { display: inline-block; margin-bottom: 5px; color: #007aff; text-decoration: none; font-weight: 600; }
   footer a:hover { text-decoration: underline; }
-
-  @media (max-width: 480px) { .url-input-group { flex-direction: column; } .url-input-group button { padding: 12px; } }
 </style>
 </head>
 <body>
@@ -73,17 +166,15 @@
     <div class="drop-zone-text">Kéo thả file IPA vào đây hoặc <b>nhấn để chọn</b></div>
   </div>
 
-  <div class="divider">Hoặc</div>
-
-  <div class="url-input-group">
-    <input type="url" id="ipaUrlInput" placeholder="Dán link IPA (Chỉ hỗ trợ Direct Link)" autocomplete="off">
-    <button id="btnFetchUrl" onclick="processIPAFromURL()">Đọc từ URL</button>
+  <div class="url-box">
+    <input type="url" class="url-input" id="ipaUrl" placeholder="Dán link trực tiếp tới file .ipa (chỉ đọc mục lục & plist, không tải nguyên file)...">
+    <button class="url-btn" id="btnFetchUrl" onclick="processIPAUrl()">Đọc link</button>
   </div>
+  <div class="url-hint">Chỉ hỗ trợ link file .ipa tải trực tiếp có bật HTTP Range (không tải hết file về máy).</div>
 
   <div class="progress-container" id="progressContainer">
     <div class="progress-bar" id="progressBar"></div>
   </div>
-  <div class="progress-text" id="progressText">Đang xử lý...</div>
 
   <div class="error-box" id="errorBox"></div>
 
@@ -172,265 +263,291 @@
 
 <div class="toast" id="toast">✓ Đã sao chép</div>
 
-<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/plist@3.0.6/dist/plist.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bplist-parser@0.3.2/dist/bplist-parser.min.js"></script>
 
 <script>
+const WORKER_PROXY = "https://ipa.vannhut9090.workers.dev/?url=";
+
 const dropZone  = document.getElementById('drop-zone');
 const fileInput = document.getElementById('ipaFile');
-const urlInput  = document.getElementById('ipaUrlInput');
-const btnFetch  = document.getElementById('btnFetchUrl');
+const urlInput  = document.getElementById('ipaUrl');
+const btnUrl    = document.getElementById('btnFetchUrl');
 
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragging'); });
 dropZone.addEventListener('dragleave', e => { if (!dropZone.contains(e.relatedTarget)) dropZone.classList.remove('dragging'); });
 dropZone.addEventListener('drop', e => {
   e.preventDefault(); dropZone.classList.remove('dragging');
   const f = e.dataTransfer.files[0];
-  if (f) processIPAFile(f);
+  if (f) processIPA(f);
 });
-fileInput.addEventListener('change', () => { if (fileInput.files[0]) processIPAFile(fileInput.files[0]); });
-urlInput.addEventListener('keypress', e => { if (e.key === 'Enter') processIPAFromURL(); });
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) processIPA(fileInput.files[0]); });
+urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') processIPAUrl(); });
 
-async function processIPAFile(file) {
-  showError(''); showResult(false); showProgress(true);
-  document.getElementById('progressText').textContent = 'Đang đọc file từ thiết bị...';
-  setProgress(100);
-  try {
-    const buf = await file.arrayBuffer();
-    await parseIPAData(buf, file.name);
-  } catch (err) { handleError(err, 'Lỗi khi đọc file IPA: '); }
-}
-
-async function processIPAFromURL() {
-  const ipaUrl = urlInput.value.trim();
-  if (!ipaUrl) { showError('Vui lòng dán link IPA vào ô trống.'); return; }
-
-  showError(''); showResult(false); showProgress(true); setProgress(0);
-  btnFetch.disabled = true;
-  const pText = document.getElementById('progressText');
-  pText.style.display = 'block';
-  pText.textContent = 'Đang kết nối...';
-
-  const proxyUrl = `https://ipa.vannhut9090.workers.dev/?url=${encodeURIComponent(ipaUrl)}`;
-
-  try {
-    pText.textContent = 'Đang trích xuất thông tin siêu tốc...';
-    await processIPAFastRange(proxyUrl, ipaUrl);
-  } catch (rangeErr) {
-    console.warn("Range Request thất bại, chuyển sang tải toàn bộ...", rangeErr);
-    pText.textContent = 'Đang tải toàn bộ file (dự phòng)...';
-    try {
-      await processIPAFullDownload(proxyUrl, ipaUrl);
-    } catch (fullErr) {
-      handleError(fullErr, 'Lỗi tải dữ liệu: ');
-    }
-  } finally {
-    btnFetch.disabled = false;
-  }
-}
-
-// ── TẢI SIÊU TỐC (CHỈ TẢI PHẦN INFO.PLIST) ──
-async function processIPAFastRange(proxyUrl, ipaUrl) {
-  const fetchRange = async (start, end) => {
-    const res = await fetch(proxyUrl, { headers: { Range: `bytes=${start}-${end}` } });
-    return await res.arrayBuffer();
-  };
-
-  const resEnd = await fetch(proxyUrl, { headers: { Range: 'bytes=-65536' } });
-  if (resEnd.status !== 206) throw new Error("Máy chủ không hỗ trợ tải từng phần (Range).");
-  
-  const bufEnd = await resEnd.arrayBuffer();
-  const dvEnd = new DataView(bufEnd);
-  
-  let eocdOffset = -1;
-  for (let i = bufEnd.byteLength - 22; i >= 0; i--) {
-    if (dvEnd.getUint32(i, true) === 0x06054b50) { eocdOffset = i; break; }
-  }
-  if (eocdOffset === -1) throw new Error('Không tìm thấy cấu trúc ZIP.');
-
-  const cdSize = dvEnd.getUint32(eocdOffset + 12, true);
-  const cdOffset = dvEnd.getUint32(eocdOffset + 16, true);
-  const totalEntries = dvEnd.getUint16(eocdOffset + 10, true);
-
-  const bufCd = await fetchRange(cdOffset, cdOffset + cdSize - 1);
-  const dvCd = new DataView(bufCd);
-  let offset = 0;
-  let infoPlist = null, metaPlist = null;
-
-  for (let i = 0; i < totalEntries; i++) {
-    if (dvCd.getUint32(offset, true) !== 0x02014b50) break;
-    const compMethod = dvCd.getUint16(offset + 10, true);
-    const compSize = dvCd.getUint32(offset + 20, true);
-    const fnameLen = dvCd.getUint16(offset + 28, true);
-    const extraLen = dvCd.getUint16(offset + 30, true);
-    const commLen = dvCd.getUint16(offset + 32, true);
-    const localOffset = dvCd.getUint32(offset + 42, true);
-    
-    const filename = new TextDecoder().decode(new Uint8Array(bufCd, offset + 46, fnameLen));
-
-    // TÌM KIẾM LINH HOẠT: Ưu tiên chuẩn, sau đó fallback cho các cấu trúc IPA lạ
-    if (filename.match(/^Payload\/[^\/]+\.app\/Info\.plist$/i)) {
-      infoPlist = { localOffset, compSize, compMethod };
-    } else if (!infoPlist && filename.endsWith('Info.plist') && filename.startsWith('Payload/') && filename.split('/').length <= 4) {
-      infoPlist = { localOffset, compSize, compMethod };
-    }
-    
-    if (filename === 'iTunesMetadata.plist') metaPlist = { localOffset, compSize, compMethod };
-    
-    offset += 46 + fnameLen + extraLen + commLen;
-  }
-
-  if (!infoPlist) throw new Error('Không tìm thấy Info.plist trong file IPA.');
-
-  const extractFile = async (fileInfo) => {
-    if (!fileInfo) return null;
-    const bufLh = await fetchRange(fileInfo.localOffset, fileInfo.localOffset + 29);
-    const dvLh = new DataView(bufLh);
-    const lhFnameLen = dvLh.getUint16(26, true);
-    const lhExtraLen = dvLh.getUint16(28, true);
-    
-    const dataStart = fileInfo.localOffset + 30 + lhFnameLen + lhExtraLen;
-    const bufData = await fetchRange(dataStart, dataStart + fileInfo.compSize - 1);
-    
-    if (fileInfo.compMethod === 0) return new Uint8Array(bufData);
-    if (fileInfo.compMethod === 8) {
-      if (typeof DecompressionStream !== 'undefined') {
-        const ds = new DecompressionStream('deflate-raw');
-        const stream = new Response(bufData).body.pipeThrough(ds);
-        return new Uint8Array(await new Response(stream).arrayBuffer());
-      } else {
-        return pako.inflateRaw(new Uint8Array(bufData));
-      }
-    }
-    throw new Error('Không hỗ trợ định dạng nén này.');
-  };
-
-  document.getElementById('progressText').textContent = 'Đang giải mã dữ liệu...';
-  const infoBytes = await extractFile(infoPlist);
-  const metaBytes = metaPlist ? await extractFile(metaPlist) : null;
-
-  const info = await parsePlist(infoBytes);
-  const meta = metaBytes ? await parsePlist(metaBytes) : null;
-  
+function renderResult(fileName, info, meta) {
   let itemId = null;
-  if (meta && meta['itemId'] !== undefined) itemId = String(meta['itemId']);
-
-  let filename = ipaUrl.split('/').pop().split('?')[0] || 'Unknown.ipa';
-  renderUI(filename, info, meta, itemId);
-}
-
-// ── TẢI TOÀN BỘ FILE (Dự phòng) ──
-async function processIPAFullDownload(proxyUrl, ipaUrl) {
-  const pText = document.getElementById('progressText');
-  const response = await fetch(proxyUrl);
-  if (!response.ok) throw new Error(`Mã lỗi HTTP ${response.status}`);
-
-  const contentLength = response.headers.get('content-length');
-  const total = parseInt(contentLength, 10);
-  const reader = response.body.getReader();
-  let loaded = 0;
-  const chunks = [];
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-    loaded += value.length;
-    if (total) {
-      const percent = Math.round((loaded / total) * 100);
-      setProgress(percent);
-      pText.textContent = `Đang tải file: ${(loaded / 1024 / 1024).toFixed(1)} MB / ${(total / 1024 / 1024).toFixed(1)} MB (${percent}%)`;
-    } else {
-      pText.textContent = `Đang tải file: ${(loaded / 1024 / 1024).toFixed(1)} MB`;
-    }
+  if (meta && meta['itemId'] !== undefined && meta['itemId'] !== null) {
+    itemId = String(meta['itemId']);
   }
 
-  pText.textContent = 'Đang giải nén IPA...';
-  setProgress(100);
-  const blob = new Blob(chunks);
-  const buf = await blob.arrayBuffer();
-
-  const zip = await JSZip.loadAsync(buf);
-  const files = Object.keys(zip.files);
-  
-  // TÌM KIẾM LINH HOẠT (FULL DOWNLOAD)
-  let infoPath = files.find(p => /^Payload\/[^/]+\.app\/Info\.plist$/i.test(p));
-  if (!infoPath) {
-      infoPath = files.find(p => p.startsWith('Payload/') && p.endsWith('Info.plist') && p.split('/').length <= 4);
-  }
-  if (!infoPath) infoPath = files.find(p => p.endsWith('Info.plist'));
-
-  if (!infoPath) throw new Error('Không tìm thấy Info.plist.');
-
-  const infoBytes = await zip.file(infoPath).async('uint8array');
-  const info = await parsePlist(infoBytes);
-  let meta = null, itemId = null;
-  if (files.includes('iTunesMetadata.plist')) {
-    meta = await parsePlist(await zip.file('iTunesMetadata.plist').async('uint8array'));
-    if (meta && meta['itemId'] !== undefined) itemId = String(meta['itemId']);
-  }
-
-  let filename = ipaUrl.split('/').pop().split('?')[0] || 'Unknown.ipa';
-  renderUI(filename, info, meta, itemId);
-}
-
-// ── XỬ LÝ PLIST & ZIP TRUYỀN THỐNG ──
-async function parseIPAData(buf, filename) {
-  try {
-    const zip = await JSZip.loadAsync(buf);
-    const files = Object.keys(zip.files);
-    
-    // TÌM KIẾM LINH HOẠT (OFFLINE FILE)
-    let infoPath = files.find(p => /^Payload\/[^/]+\.app\/Info\.plist$/i.test(p));
-    if (!infoPath) {
-        infoPath = files.find(p => p.startsWith('Payload/') && p.endsWith('Info.plist') && p.split('/').length <= 4);
-    }
-    if (!infoPath) infoPath = files.find(p => p.endsWith('Info.plist'));
-
-    if (!infoPath) throw new Error('Không tìm thấy Info.plist.');
-
-    const info = await parsePlist(await zip.file(infoPath).async('uint8array'));
-    let meta = null, itemId = null;
-    if (files.includes('iTunesMetadata.plist')) {
-      meta = await parsePlist(await zip.file('iTunesMetadata.plist').async('uint8array'));
-      if (meta && meta['itemId'] !== undefined) itemId = String(meta['itemId']);
-    }
-    renderUI(filename, info, meta, itemId);
-  } catch (err) { throw err; }
-}
-
-// ── HIỂN THỊ KẾT QUẢ ──
-function renderUI(filename, info, meta, itemId) {
-  set('val-filename', filename);
-  set('val-bundle', info['CFBundleIdentifier'] || '(không có)');
-  set('val-appname', info['CFBundleDisplayName'] || info['CFBundleName'] || '(không có)');
-  set('val-version', info['CFBundleShortVersionString'] || info['CFBundleVersion'] || '(không có)');
+  set('val-filename', fileName);
+  set('val-bundle',   info['CFBundleIdentifier'] || '(không có)');
+  set('val-appname',  info['CFBundleDisplayName'] || info['CFBundleName'] || '(không có)');
+  set('val-version',  info['CFBundleShortVersionString'] || info['CFBundleVersion'] || '(không có)');
   const iosVer = info['MinimumOSVersion'] || info['LSMinimumSystemVersion'] || '';
-  set('val-ios', iosVer || '(không có)');
+  set('val-ios',      iosVer || '(không có)');
   set('val-ios-note', iosVer || '?');
+
+  // Nhà phát triển
   set('val-developer', meta ? (meta['artistName'] || '(không có)') : '(không có)');
 
+  // Item ID + nút App Store
   const itemIdEl = document.getElementById('val-itemid');
-  const btnCopy = document.getElementById('btn-copy-itemid');
+  const btnCopy  = document.getElementById('btn-copy-itemid');
   const btnStore = document.getElementById('btn-appstore');
 
   if (itemId) {
-    itemIdEl.textContent = itemId;
-    btnCopy.style.display = '';
-    btnStore.href = `https://apps.apple.com/app/id${itemId}`;
+    itemIdEl.textContent   = itemId;
+    btnCopy.style.display  = '';
+    btnStore.href          = `https://apps.apple.com/app/id${itemId}`;
     btnStore.style.display = '';
   } else {
-    itemIdEl.innerHTML = '<span class="badge-notfound">Không có (IPA không qua App Store)</span>';
-    btnCopy.style.display = 'none';
+    itemIdEl.innerHTML     = '<span class="badge-notfound">Không có (IPA không qua App Store)</span>';
+    btnCopy.style.display  = 'none';
     btnStore.style.display = 'none';
   }
-
-  showProgress(false);
-  showResult(true);
 }
 
+/* ── ĐỌC FILE IPA TRÊN MÁY ── */
+async function processIPA(file) {
+  showError('');
+  showResult(false);
+  showProgress(true);
+
+  let progress = 0;
+  const fake = setInterval(() => {
+    if (progress < 88) { progress += 8; setProgress(progress); }
+  }, 130);
+
+  try {
+    const buf   = await file.arrayBuffer();
+    const zip   = await JSZip.loadAsync(buf);
+    const files = Object.keys(zip.files);
+
+    // ── Info.plist ──
+    const infoPath = files.find(p => /^Payload\/[^/]+\.app\/Info\.plist$/i.test(p));
+    if (!infoPath) throw new Error('Không tìm thấy Info.plist trong gói IPA.');
+    const infoBytes = await zip.file(infoPath).async('uint8array');
+    const info = await parsePlist(infoBytes);
+
+    // ── iTunesMetadata.plist → itemId ──
+    let meta = null;
+    const metaPath = files.find(p => p === 'iTunesMetadata.plist');
+    if (metaPath) {
+      try {
+        const metaBytes = await zip.file(metaPath).async('uint8array');
+        meta = await parsePlist(metaBytes);
+      } catch (_) {}
+    }
+
+    renderResult(file.name, info, meta);
+
+    clearInterval(fake); setProgress(100);
+    setTimeout(() => { showProgress(false); showResult(true); }, 350);
+
+  } catch (err) {
+    clearInterval(fake); setProgress(0);
+    setTimeout(() => showProgress(false), 300);
+    showError('❌ Lỗi khi đọc IPA: ' + (err.message || err));
+  }
+}
+
+/* ── ĐỌC QUA LINK (CHỈ ĐỌC PHẦN MỤC LỤC & PLIST, KHÔNG TẢI NGUYÊN FILE) ── */
+async function processIPAUrl() {
+  const rawUrl = urlInput.value.trim();
+  if (!rawUrl) {
+    showError('❌ Vui lòng nhập link trực tiếp tới file .ipa.');
+    return;
+  }
+
+  showError('');
+  showResult(false);
+  showProgress(true);
+  setProgress(15);
+  btnUrl.disabled = true;
+
+  try {
+    const proxiedUrl = WORKER_PROXY + encodeURIComponent(rawUrl);
+
+    // 1. Xin ~64KB cuối file để tìm EOCD (mục lục ZIP nằm ở cuối file)
+    const tailResp = await fetch(proxiedUrl, {
+      headers: { "Range": "bytes=-65560" }
+    });
+
+    // Bắt buộc phải là 206 Partial Content; nếu trả 200 thì hủy luồng ngay để không tải ngầm cả file
+    if (tailResp.status !== 206) {
+      if (tailResp.body) await tailResp.body.cancel();
+      throw new Error("Server không hỗ trợ đọc từng phần (HTTP Range) hoặc link không phải file trực tiếp.");
+    }
+
+    const totalSize = parseTotalSizeFromContentRange(tailResp.headers.get("Content-Range"));
+    if (!totalSize) {
+      if (tailResp.body) await tailResp.body.cancel();
+      throw new Error("Không xác định được kích thước file từ Content-Range.");
+    }
+
+    const tailBuf = new Uint8Array(await tailResp.arrayBuffer());
+    setProgress(40);
+
+    const eocd = findEOCD(tailBuf);
+    if (!eocd) {
+      throw new Error("Không tìm thấy mục lục ZIP ở cuối file.");
+    }
+
+    // 2. Xin đúng đoạn Central Directory chứa danh sách file bên trong IPA
+    const cdStart = eocd.cdOffset;
+    const cdEnd   = Math.min(totalSize - 1, cdStart + eocd.cdSize - 1);
+    const cdResp  = await fetch(proxiedUrl, {
+      headers: { "Range": `bytes=${cdStart}-${cdEnd}` }
+    });
+    if (cdResp.status !== 206) {
+      if (cdResp.body) await cdResp.body.cancel();
+      throw new Error("Không đọc được danh sách mục lục của file IPA.");
+    }
+
+    const cdBuf = new Uint8Array(await cdResp.arrayBuffer());
+    setProgress(65);
+
+    const entries = parseCentralDirectory(cdBuf);
+    const infoEntry = entries.find(e => /^Payload\/[^/]+\.app\/Info\.plist$/i.test(e.name));
+    if (!infoEntry) {
+      throw new Error("Không tìm thấy Info.plist trong gói IPA.");
+    }
+    const metaEntry = entries.find(e => e.name === "iTunesMetadata.plist");
+
+    // 3. Chỉ tải và giải nén đúng file Info.plist (và iTunesMetadata.plist nếu có)
+    const infoBytes = await extractEntryByRange(proxiedUrl, infoEntry);
+    const info = await parsePlist(infoBytes);
+    setProgress(88);
+
+    let meta = null;
+    if (metaEntry) {
+      try {
+        const metaBytes = await extractEntryByRange(proxiedUrl, metaEntry);
+        meta = await parsePlist(metaBytes);
+      } catch (_) {}
+    }
+
+    let fileName = "remote.ipa";
+    try {
+      const seg = decodeURIComponent(new URL(rawUrl).pathname.split("/").pop() || "");
+      if (seg) fileName = seg;
+    } catch (_) {}
+
+    renderResult(fileName, info, meta);
+    setProgress(100);
+    setTimeout(() => { showProgress(false); showResult(true); }, 300);
+
+  } catch (err) {
+    setProgress(0);
+    setTimeout(() => showProgress(false), 300);
+    showError("❌ Lỗi khi đọc từ link: " + (err.message || err));
+  } finally {
+    btnUrl.disabled = false;
+  }
+}
+
+function parseTotalSizeFromContentRange(rangeHeader) {
+  if (!rangeHeader) return null;
+  const match = rangeHeader.match(/\/(\d+)$/);
+  return match ? Number(match[1]) : null;
+}
+
+function findEOCD(tailBuf) {
+  const dv = new DataView(tailBuf.buffer, tailBuf.byteOffset, tailBuf.byteLength);
+  const minPos = Math.max(0, tailBuf.length - 65557);
+  for (let i = tailBuf.length - 22; i >= minPos; i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) {
+      const commentLen = dv.getUint16(i + 20, true);
+      if (i + 22 + commentLen <= tailBuf.length) {
+        const cdSize   = dv.getUint32(i + 12, true);
+        const cdOffset = dv.getUint32(i + 16, true);
+        if (cdSize !== 0xffffffff && cdOffset !== 0xffffffff) {
+          return { cdSize, cdOffset };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function parseCentralDirectory(cdBuf) {
+  const dv = new DataView(cdBuf.buffer, cdBuf.byteOffset, cdBuf.byteLength);
+  const entries = [];
+  let pos = 0;
+
+  while (pos + 46 <= cdBuf.length) {
+    if (dv.getUint32(pos, true) !== 0x02014b50) break;
+
+    const compressionMethod = dv.getUint16(pos + 10, true);
+    const compressedSize    = dv.getUint32(pos + 20, true);
+    const fileNameLen       = dv.getUint16(pos + 28, true);
+    const extraFieldLen     = dv.getUint16(pos + 30, true);
+    const commentLen        = dv.getUint16(pos + 32, true);
+    const localHeaderOffset = dv.getUint32(pos + 42, true);
+
+    const name = new TextDecoder().decode(cdBuf.subarray(pos + 46, pos + 46 + fileNameLen));
+    entries.push({ name, compressionMethod, compressedSize, localHeaderOffset });
+
+    pos += 46 + fileNameLen + extraFieldLen + commentLen;
+  }
+  return entries;
+}
+
+async function extractEntryByRange(proxiedUrl, entry) {
+  const headerStart = entry.localHeaderOffset;
+  const approxEnd   = headerStart + 30 + entry.name.length + 128 + entry.compressedSize - 1;
+
+  const resp = await fetch(proxiedUrl, {
+    headers: { "Range": `bytes=${headerStart}-${approxEnd}` }
+  });
+  if (resp.status !== 206) {
+    if (resp.body) await resp.body.cancel();
+    throw new Error(`Không lấy được dữ liệu của ${entry.name}`);
+  }
+
+  const buf = new Uint8Array(await resp.arrayBuffer());
+  const dv  = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+
+  if (dv.getUint32(0, true) !== 0x04034b50) {
+    throw new Error(`Sai cấu trúc file trong ZIP cho ${entry.name}`);
+  }
+
+  const fnLen    = dv.getUint16(26, true);
+  const extraLen = dv.getUint16(28, true);
+  const dataStart = 30 + fnLen + extraLen;
+  const compressedData = buf.subarray(dataStart, dataStart + entry.compressedSize);
+
+  if (entry.compressionMethod === 0) {
+    return compressedData;
+  }
+  if (entry.compressionMethod === 8) {
+    if (typeof DecompressionStream !== "undefined") {
+      const ds = new DecompressionStream("deflate-raw");
+      const writer = ds.writable.getWriter();
+      writer.write(compressedData);
+      writer.close();
+      const outBuf = await new Response(ds.readable).arrayBuffer();
+      return new Uint8Array(outBuf);
+    }
+    throw new Error("Trình duyệt không hỗ trợ giải nén Deflate.");
+  }
+
+  throw new Error(`Không hỗ trợ kiểu nén ZIP mã ${entry.compressionMethod}`);
+}
+
+/* ── PLIST DISPATCHER ── */
 async function parsePlist(bytes) {
   const isBinary = bytes[0]===0x62 && bytes[1]===0x70 && bytes[2]===0x6c && bytes[3]===0x69;
   if (isBinary) {
@@ -442,13 +559,16 @@ async function parsePlist(bytes) {
         if (p && p[0]) return p[0];
       }
     } catch(_){}
+    try { const r = plist.parse(new TextDecoder('utf-8',{fatal:false}).decode(bytes)); if(r) return r; } catch(_){}
     throw new Error('Không thể parse binary plist.');
   } else {
     try { const r = parseXMLPlist(new TextDecoder().decode(bytes)); if(r && Object.keys(r).length>0) return r; } catch(_){}
-    try { return plist.parse(new TextDecoder().decode(bytes)); } catch(e) { throw new Error('Lỗi XML plist: '+e.message); }
+    try { return plist.parse(new TextDecoder().decode(bytes)); }
+    catch(e) { throw new Error('Không thể parse XML plist: '+e.message); }
   }
 }
 
+/* ── BINARY PLIST PARSER ── */
 function parseBinaryPlist(bytes) {
   const dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
   const len=bytes.length, to=len-32;
@@ -479,33 +599,23 @@ function parseBinaryPlist(bytes) {
 function riN(dv,off,n){let v=0;for(let i=0;i<n;i++)v=v*256+dv.getUint8(off+i);return v;}
 function ri64(dv,off){return dv.getUint32(off,false)*0x100000000+dv.getUint32(off+4,false);}
 
+/* ── XML PLIST PARSER ── */
 function parseXMLPlist(text){const doc=new DOMParser().parseFromString(text,'application/xml');const root=doc.querySelector('plist > dict');return root?parseDict(root):{};}
 function parseDict(node){const o={},c=[...node.children];for(let i=0;i<c.length;i+=2)if(c[i].tagName==='key'&&c[i+1])o[c[i].textContent]=parseNode(c[i+1]);return o;}
 function parseNode(n){switch(n.tagName){case'string':return n.textContent;case'integer':return parseInt(n.textContent,10);case'real':return parseFloat(n.textContent);case'true':return true;case'false':return false;case'dict':return parseDict(n);case'array':return[...n.children].map(parseNode);default:return n.textContent;}}
 
 /* ── UI HELPERS ── */
 function set(id,val){document.getElementById(id).textContent=val;}
-function showProgress(on){
-  document.getElementById('progressContainer').style.display=on?'block':'none';
-  document.getElementById('progressText').style.display=on?'block':'none';
-}
+function showProgress(on){document.getElementById('progressContainer').style.display=on?'block':'none';if(!on)setProgress(0);}
 function setProgress(v){document.getElementById('progressBar').style.width=v+'%';}
 function showResult(on){document.getElementById('result').style.display=on?'block':'none';}
 function showError(msg){const eb=document.getElementById('errorBox');eb.textContent=msg;eb.style.display=msg?'block':'none';}
-
-function handleError(err, prefix) {
-  setProgress(0);
-  setTimeout(() => showProgress(false), 300);
-  showError('❌ ' + prefix + (err.message || err));
-}
-
 function copyVal(id){
-  const textToCopy = document.getElementById(id).textContent;
-  navigator.clipboard.writeText(textToCopy).then(()=>{
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=>{
     const t=document.getElementById('toast');
     t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'),1800);
-  }).catch(() => { alert('Không thể sao chép. Vui lòng copy thủ công.'); });
+  });
 }
 </script>
 </body>
