@@ -380,32 +380,48 @@ async function processIPAUrl() {
   try {
     const proxiedUrl = WORKER_PROXY + encodeURIComponent(rawUrl);
 
-    // 1. Xin ~64KB cuối file để tìm EOCD (mục lục ZIP nằm ở cuối file)
-    const tailResp = await fetch(proxiedUrl, {
-      headers: { "Range": "bytes=-65560" }
+    // 1. Lấy tổng dung lượng file bằng Range: bytes=0-0 (chỉ xin đúng 1 byte đầu tiên)
+    const probeResp = await fetch(proxiedUrl, {
+      headers: { "Range": "bytes=0-0" }
     });
 
-    // Bắt buộc phải là 206 Partial Content; nếu trả 200 thì hủy luồng ngay để không tải ngầm cả file
-    if (tailResp.status !== 206) {
-      if (tailResp.body) await tailResp.body.cancel();
-      throw new Error("Server không hỗ trợ đọc từng phần (HTTP Range) hoặc link không phải file trực tiếp.");
+    if (probeResp.status !== 206) {
+      if (probeResp.body) await probeResp.body.cancel();
+      throw new Error(`Server trả về mã ${probeResp.status} (không hỗ trợ đọc từng phần HTTP Range).`);
     }
 
-    const totalSize = parseTotalSizeFromContentRange(tailResp.headers.get("Content-Range"));
-    if (!totalSize) {
+    const totalSize = parseTotalSizeFromContentRange(probeResp.headers.get("Content-Range"));
+    if (probeResp.body) await probeResp.body.cancel();
+
+    if (!totalSize || totalSize <= 22) {
+      throw new Error("Không xác định được dung lượng file từ Content-Range.");
+    }
+
+    setProgress(28);
+
+    // 2. Tính dải byte cuối file rõ ràng (tối đa ~64KB cuối) để tìm EOCD
+    const tailLen   = Math.min(totalSize, 65560);
+    const tailStart = totalSize - tailLen;
+    const tailEnd   = totalSize - 1;
+
+    const tailResp = await fetch(proxiedUrl, {
+      headers: { "Range": `bytes=${tailStart}-${tailEnd}` }
+    });
+
+    if (tailResp.status !== 206) {
       if (tailResp.body) await tailResp.body.cancel();
-      throw new Error("Không xác định được kích thước file từ Content-Range.");
+      throw new Error("Không đọc được phần cuối file theo dải byte.");
     }
 
     const tailBuf = new Uint8Array(await tailResp.arrayBuffer());
-    setProgress(40);
+    setProgress(48);
 
     const eocd = findEOCD(tailBuf);
     if (!eocd) {
       throw new Error("Không tìm thấy mục lục ZIP ở cuối file.");
     }
 
-    // 2. Xin đúng đoạn Central Directory chứa danh sách file bên trong IPA
+    // 3. Đọc đúng đoạn Central Directory
     const cdStart = eocd.cdOffset;
     const cdEnd   = Math.min(totalSize - 1, cdStart + eocd.cdSize - 1);
     const cdResp  = await fetch(proxiedUrl, {
@@ -417,7 +433,7 @@ async function processIPAUrl() {
     }
 
     const cdBuf = new Uint8Array(await cdResp.arrayBuffer());
-    setProgress(65);
+    setProgress(70);
 
     const entries = parseCentralDirectory(cdBuf);
     const infoEntry = entries.find(e => /^Payload\/[^/]+\.app\/Info\.plist$/i.test(e.name));
@@ -426,10 +442,10 @@ async function processIPAUrl() {
     }
     const metaEntry = entries.find(e => e.name === "iTunesMetadata.plist");
 
-    // 3. Chỉ tải và giải nén đúng file Info.plist (và iTunesMetadata.plist nếu có)
+    // 4. Chỉ tải và giải nén đúng file Info.plist (và iTunesMetadata.plist nếu có)
     const infoBytes = await extractEntryByRange(proxiedUrl, infoEntry);
     const info = await parsePlist(infoBytes);
-    setProgress(88);
+    setProgress(90);
 
     let meta = null;
     if (metaEntry) {
