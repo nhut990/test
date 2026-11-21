@@ -53,7 +53,7 @@
   .drop-zone-text { font-size: 0.95rem; color: #64748b; }
   .drop-zone-text b { color: #007aff; }
 
-  /* Vùng nhập Link URL mới */
+  /* Vùng nhập Link URL */
   .divider { text-align: center; margin: 20px 0; color: #94a3b8; font-size: 0.85rem; position: relative; text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
   .divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 42%; height: 1px; background: #e2e8f0; }
   .divider::before { left: 0; }
@@ -314,7 +314,7 @@ async function processIPAFromURL() {
   const fake = startFakeProgress();
 
   try {
-    // Sử dụng link Cloudflare Worker của bạn
+    // Đã gắn sẵn link Worker hoạt động của bạn
     const proxyUrl = `https://ipa.vannhut9090.workers.dev/?url=${encodeURIComponent(ipaUrl)}`;
     const response = await fetch(proxyUrl);
 
