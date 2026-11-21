@@ -75,25 +75,26 @@
     .status.err {
       color: #cf222e;
     }
-    .install-wrap {
+    .action-wrap {
       margin-top: 18px;
-      display: none;
     }
-    .install-wrap.show {
-      display: block;
-    }
-    .btn-install {
+    .btn-action {
       display: block;
       width: 100%;
       box-sizing: border-box;
       text-align: center;
       padding: 12px 16px;
       border-radius: 10px;
-      background: #1a7f37;
+      border: none;
+      background: #0969da;
       color: #fff;
       font-size: 15px;
       font-weight: 700;
       text-decoration: none;
+      cursor: pointer;
+    }
+    .btn-action.ready {
+      background: #1a7f37;
     }
   </style>
 </head>
@@ -120,8 +121,8 @@
     <label>iOS hỗ trợ tối thiểu</label>
     <input id="minOs" type="text" placeholder="Ví dụ: 12.4" />
 
-    <div class="install-wrap" id="installWrap">
-      <a class="btn-install" id="installLink" href="#">Cài Đặt</a>
+    <div class="action-wrap">
+      <button class="btn-action" id="btnCreateInstall" type="button">Tạo Liên Kết Cài Đặt</button>
     </div>
   </div>
 
@@ -134,7 +135,7 @@
     const WORKER_PROXY = "https://ipa.vannhut9090.workers.dev/?url=";
     const DEFAULT_IMAGE_URL = "https://raw.githubusercontent.com/nhut990/files/refs/heads/main/hinh/logo_minhnhut.PNG";
 
-    let isReadyToInstall = false;
+    let builtInstallUrl = "";
 
     function setStatus(msg, type = "") {
       const el = document.getElementById("statusText");
@@ -149,6 +150,13 @@
       } catch {
         return "";
       }
+    }
+
+    function resetInstallState() {
+      builtInstallUrl = "";
+      const btn = document.getElementById("btnCreateInstall");
+      btn.textContent = "Tạo Liên Kết Cài Đặt";
+      btn.classList.remove("ready");
     }
 
     function parseTotalSizeFromContentRange(rangeHeader) {
@@ -393,41 +401,9 @@
       return await parsePlist(infoBytes);
     }
 
-    function syncInstallButton() {
-      const ipa = document.getElementById("ipaUrl").value.trim();
-      const bundleId = document.getElementById("bundleId").value.trim();
-      const version = document.getElementById("version").value.trim();
-      const title = document.getElementById("title").value.trim();
-
-      const wrap = document.getElementById("installWrap");
-      const linkEl = document.getElementById("installLink");
-
-      if (!isReadyToInstall || !ipa || !bundleId) {
-        wrap.classList.remove("show");
-        linkEl.href = "#";
-        return;
-      }
-
-      const params = new URLSearchParams();
-      params.set("ipa", ipa);
-      params.set("image", DEFAULT_IMAGE_URL);
-      params.set("bundle_id", bundleId);
-      if (version) params.set("version", version);
-      if (title) params.set("title", title);
-
-      const plistUrl = `${WORKER_PLIST}?${params.toString()}`;
-      const itmsUrl = `itms-services://?action=download-manifest&url=${encodeURIComponent(plistUrl)}`;
-
-      const labelApp = [title || guessTitleFromUrl(ipa) || "Ứng dụng", version].filter(Boolean).join(" ");
-      linkEl.textContent = `Cài Đặt ${labelApp}`;
-      linkEl.href = itmsUrl;
-      wrap.classList.add("show");
-    }
-
     document.getElementById("btnFetchInfo").addEventListener("click", async () => {
       const ipa = document.getElementById("ipaUrl").value.trim();
-      isReadyToInstall = false;
-      syncInstallButton();
+      resetInstallState();
 
       if (!ipa || !ipa.startsWith("https://")) {
         setStatus("Vui lòng nhập link .ipa hợp lệ bắt đầu bằng https://", "err");
@@ -436,7 +412,7 @@
 
       const btn = document.getElementById("btnFetchInfo");
       btn.disabled = true;
-      setStatus("Đang lấy thông tin và chuẩn bị dữ liệu cài đặt...");
+      setStatus("Đang lấy thông tin từ file .ipa...");
 
       try {
         const info = await fetchInfoFromProxyRange(ipa);
@@ -450,28 +426,56 @@
         document.getElementById("version").value = version;
         document.getElementById("minOs").value = minOs;
 
-        if (!bundleId) {
-          setStatus("Đã lấy thông tin nhưng thiếu Bundle ID để cài đặt.", "err");
-          return;
-        }
-
-        isReadyToInstall = true;
-        syncInstallButton();
-        setStatus("Đã lấy thông tin và sẵn sàng cài đặt.", "ok");
+        setStatus("Đã điền thông tin tự động. Bạn có thể kiểm tra và bấm Tạo Liên Kết Cài Đặt.", "ok");
       } catch (err) {
-        setStatus(`Lấy thông tin thất bại: ${err.message || err}`, "err");
+        setStatus(`Không lấy được thông tin tự động (${err.message || err}). Bạn vẫn có thể nhập thủ công rồi bấm Tạo Liên Kết Cài Đặt.`, "err");
       } finally {
         btn.disabled = false;
       }
     });
 
+    document.getElementById("btnCreateInstall").addEventListener("click", () => {
+      const btn = document.getElementById("btnCreateInstall");
+
+      if (builtInstallUrl) {
+        window.location.href = builtInstallUrl;
+        return;
+      }
+
+      const ipa = document.getElementById("ipaUrl").value.trim();
+      const title = document.getElementById("title").value.trim();
+      const bundleId = document.getElementById("bundleId").value.trim();
+      const version = document.getElementById("version").value.trim();
+
+      if (!ipa || !ipa.startsWith("https://")) {
+        setStatus("Vui lòng nhập link .ipa hợp lệ bắt đầu bằng https://", "err");
+        return;
+      }
+      if (!bundleId) {
+        setStatus("Vui lòng nhập Bundle ID trước khi tạo liên kết cài đặt.", "err");
+        return;
+      }
+
+      const params = new URLSearchParams();
+      params.set("ipa", ipa);
+      params.set("image", DEFAULT_IMAGE_URL);
+      params.set("bundle_id", bundleId);
+      if (version) params.set("version", version);
+      if (title) params.set("title", title);
+
+      const plistUrl = `${WORKER_PLIST}?${params.toString()}`;
+      builtInstallUrl = `itms-services://?action=download-manifest&url=${encodeURIComponent(plistUrl)}`;
+
+      const labelParts = ["Cài Đặt"];
+      if (title) labelParts.push(title);
+      if (version) labelParts.push(version);
+      btn.textContent = labelParts.join(" ");
+      btn.classList.add("ready");
+      setStatus("Đã tạo liên kết cài đặt. Nhấn nút bên dưới để cài đặt.", "ok");
+    });
+
     ["ipaUrl", "title", "bundleId", "version", "minOs"].forEach((id) => {
-      document.getElementById(id).addEventListener("input", () => {
-        if (id === "ipaUrl") {
-          isReadyToInstall = false;
-        }
-        syncInstallButton();
-      });
+      document.getElementById(id).addEventListener("input", resetInstallState);
     });
   </script>
 </body>
