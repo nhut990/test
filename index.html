@@ -57,18 +57,45 @@
     gap: 10px;
     margin-top: 14px;
   }
-  .url-input {
+  .url-input-wrap {
+    position: relative;
     flex: 1;
-    padding: 11px 14px;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+  .url-input {
+    width: 100%;
+    padding: 11px 36px 11px 14px;
     border: 1.5px solid #cbd5e1;
     border-radius: 10px;
     font-size: 0.92rem;
     font-family: 'Inter', sans-serif;
     outline: none;
     transition: border-color 0.2s;
-    min-width: 0;
+    box-sizing: border-box;
   }
   .url-input:focus { border-color: #007aff; }
+  .clear-url-btn {
+    position: absolute;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 99px;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background 0.15s, color 0.15s;
+  }
+  .clear-url-btn:hover { background: #cbd5e1; color: #111827; }
+  .clear-url-btn.show { display: inline-flex; }
   .url-btn {
     background: #007aff;
     color: white;
@@ -167,10 +194,13 @@
   </div>
 
   <div class="url-box">
-    <input type="url" class="url-input" id="ipaUrl" placeholder="Dán link trực tiếp tới file .ipa (chỉ đọc mục lục & plist, không tải nguyên file)...">
+    <div class="url-input-wrap">
+      <input type="url" class="url-input" id="ipaUrl" placeholder="Dán link trực tiếp tới file .ipa (chỉ đọc mục lục & plist, không tải nguyên file)...">
+      <button type="button" class="clear-url-btn" id="btnClearUrl" title="Xóa link" onclick="clearUrlInput()">×</button>
+    </div>
     <button class="url-btn" id="btnFetchUrl" onclick="processIPAUrl()">Đọc link</button>
   </div>
-  <div class="url-hint">Chỉ hỗ trợ link file .ipa tải trực tiếp có bật HTTP Range (không tải hết file về máy).</div>
+  <div class="url-hint">Chỉ hỗ trợ link file .IPA  Direct link (download trực tiếp)</div>
 
   <div class="progress-container" id="progressContainer">
     <div class="progress-bar" id="progressBar"></div>
@@ -270,10 +300,21 @@
 <script>
 const WORKER_PROXY = "https://ipa.vannhut9090.workers.dev/?url=";
 
-const dropZone  = document.getElementById('drop-zone');
-const fileInput = document.getElementById('ipaFile');
-const urlInput  = document.getElementById('ipaUrl');
-const btnUrl    = document.getElementById('btnFetchUrl');
+const dropZone     = document.getElementById('drop-zone');
+const fileInput    = document.getElementById('ipaFile');
+const urlInput     = document.getElementById('ipaUrl');
+const btnUrl       = document.getElementById('btnFetchUrl');
+const btnClearUrl  = document.getElementById('btnClearUrl');
+
+function toggleClearUrlBtn() {
+  btnClearUrl.classList.toggle('show', urlInput.value.length > 0);
+}
+
+function clearUrlInput() {
+  urlInput.value = '';
+  toggleClearUrlBtn();
+  urlInput.focus();
+}
 
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragging'); });
 dropZone.addEventListener('dragleave', e => { if (!dropZone.contains(e.relatedTarget)) dropZone.classList.remove('dragging'); });
@@ -283,6 +324,7 @@ dropZone.addEventListener('drop', e => {
   if (f) processIPA(f);
 });
 fileInput.addEventListener('change', () => { if (fileInput.files[0]) processIPA(fileInput.files[0]); });
+urlInput.addEventListener('input', toggleClearUrlBtn);
 urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') processIPAUrl(); });
 
 function renderResult(fileName, info, meta) {
