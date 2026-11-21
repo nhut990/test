@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tạo link cài IPA (itms-services)</title>
+  <title>Cài đặt IPA</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -75,47 +75,31 @@
     .status.err {
       color: #cf222e;
     }
-    .row {
-      display: flex;
-      gap: 10px;
-      margin-top: 16px;
-      flex-wrap: wrap;
+    .install-wrap {
+      margin-top: 18px;
+      display: none;
     }
-    button, a.btn {
-      padding: 10px 16px;
-      border-radius: 8px;
-      border: none;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .btn-primary {
-      background: #0969da;
-      color: #fff;
+    .install-wrap.show {
+      display: block;
     }
     .btn-install {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+      padding: 12px 16px;
+      border-radius: 10px;
       background: #1a7f37;
       color: #fff;
-    }
-    .btn-copy {
-      background: #eef2f7;
-      color: #1f2328;
-    }
-    .out {
-      margin-top: 16px;
-      padding: 12px;
-      background: #f6f8fa;
-      border-radius: 8px;
-      word-break: break-all;
-      font-size: 13px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>Tạo link cài IPA qua Cloudflare Worker</h1>
+    <h1>Cài đặt ứng dụng IPA</h1>
 
     <label>Link file .ipa (bắt buộc https://)</label>
     <div class="input-group">
@@ -124,30 +108,20 @@
     </div>
     <div class="status" id="statusText"></div>
 
-    <label>Tên hiển thị (Title)</label>
-    <input id="title" type="text" placeholder="Tự lấy theo tên file hoặc Info.plist" />
+    <label>Tên hiển thị</label>
+    <input id="title" type="text" placeholder="Tên ứng dụng" />
 
     <label>Bundle ID</label>
     <input id="bundleId" type="text" placeholder="Ví dụ: com.burbn.instagram" />
 
-    <label>Phiên bản (Version)</label>
+    <label>Phiên bản</label>
     <input id="version" type="text" placeholder="Ví dụ: 240.0" />
 
-    <label>iOS hỗ trợ tối thiểu (Minimum OS Version)</label>
-    <input id="minOs" type="text" placeholder="Ví dụ: 13.0" />
+    <label>iOS hỗ trợ tối thiểu</label>
+    <input id="minOs" type="text" placeholder="Ví dụ: 12.4" />
 
-    <label>Link icon hiển thị (Image)</label>
-    <input id="imageUrl" type="url" value="https://raw.githubusercontent.com/nhut990/files/refs/heads/main/hinh/logo_minhnhut.PNG" />
-
-    <div class="row">
-      <button class="btn-primary" id="btnGenerate" type="button">Tạo link cài đặt</button>
-      <a class="btn btn-install" id="installLink" href="#">Cài đặt ngay (iOS)</a>
-      <button class="btn-copy" id="btnCopy" type="button">Copy link cài</button>
-    </div>
-
-    <div class="out" id="outputBox">
-      <div><strong>Link .plist:</strong> <span id="plistOut">Chưa tạo</span></div>
-      <div style="margin-top:8px;"><strong>Link itms-services:</strong> <span id="installOut">Chưa tạo</span></div>
+    <div class="install-wrap" id="installWrap">
+      <a class="btn-install" id="installLink" href="#">Cài Đặt</a>
     </div>
   </div>
 
@@ -158,6 +132,9 @@
   <script>
     const WORKER_PLIST = "https://cai-ipa.vannhut9090.workers.dev/";
     const WORKER_PROXY = "https://ipa.vannhut9090.workers.dev/?url=";
+    const DEFAULT_IMAGE_URL = "https://raw.githubusercontent.com/nhut990/files/refs/heads/main/hinh/logo_minhnhut.PNG";
+
+    let isReadyToInstall = false;
 
     function setStatus(msg, type = "") {
       const el = document.getElementById("statusText");
@@ -416,31 +393,42 @@
       return await parsePlist(infoBytes);
     }
 
-    function buildLinks() {
+    function syncInstallButton() {
       const ipa = document.getElementById("ipaUrl").value.trim();
-      const image = document.getElementById("imageUrl").value.trim();
       const bundleId = document.getElementById("bundleId").value.trim();
       const version = document.getElementById("version").value.trim();
       const title = document.getElementById("title").value.trim();
 
+      const wrap = document.getElementById("installWrap");
+      const linkEl = document.getElementById("installLink");
+
+      if (!isReadyToInstall || !ipa || !bundleId) {
+        wrap.classList.remove("show");
+        linkEl.href = "#";
+        return;
+      }
+
       const params = new URLSearchParams();
-      if (ipa) params.set("ipa", ipa);
-      if (image) params.set("image", image);
-      if (bundleId) params.set("bundle_id", bundleId);
+      params.set("ipa", ipa);
+      params.set("image", DEFAULT_IMAGE_URL);
+      params.set("bundle_id", bundleId);
       if (version) params.set("version", version);
       if (title) params.set("title", title);
 
       const plistUrl = `${WORKER_PLIST}?${params.toString()}`;
       const itmsUrl = `itms-services://?action=download-manifest&url=${encodeURIComponent(plistUrl)}`;
 
-      document.getElementById("plistOut").textContent = plistUrl;
-      document.getElementById("installOut").textContent = itmsUrl;
-      document.getElementById("installLink").href = itmsUrl;
-      return itmsUrl;
+      const labelApp = [title || guessTitleFromUrl(ipa) || "Ứng dụng", version].filter(Boolean).join(" ");
+      linkEl.textContent = `Cài Đặt ${labelApp}`;
+      linkEl.href = itmsUrl;
+      wrap.classList.add("show");
     }
 
     document.getElementById("btnFetchInfo").addEventListener("click", async () => {
       const ipa = document.getElementById("ipaUrl").value.trim();
+      isReadyToInstall = false;
+      syncInstallButton();
+
       if (!ipa || !ipa.startsWith("https://")) {
         setStatus("Vui lòng nhập link .ipa hợp lệ bắt đầu bằng https://", "err");
         return;
@@ -448,60 +436,43 @@
 
       const btn = document.getElementById("btnFetchInfo");
       btn.disabled = true;
-      setStatus("Đang đọc mục lục & Info.plist qua proxy...");
+      setStatus("Đang lấy thông tin và chuẩn bị dữ liệu cài đặt...");
 
       try {
         const info = await fetchInfoFromProxyRange(ipa);
-        const bundleId = info.CFBundleIdentifier || "";
-        const version = info.CFBundleShortVersionString || info.CFBundleVersion || "";
-        const minOs = info.MinimumOSVersion || info.LSMinimumSystemVersion || "";
-        const title =
-          info.CFBundleDisplayName ||
-          info.CFBundleName ||
-          guessTitleFromUrl(ipa) ||
-          "";
+        const bundleId = (info.CFBundleIdentifier || "").trim();
+        const version = String(info.CFBundleShortVersionString || info.CFBundleVersion || "").trim();
+        const minOs = String(info.MinimumOSVersion || info.LSMinimumSystemVersion || "").trim();
+        const appTitle = (info.CFBundleDisplayName || info.CFBundleName || guessTitleFromUrl(ipa) || "").trim();
 
-        if (title) document.getElementById("title").value = title;
-        if (bundleId) document.getElementById("bundleId").value = bundleId;
-        if (version) document.getElementById("version").value = version;
-        if (minOs !== undefined && minOs !== null && String(minOs) !== "") {
-          document.getElementById("minOs").value = String(minOs);
+        document.getElementById("title").value = appTitle;
+        document.getElementById("bundleId").value = bundleId;
+        document.getElementById("version").value = version;
+        document.getElementById("minOs").value = minOs;
+
+        if (!bundleId) {
+          setStatus("Đã lấy thông tin nhưng thiếu Bundle ID để cài đặt.", "err");
+          return;
         }
 
-        buildLinks();
-        setStatus(
-          `Đã lấy thông tin: Tên (${title || "trống"}), Bundle ID (${bundleId || "trống"}), Phiên bản (${version || "trống"}), iOS tối thiểu (${minOs || "trống"})`,
-          "ok"
-        );
+        isReadyToInstall = true;
+        syncInstallButton();
+        setStatus("Đã lấy thông tin và sẵn sàng cài đặt.", "ok");
       } catch (err) {
-        const fallbackTitle = guessTitleFromUrl(ipa);
-        if (fallbackTitle && !document.getElementById("title").value.trim()) {
-          document.getElementById("title").value = fallbackTitle;
-        }
-        buildLinks();
-        setStatus(`Lỗi khi đọc thông tin: ${err.message || err}`, "err");
+        setStatus(`Lấy thông tin thất bại: ${err.message || err}`, "err");
       } finally {
         btn.disabled = false;
       }
     });
 
-    ["ipaUrl", "title", "bundleId", "version", "minOs", "imageUrl"].forEach((id) => {
-      document.getElementById(id).addEventListener("input", buildLinks);
+    ["ipaUrl", "title", "bundleId", "version", "minOs"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", () => {
+        if (id === "ipaUrl") {
+          isReadyToInstall = false;
+        }
+        syncInstallButton();
+      });
     });
-
-    document.getElementById("btnGenerate").addEventListener("click", buildLinks);
-
-    document.getElementById("btnCopy").addEventListener("click", async () => {
-      const link = buildLinks();
-      try {
-        await navigator.clipboard.writeText(link);
-        setStatus("Đã copy link cài đặt!", "ok");
-      } catch {
-        prompt("Copy link dưới đây:", link);
-      }
-    });
-
-    buildLinks();
   </script>
 </body>
 </html>
