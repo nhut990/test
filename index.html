@@ -44,9 +44,44 @@
       margin-top: 6px;
       align-items: stretch;
     }
-    .input-group input {
-      margin-top: 0;
+    .input-wrap {
+      position: relative;
       flex: 1;
+      display: flex;
+      align-items: center;
+    }
+    .input-wrap input {
+      margin-top: 0;
+      padding-right: 34px;
+    }
+    .btn-clear {
+      position: absolute;
+      right: 8px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: none;
+      background: #e5e7eb;
+      color: #374151;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .btn-clear.visible {
+      display: inline-flex;
+    }
+    .btn-clear:hover {
+      background: #d1d5db;
+    }
+    .field-note {
+      margin-top: 6px;
+      font-size: 12.5px;
+      color: #57606a;
+      line-height: 1.4;
     }
     .btn-fetch {
       padding: 0 14px;
@@ -104,9 +139,18 @@
 
     <label>Link files .ipa (Direct link)</label>
     <div class="input-group">
-      <input id="ipaUrl" type="url" placeholder="https://github.com/.../App.ipa" />
+      <div class="input-wrap">
+        <input
+          id="ipaUrl"
+          type="url"
+          placeholder="https://github.com/.../App.ipa"
+          value="https://github.com/nhut990/files/releases/download/V1.0_Facebook/Facebook.555.0.0.ipa"
+        />
+        <button class="btn-clear" id="btnClearIpa" type="button" title="Xoá link" aria-label="Xoá link">&times;</button>
+      </div>
       <button class="btn-fetch" id="btnFetchInfo" type="button">Lấy thông tin</button>
     </div>
+    <div class="field-note">Chỉ hỗ trợ link tải trực tiếp (.ipa) và file IPA phải có chứng chỉ hợp lệ mới cài đặt được.</div>
     <div class="status" id="statusText"></div>
 
     <label>Tên hiển thị</label>
@@ -138,6 +182,20 @@
 
     let builtInstallUrl = "";
 
+    const ipaInput = document.getElementById("ipaUrl");
+    const btnClearIpa = document.getElementById("btnClearIpa");
+
+    function updateClearButtonVisibility() {
+      btnClearIpa.classList.toggle("visible", ipaInput.value.length > 0);
+    }
+
+    function clearFetchedFields() {
+      document.getElementById("title").value = "";
+      document.getElementById("bundleId").value = "";
+      document.getElementById("version").value = "";
+      document.getElementById("minOs").value = "";
+    }
+
     function setStatus(msg, type = "") {
       const el = document.getElementById("statusText");
       el.textContent = msg;
@@ -159,6 +217,24 @@
       btn.textContent = "Tạo Liên Kết Cài Đặt";
       btn.classList.remove("ready");
     }
+
+    btnClearIpa.addEventListener("click", () => {
+      ipaInput.value = "";
+      updateClearButtonVisibility();
+      clearFetchedFields();
+      resetInstallState();
+      setStatus("");
+      ipaInput.focus();
+    });
+
+    ipaInput.addEventListener("input", () => {
+      updateClearButtonVisibility();
+      clearFetchedFields();
+      resetInstallState();
+      setStatus("");
+    });
+
+    updateClearButtonVisibility();
 
     function parseTotalSizeFromContentRange(rangeHeader) {
       if (!rangeHeader) return null;
@@ -403,7 +479,7 @@
     }
 
     document.getElementById("btnFetchInfo").addEventListener("click", async () => {
-      const ipa = document.getElementById("ipaUrl").value.trim();
+      const ipa = ipaInput.value.trim();
       resetInstallState();
 
       if (!ipa || !ipa.startsWith("https://")) {
@@ -443,7 +519,7 @@
         return;
       }
 
-      const ipa = document.getElementById("ipaUrl").value.trim();
+      const ipa = ipaInput.value.trim();
       const title = document.getElementById("title").value.trim();
       const bundleId = document.getElementById("bundleId").value.trim();
       const version = document.getElementById("version").value.trim();
@@ -475,7 +551,7 @@
       setStatus("Đã tạo liên kết cài đặt. Nhấn nút bên dưới để cài đặt.", "ok");
     });
 
-    ["ipaUrl", "title", "bundleId", "version", "minOs"].forEach((id) => {
+    ["title", "bundleId", "version", "minOs"].forEach((id) => {
       document.getElementById(id).addEventListener("input", resetInstallState);
     });
   </script>
