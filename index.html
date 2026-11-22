@@ -131,8 +131,9 @@
   <script src="https://cdn.jsdelivr.net/npm/bplist-parser@0.3.2/dist/bplist-parser.min.js"></script>
 
   <script>
-    const WORKER_PLIST = "https://cai-ipa.nhut990.workers.dev/";
-    const WORKER_PROXY = "https://ios.nhut990.workers.dev/?url=";
+    const WORKER_BASE = "https://i.nhut990.workers.dev/";
+    const WORKER_PLIST = WORKER_BASE;
+    const WORKER_PROXY = `${WORKER_BASE}?url=`;
     const DEFAULT_IMAGE_URL = "https://raw.githubusercontent.com/nhut990/files/refs/heads/main/hinh/logo_minhnhut.PNG";
 
     let builtInstallUrl = "";
