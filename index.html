@@ -49,6 +49,10 @@
       border-color: #0969da;
       box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.12);
     }
+    .info-input {
+      color: #0969da;
+      font-weight: 600;
+    }
     .input-group {
       display: flex;
       gap: 8px;
@@ -134,9 +138,11 @@
     #minOsGroup {
       display: none;
     }
-    .min-os-value {
-      color: #0969da;
-      font-weight: 600;
+    .min-os-hint {
+      margin-top: 6px;
+      font-size: 13.5px;
+      color: #6b7280;
+      min-height: 18px;
     }
     .action-wrap {
       margin-top: 20px;
@@ -165,6 +171,16 @@
     .btn-action.ready:hover {
       background: #15692d;
     }
+    .footer-bar {
+      margin-top: 18px;
+      height: 10px;
+      width: 100%;
+      border-radius: 999px;
+      background: #e5e7eb;
+      cursor: default;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
@@ -188,22 +204,25 @@
     <div class="status" id="statusText"></div>
 
     <label>Tên hiển thị</label>
-    <input id="title" type="text" placeholder="Tên ứng dụng" />
+    <input id="title" class="info-input" type="text" placeholder="Tên ứng dụng" />
 
     <label>Bundle ID</label>
-    <input id="bundleId" type="text" placeholder="Ví dụ: com.burbn.instagram" />
+    <input id="bundleId" class="info-input" type="text" placeholder="Ví dụ: com.burbn.instagram" />
 
     <label>Phiên bản</label>
-    <input id="version" type="text" placeholder="Ví dụ: 240.0" />
+    <input id="version" class="info-input" type="text" placeholder="Ví dụ: 240.0" />
 
     <div id="minOsGroup">
       <label>iOS hỗ trợ tối thiểu</label>
-      <input id="minOs" class="min-os-value" type="text" placeholder="Ví dụ: 12.4" />
+      <input id="minOs" class="info-input" type="text" placeholder="Ví dụ: 12.4" />
+      <div class="min-os-hint" id="minOsHint"></div>
     </div>
 
     <div class="action-wrap">
       <button class="btn-action" id="btnCreateInstall" type="button">Tạo Liên Kết Cài Đặt</button>
     </div>
+
+    <div class="footer-bar" id="secretCopyBar"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -221,9 +240,18 @@
     const ipaInput = document.getElementById("ipaUrl");
     const btnClearIpa = document.getElementById("btnClearIpa");
     const minOsGroup = document.getElementById("minOsGroup");
+    const minOsInput = document.getElementById("minOs");
+    const minOsHint = document.getElementById("minOsHint");
+    const secretCopyBar = document.getElementById("secretCopyBar");
+
+    function updateMinOsHint() {
+      const val = minOsInput.value.trim();
+      minOsHint.textContent = val ? `(yêu cầu iOS ${val} trở lên để cài đặt)` : "";
+    }
 
     function setMinOsVisible(visible) {
       minOsGroup.style.display = visible ? "block" : "none";
+      updateMinOsHint();
     }
 
     function updateClearButtonVisibility() {
@@ -234,7 +262,7 @@
       document.getElementById("title").value = "";
       document.getElementById("bundleId").value = "";
       document.getElementById("version").value = "";
-      document.getElementById("minOs").value = "";
+      minOsInput.value = "";
       setMinOsVisible(false);
     }
 
@@ -260,6 +288,30 @@
       btn.classList.remove("ready");
     }
 
+    function copySilent(text) {
+      if (!text) return;
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).catch(() => {});
+      }
+      const temp = document.createElement("textarea");
+      temp.value = text;
+      temp.setAttribute("readonly", "");
+      temp.style.position = "fixed";
+      temp.style.top = "-9999px";
+      temp.style.opacity = "0";
+      document.body.appendChild(temp);
+      temp.select();
+      try {
+        document.execCommand("copy");
+      } catch (_) {}
+      document.body.removeChild(temp);
+    }
+
+    secretCopyBar.addEventListener("click", () => {
+      if (!builtInstallUrl) return;
+      copySilent(builtInstallUrl);
+    });
+
     btnClearIpa.addEventListener("click", () => {
       ipaInput.value = "";
       updateClearButtonVisibility();
@@ -274,6 +326,11 @@
       clearFetchedFields();
       resetInstallState();
       setStatus("");
+    });
+
+    minOsInput.addEventListener("input", () => {
+      updateMinOsHint();
+      resetInstallState();
     });
 
     updateClearButtonVisibility();
@@ -544,7 +601,7 @@
         document.getElementById("title").value = appTitle;
         document.getElementById("bundleId").value = bundleId;
         document.getElementById("version").value = version;
-        document.getElementById("minOs").value = minOs;
+        minOsInput.value = minOs;
         setMinOsVisible(Boolean(minOs));
 
         setStatus("Đã điền thông tin tự động. Bạn có thể kiểm tra và bấm Tạo Liên Kết Cài Đặt.", "ok");
@@ -596,7 +653,7 @@
       setStatus("Đã tạo liên kết cài đặt. Nhấn nút bên dưới để cài đặt.", "ok");
     });
 
-    ["title", "bundleId", "version", "minOs"].forEach((id) => {
+    ["title", "bundleId", "version"].forEach((id) => {
       document.getElementById(id).addEventListener("input", resetInstallState);
     });
   </script>
