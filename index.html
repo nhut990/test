@@ -234,7 +234,7 @@
     </div>
   </div>
 
-  <div class="copy-bar" id="copyBar" role="button" tabindex="0" aria-label="Copy liên kết cài đặt"></div>
+  <div class="copy-bar" id="copyBar" role="button" tabindex="0" aria-label="Copy link plist"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/plist@3.0.6/dist/plist.min.js"></script>
@@ -247,6 +247,7 @@
     const DEFAULT_IMAGE_URL = "https://raw.githubusercontent.com/nhut990/files/refs/heads/main/hinh/logo_minhnhut.PNG";
 
     let builtInstallUrl = "";
+    let builtPlistUrl = "";
 
     const ipaInput = document.getElementById("ipaUrl");
     const btnClearIpa = document.getElementById("btnClearIpa");
@@ -296,8 +297,8 @@
     }
 
     copyBar.addEventListener("click", async () => {
-      if (!builtInstallUrl) return;
-      const ok = await copyToClipboard(builtInstallUrl);
+      if (!builtPlistUrl) return;
+      const ok = await copyToClipboard(builtPlistUrl);
       if (ok) {
         copyBar.classList.add("copied");
         if (copyBarResetTimer) clearTimeout(copyBarResetTimer);
@@ -346,6 +347,7 @@
 
     function resetInstallState() {
       builtInstallUrl = "";
+      builtPlistUrl = "";
       const btn = document.getElementById("btnCreateInstall");
       btn.textContent = "Tạo Liên Kết Cài Đặt";
       btn.classList.remove("ready");
@@ -683,6 +685,7 @@
       if (title) params.set("title", title);
 
       const plistUrl = `${WORKER_PLIST}?${params.toString()}`;
+      builtPlistUrl = plistUrl;
       builtInstallUrl = `itms-services://?action=download-manifest&url=${encodeURIComponent(plistUrl)}`;
 
       const labelParts = ["Cài Đặt"];
