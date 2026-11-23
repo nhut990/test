@@ -7,6 +7,8 @@
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
       max-width: 640px;
       margin: 24px auto;
       padding: 0 16px;
@@ -16,27 +18,36 @@
     .card {
       background: #fff;
       border-radius: 12px;
-      padding: 20px;
+      padding: 22px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
     }
     h1 {
-      font-size: 20px;
-      margin: 0 0 16px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #0969da;
+      margin: 0 0 18px;
     }
     label {
       display: block;
       font-weight: 600;
-      margin-top: 12px;
-      font-size: 14px;
+      margin-top: 14px;
+      font-size: 15px;
+      color: #1f2328;
     }
     input {
       width: 100%;
       box-sizing: border-box;
-      padding: 10px 12px;
+      padding: 11px 13px;
       margin-top: 6px;
       border: 1px solid #d0d7de;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 15px;
+      color: #1f2328;
+    }
+    input:focus {
+      outline: none;
+      border-color: #0969da;
+      box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.12);
     }
     .input-group {
       display: flex;
@@ -52,18 +63,18 @@
     }
     .input-wrap input {
       margin-top: 0;
-      padding-right: 34px;
+      padding-right: 36px;
     }
     .btn-clear {
       position: absolute;
       right: 8px;
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       border: none;
       background: #e5e7eb;
       color: #374151;
-      font-size: 14px;
+      font-size: 16px;
       line-height: 1;
       cursor: pointer;
       display: none;
@@ -78,21 +89,28 @@
       background: #d1d5db;
     }
     .field-note {
-      margin-top: 6px;
-      font-size: 12.5px;
-      color: #57606a;
-      line-height: 1.4;
+      margin-top: 7px;
+      font-size: 14px;
+      color: #4b5563;
+      line-height: 1.45;
+    }
+    .field-note strong {
+      color: #111827;
+      font-weight: 700;
     }
     .btn-fetch {
-      padding: 0 14px;
+      padding: 0 16px;
       border-radius: 8px;
       border: 1px solid #0969da;
       background: #eff6ff;
       color: #0969da;
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 14px;
+      font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
+    }
+    .btn-fetch:hover:not(:disabled) {
+      background: #dbeafe;
     }
     .btn-fetch:disabled {
       opacity: 0.6;
@@ -100,36 +118,52 @@
     }
     .status {
       margin-top: 8px;
-      font-size: 13px;
+      font-size: 14px;
+      font-weight: 500;
       color: #57606a;
-      min-height: 18px;
+      min-height: 20px;
     }
     .status.ok {
       color: #1a7f37;
+      font-weight: 600;
     }
     .status.err {
       color: #cf222e;
+      font-weight: 600;
+    }
+    #minOsGroup {
+      display: none;
+    }
+    .min-os-value {
+      color: #0969da;
+      font-weight: 600;
     }
     .action-wrap {
-      margin-top: 18px;
+      margin-top: 20px;
     }
     .btn-action {
       display: block;
       width: 100%;
       box-sizing: border-box;
       text-align: center;
-      padding: 12px 16px;
+      padding: 13px 16px;
       border-radius: 10px;
       border: none;
       background: #0969da;
       color: #fff;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 700;
       text-decoration: none;
       cursor: pointer;
     }
+    .btn-action:hover {
+      background: #0757b5;
+    }
     .btn-action.ready {
       background: #1a7f37;
+    }
+    .btn-action.ready:hover {
+      background: #15692d;
     }
   </style>
 </head>
@@ -144,13 +178,13 @@
           id="ipaUrl"
           type="url"
           placeholder="https://github.com/.../App.ipa"
-          value="https://github.com/nhut990/files/releases/download/V1.0_Facebook/Facebook.555.0.0.ipa"
+          value="https://github.com/nhut990/files/releases/download/V1.0_Facebook/Facebook.551.1.0.ipa"
         />
         <button class="btn-clear" id="btnClearIpa" type="button" title="Xoá link" aria-label="Xoá link">&times;</button>
       </div>
       <button class="btn-fetch" id="btnFetchInfo" type="button">Lấy thông tin</button>
     </div>
-    <div class="field-note">Chỉ hỗ trợ link tải trực tiếp (.ipa) và file IPA phải có chứng chỉ hợp lệ mới cài đặt được.</div>
+    <div class="field-note">Chỉ hỗ trợ <strong>link tải trực tiếp (.ipa)</strong> và file IPA phải có <strong>chứng chỉ hợp lệ</strong> mới cài đặt được.</div>
     <div class="status" id="statusText"></div>
 
     <label>Tên hiển thị</label>
@@ -162,8 +196,10 @@
     <label>Phiên bản</label>
     <input id="version" type="text" placeholder="Ví dụ: 240.0" />
 
-    <label>iOS hỗ trợ tối thiểu</label>
-    <input id="minOs" type="text" placeholder="Ví dụ: 12.4" />
+    <div id="minOsGroup">
+      <label>iOS hỗ trợ tối thiểu</label>
+      <input id="minOs" class="min-os-value" type="text" placeholder="Ví dụ: 12.4" />
+    </div>
 
     <div class="action-wrap">
       <button class="btn-action" id="btnCreateInstall" type="button">Tạo Liên Kết Cài Đặt</button>
@@ -184,6 +220,11 @@
 
     const ipaInput = document.getElementById("ipaUrl");
     const btnClearIpa = document.getElementById("btnClearIpa");
+    const minOsGroup = document.getElementById("minOsGroup");
+
+    function setMinOsVisible(visible) {
+      minOsGroup.style.display = visible ? "block" : "none";
+    }
 
     function updateClearButtonVisibility() {
       btnClearIpa.classList.toggle("visible", ipaInput.value.length > 0);
@@ -194,6 +235,7 @@
       document.getElementById("bundleId").value = "";
       document.getElementById("version").value = "";
       document.getElementById("minOs").value = "";
+      setMinOsVisible(false);
     }
 
     function setStatus(msg, type = "") {
@@ -481,6 +523,7 @@
     document.getElementById("btnFetchInfo").addEventListener("click", async () => {
       const ipa = ipaInput.value.trim();
       resetInstallState();
+      setMinOsVisible(false);
 
       if (!ipa || !ipa.startsWith("https://")) {
         setStatus("Vui lòng nhập link .ipa hợp lệ bắt đầu bằng https://", "err");
@@ -502,9 +545,11 @@
         document.getElementById("bundleId").value = bundleId;
         document.getElementById("version").value = version;
         document.getElementById("minOs").value = minOs;
+        setMinOsVisible(Boolean(minOs));
 
         setStatus("Đã điền thông tin tự động. Bạn có thể kiểm tra và bấm Tạo Liên Kết Cài Đặt.", "ok");
       } catch (err) {
+        setMinOsVisible(false);
         setStatus(`Không lấy được thông tin tự động (${err.message || err}). Bạn vẫn có thể nhập thủ công rồi bấm Tạo Liên Kết Cài Đặt.`, "err");
       } finally {
         btn.disabled = false;
