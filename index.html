@@ -3,703 +3,260 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cài đặt IPA</title>
+  <title>IPA Tool Helper - Tra cứu &amp; Tải IPA</title>
   <style>
+    :root {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --ink: #16181d;
+      --muted: #667085;
+      --line: #e4e7ec;
+      --pri: #0066ff;
+      --pri-ink: #ffffff;
+      --soft: #eef4ff;
+      --warn-bg: #fff8eb;
+      --warn-ink: #9a5b00;
+    }
+    * { box-sizing: border-box; }
     body {
+      margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 16px;
-      line-height: 1.5;
-      max-width: 640px;
-      margin: 24px auto;
-      padding: 0 16px;
-      background: #f5f6f8;
-      color: #1f2328;
+      background: var(--bg);
+      color: var(--ink);
+      padding: 16px;
     }
+    .wrap { max-width: 760px; margin: 0 auto; }
     .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 22px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
     }
-    h1 {
-      font-size: 22px;
-      font-weight: 700;
-      color: #0969da;
-      margin: 0 0 18px;
-    }
-    label {
-      display: block;
-      font-weight: 600;
-      margin-top: 14px;
-      font-size: 15px;
-      color: #1f2328;
-    }
-    input {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 11px 13px;
-      margin-top: 6px;
-      border: 1px solid #d0d7de;
-      border-radius: 8px;
-      font-size: 15px;
-      color: #1f2328;
-    }
-    input:focus {
-      outline: none;
-      border-color: #0969da;
-      box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.12);
-    }
-    .info-input {
-      color: #0969da;
-      font-weight: 600;
-    }
-    .input-group {
-      display: flex;
-      gap: 8px;
-      margin-top: 6px;
-      align-items: stretch;
-    }
-    .input-wrap {
-      position: relative;
-      flex: 1;
-      display: flex;
-      align-items: center;
-    }
-    .input-wrap input {
-      margin-top: 0;
-      padding-right: 36px;
-    }
-    .btn-clear {
-      position: absolute;
-      right: 8px;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      border: none;
-      background: #e5e7eb;
-      color: #374151;
-      font-size: 16px;
-      line-height: 1;
-      cursor: pointer;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-    }
-    .btn-clear.visible {
-      display: inline-flex;
-    }
-    .btn-clear:hover {
-      background: #d1d5db;
-    }
-    .field-note {
-      margin-top: 7px;
-      font-size: 14px;
-      color: #4b5563;
-      line-height: 1.45;
-    }
-    .field-note strong {
-      color: #111827;
-      font-weight: 700;
-    }
-    .btn-fetch {
-      padding: 0 16px;
-      border-radius: 8px;
-      border: 1px solid #0969da;
-      background: #eff6ff;
-      color: #0969da;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .btn-fetch:hover:not(:disabled) {
-      background: #dbeafe;
-    }
-    .btn-fetch:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .status {
-      margin-top: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      color: #57606a;
-      min-height: 20px;
-    }
-    .status.ok {
-      color: #1a7f37;
-      font-weight: 600;
-    }
-    .status.err {
-      color: #cf222e;
-      font-weight: 600;
-    }
-    #minOsGroup {
-      display: none;
-    }
-    .min-os-hint {
-      margin-top: 6px;
-      font-size: 13.5px;
-      color: #6b7280;
-      min-height: 18px;
-    }
-    .action-wrap {
-      margin-top: 20px;
-    }
-    .btn-action {
-      display: block;
-      width: 100%;
-      box-sizing: border-box;
-      text-align: center;
-      padding: 13px 16px;
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 14px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    input, select {
+      height: 40px;
+      border: 1px solid var(--line);
       border-radius: 10px;
-      border: none;
-      background: #0969da;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 700;
-      text-decoration: none;
+      padding: 0 12px;
+      font-size: 14px;
+      background: #fff;
+      color: var(--ink);
+    }
+    input.grow { flex: 1 1 240px; min-width: 0; }
+    button {
+      height: 40px;
+      border: 0;
+      border-radius: 10px;
+      padding: 0 14px;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
     }
-    .btn-action:hover {
-      background: #0757b5;
+    .btn-p { background: var(--pri); color: var(--pri-ink); }
+    .btn-s { background: var(--soft); color: var(--pri); }
+    .btn-g { background: #eef1f5; color: var(--ink); }
+    .app-head { display: flex; gap: 12px; align-items: center; margin-top: 14px; }
+    .app-icon { width: 64px; height: 64px; border-radius: 14px; object-fit: cover; border: 1px solid var(--line); }
+    .meta { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+    .box {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fafbfd;
     }
-    .btn-action.ready {
-      background: #1a7f37;
+    .box h3 { margin: 0 0 8px; font-size: 15px; }
+    .note {
+      background: var(--warn-bg);
+      color: var(--warn-ink);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      margin-top: 10px;
     }
-    .btn-action.ready:hover {
-      background: #15692d;
-    }
-
-    /* ===== Thanh copy ẩn ở đáy: xám trơn, không chữ ===== */
-    .copy-bar {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 50px;
-      background: #d0d7de;
-      cursor: pointer;
-      box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
-      transform: translateY(100%);
-      transition: transform 0.25s ease, background-color 0.25s ease;
-      z-index: 999;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .copy-bar.show { transform: translateY(0); }
-    .copy-bar:hover { background: #c2cad2; }
-    .copy-bar.copied { background: #1a7f37; }
-    body.bar-open { padding-bottom: 66px; }
+    .status { font-size: 13px; color: var(--muted); margin-top: 10px; white-space: pre-line; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Cài đặt ứng dụng IPA</h1>
+  <div class="wrap">
+    <div class="card">
+      <h1>IPA Tool Helper (Chặng 1)</h1>
+      <p class="sub">Tìm ứng dụng hoặc dán link/ID App Store để lấy App ID, Bundle ID và chuẩn bị thao tác.</p>
 
-    <label>Link files .ipa (Direct link)</label>
-    <div class="input-group">
-      <div class="input-wrap">
-        <input
-          id="ipaUrl"
-          type="url"
-          placeholder="https://github.com/.../App.ipa"
-          value="https://github.com/nhut990/files/releases/download/V1.0_Facebook/Facebook.551.1.0.ipa"
-        />
-        <button class="btn-clear" id="btnClearIpa" type="button" title="Xoá link" aria-label="Xoá link">&times;</button>
+      <div class="row">
+        <input id="queryInput" class="grow" placeholder="Nhập tên app, App ID (VD: 389801252) hoặc link App Store..." />
+        <select id="countrySelect" title="Vùng App Store">
+          <option value="vn">VN</option>
+          <option value="us">US</option>
+        </select>
+        <button class="btn-p" id="btnSearch" onclick="handleLookupOrSearch()">Tra cứu</button>
       </div>
-      <button class="btn-fetch" id="btnFetchInfo" type="button">Lấy thông tin</button>
-    </div>
-    <div class="field-note">Chỉ hỗ trợ <strong>link tải trực tiếp (.ipa)</strong> và file IPA phải có <strong>chứng chỉ hợp lệ</strong> mới cài đặt được.</div>
-    <div class="status" id="statusText"></div>
 
-    <label>Tên hiển thị</label>
-    <input id="title" class="info-input" type="text" placeholder="Tên ứng dụng" />
-
-    <label>Bundle ID</label>
-    <input id="bundleId" class="info-input" type="text" placeholder="Ví dụ: com.burbn.instagram" />
-
-    <label>Phiên bản</label>
-    <input id="version" class="info-input" type="text" placeholder="Ví dụ: 240.0" />
-
-    <div id="minOsGroup">
-      <label>iOS hỗ trợ tối thiểu</label>
-      <input id="minOs" class="info-input" type="text" placeholder="Ví dụ: 12.4" />
-      <div class="min-os-hint" id="minOsHint"></div>
+      <div id="appResult"></div>
+      <div id="statusMsg" class="status">Sẵn sàng. Nhập từ khóa hoặc App ID/link rồi bấm Tra cứu.</div>
     </div>
 
-    <div class="action-wrap">
-      <button class="btn-action" id="btnCreateInstall" type="button">Tạo Liên Kết Cài Đặt</button>
+    <div class="card">
+      <h3>Cấu hình Backend trung gian (Chặng 2–3)</h3>
+      <p class="sub">Hiện tại phần tra cứu metadata đã chạy trực tiếp; phần Thêm Đã mua &amp; Tải IPA cần nối API backend của bạn.</p>
+      <div class="row">
+        <input id="apiBaseInput" class="grow mono" placeholder="VD: https://api-cua-ban.example.com (để trống nếu chưa có)" oninput="saveApiBase()" />
+      </div>
+
+      <div class="grid-2">
+        <div class="box">
+          <h3>1. Thêm vào Đã mua</h3>
+          <div class="row">
+            <input id="bundlePurchaseInput" class="grow mono" placeholder="Bundle ID (tự điền khi tra cứu)" />
+            <button class="btn-s" onclick="callBackendAction('purchase')">Thêm Đã mua</button>
+          </div>
+        </div>
+
+        <div class="box">
+          <h3>2. Tải IPA theo Version ID</h3>
+          <div class="row" style="margin-bottom:8px;">
+            <input id="versionIdInput" class="grow mono" placeholder="Version ID (để trống = bản mới nhất)" />
+            <button class="btn-g" onclick="callBackendAction('versions')">Lấy Version</button>
+          </div>
+          <button class="btn-p" style="width:100%;" onclick="callBackendAction('download')">Tải IPA</button>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Lưu ý:</b> Trình duyệt tĩnh trên GitHub không tự đăng nhập Apple ID hay tải file .ipa gốc từ Apple nếu thiếu máy chủ/worker trung gian. Nên dùng <b>Apple ID phụ</b> khi thử nghiệm luồng đăng nhập.
+      </div>
     </div>
   </div>
 
-  <div class="copy-bar" id="copyBar" role="button" tabindex="0" aria-label="Copy link plist"></div>
-
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/plist@3.0.6/dist/plist.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bplist-parser@0.3.2/dist/bplist-parser.min.js"></script>
-
   <script>
-    const WORKER_BASE = "https://i.nhut990.workers.dev/";
-    const WORKER_PLIST = WORKER_BASE;
-    const WORKER_PROXY = `${WORKER_BASE}?url=`;
-    const DEFAULT_IMAGE_URL = "https://raw.githubusercontent.com/nhut990/files/refs/heads/main/hinh/logo_minhnhut.PNG";
+    const API_KEY_STORAGE = 'ipatool_helper_api_base';
+    const apiInput = document.getElementById('apiBaseInput');
+    apiInput.value = localStorage.getItem(API_KEY_STORAGE) || '';
 
-    let builtInstallUrl = "";
-    let builtPlistUrl = "";
-
-    const ipaInput = document.getElementById("ipaUrl");
-    const btnClearIpa = document.getElementById("btnClearIpa");
-    const minOsGroup = document.getElementById("minOsGroup");
-    const minOsInput = document.getElementById("minOs");
-    const minOsHint = document.getElementById("minOsHint");
-
-    const copyBar = document.getElementById("copyBar");
-    let copyBarResetTimer = null;
-
-    function showCopyBar() {
-      document.body.classList.add("bar-open");
-      copyBar.classList.add("show");
-      copyBar.classList.remove("copied");
+    function saveApiBase() {
+      localStorage.setItem(API_KEY_STORAGE, apiInput.value.trim());
     }
 
-    function hideCopyBar() {
-      copyBar.classList.remove("show", "copied");
-      document.body.classList.remove("bar-open");
-      if (copyBarResetTimer) {
-        clearTimeout(copyBarResetTimer);
-        copyBarResetTimer = null;
-      }
+    function setStatus(msg) {
+      document.getElementById('statusMsg').textContent = msg;
     }
 
-    async function copyToClipboard(text) {
-      try {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(text);
-          return true;
+    function extractAppId(raw) {
+      const s = raw.trim();
+      if (/^\d+$/.test(s)) return s;
+      const m = s.match(/id(\d+)/i);
+      return m ? m[1] : null;
+    }
+
+    function jsonp(url) {
+      return new Promise((resolve, reject) => {
+        const cbName = '__itunes_cb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+        const script = document.createElement('script');
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error('Hết thời gian chờ phản hồi từ iTunes API'));
+        }, 10000);
+
+        function cleanup() {
+          clearTimeout(timer);
+          delete window[cbName];
+          if (script.parentNode) script.parentNode.removeChild(script);
         }
-      } catch (_) {}
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        ta.style.pointerEvents = "none";
-        document.body.appendChild(ta);
-        ta.select();
-        const ok = document.execCommand("copy");
-        document.body.removeChild(ta);
-        return ok;
-      } catch (_) {
-        return false;
-      }
-    }
 
-    copyBar.addEventListener("click", async () => {
-      if (!builtPlistUrl) return;
-      const ok = await copyToClipboard(builtPlistUrl);
-      if (ok) {
-        copyBar.classList.add("copied");
-        if (copyBarResetTimer) clearTimeout(copyBarResetTimer);
-        copyBarResetTimer = setTimeout(() => {
-          copyBar.classList.remove("copied");
-        }, 1500);
-      }
-    });
+        window[cbName] = (data) => {
+          cleanup();
+          resolve(data);
+        };
 
-    function updateMinOsHint() {
-      const val = minOsInput.value.trim();
-      minOsHint.textContent = val ? `(yêu cầu iOS ${val} trở lên để cài đặt)` : "";
-    }
-
-    function setMinOsVisible(visible) {
-      minOsGroup.style.display = visible ? "block" : "none";
-      updateMinOsHint();
-    }
-
-    function updateClearButtonVisibility() {
-      btnClearIpa.classList.toggle("visible", ipaInput.value.length > 0);
-    }
-
-    function clearFetchedFields() {
-      document.getElementById("title").value = "";
-      document.getElementById("bundleId").value = "";
-      document.getElementById("version").value = "";
-      minOsInput.value = "";
-      setMinOsVisible(false);
-    }
-
-    function setStatus(msg, type = "") {
-      const el = document.getElementById("statusText");
-      el.textContent = msg;
-      el.className = "status" + (type ? " " + type : "");
-    }
-
-    function guessTitleFromUrl(urlStr) {
-      try {
-        const last = decodeURIComponent(new URL(urlStr).pathname.split("/").pop() || "");
-        return last.replace(/\.ipa$/i, "");
-      } catch {
-        return "";
-      }
-    }
-
-    function resetInstallState() {
-      builtInstallUrl = "";
-      builtPlistUrl = "";
-      const btn = document.getElementById("btnCreateInstall");
-      btn.textContent = "Tạo Liên Kết Cài Đặt";
-      btn.classList.remove("ready");
-      hideCopyBar();
-    }
-
-    btnClearIpa.addEventListener("click", () => {
-      ipaInput.value = "";
-      updateClearButtonVisibility();
-      clearFetchedFields();
-      resetInstallState();
-      setStatus("");
-      ipaInput.focus();
-    });
-
-    ipaInput.addEventListener("input", () => {
-      updateClearButtonVisibility();
-      clearFetchedFields();
-      resetInstallState();
-      setStatus("");
-    });
-
-    minOsInput.addEventListener("input", () => {
-      updateMinOsHint();
-      resetInstallState();
-    });
-
-    updateClearButtonVisibility();
-
-    function parseTotalSizeFromContentRange(rangeHeader) {
-      if (!rangeHeader) return null;
-      const match = rangeHeader.match(/\/(\d+)$/);
-      return match ? Number(match[1]) : null;
-    }
-
-    function findEOCD(tailBuf) {
-      const dv = new DataView(tailBuf.buffer, tailBuf.byteOffset, tailBuf.byteLength);
-      const minPos = Math.max(0, tailBuf.length - 65557);
-      for (let i = tailBuf.length - 22; i >= minPos; i--) {
-        if (dv.getUint32(i, true) === 0x06054b50) {
-          const commentLen = dv.getUint16(i + 20, true);
-          if (i + 22 + commentLen <= tailBuf.length) {
-            const cdSize = dv.getUint32(i + 12, true);
-            const cdOffset = dv.getUint32(i + 16, true);
-            if (cdSize !== 0xffffffff && cdOffset !== 0xffffffff) {
-              return { cdSize, cdOffset };
-            }
-          }
-        }
-      }
-      return null;
-    }
-
-    function parseCentralDirectory(cdBuf) {
-      const dv = new DataView(cdBuf.buffer, cdBuf.byteOffset, cdBuf.byteLength);
-      const entries = [];
-      let pos = 0;
-
-      while (pos + 46 <= cdBuf.length) {
-        if (dv.getUint32(pos, true) !== 0x02014b50) break;
-
-        const compressionMethod = dv.getUint16(pos + 10, true);
-        const compressedSize = dv.getUint32(pos + 20, true);
-        const fileNameLen = dv.getUint16(pos + 28, true);
-        const extraFieldLen = dv.getUint16(pos + 30, true);
-        const commentLen = dv.getUint16(pos + 32, true);
-        const localHeaderOffset = dv.getUint32(pos + 42, true);
-
-        const name = new TextDecoder().decode(cdBuf.subarray(pos + 46, pos + 46 + fileNameLen));
-        entries.push({ name, compressionMethod, compressedSize, localHeaderOffset });
-
-        pos += 46 + fileNameLen + extraFieldLen + commentLen;
-      }
-      return entries;
-    }
-
-    async function extractEntryByRange(proxiedUrl, entry) {
-      const headerStart = entry.localHeaderOffset;
-      const approxEnd = headerStart + 30 + entry.name.length + 128 + entry.compressedSize - 1;
-
-      const resp = await fetch(proxiedUrl, {
-        headers: { Range: `bytes=${headerStart}-${approxEnd}` },
+        const sep = url.includes('?') ? '&' : '?';
+        script.src = `${url}${sep}callback=${cbName}`;
+        script.onerror = () => {
+          cleanup();
+          reject(new Error('Không tải được dữ liệu từ iTunes API'));
+        };
+        document.body.appendChild(script);
       });
-      if (resp.status !== 206) {
-        if (resp.body) await resp.body.cancel();
-        throw new Error(`Không lấy được dữ liệu của ${entry.name}`);
-      }
-
-      const buf = new Uint8Array(await resp.arrayBuffer());
-      const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
-
-      if (dv.getUint32(0, true) !== 0x04034b50) {
-        throw new Error(`Sai cấu trúc file trong ZIP cho ${entry.name}`);
-      }
-
-      const fnLen = dv.getUint16(26, true);
-      const extraLen = dv.getUint16(28, true);
-      const dataStart = 30 + fnLen + extraLen;
-      const compressedData = buf.subarray(dataStart, dataStart + entry.compressedSize);
-
-      if (entry.compressionMethod === 0) {
-        return compressedData;
-      }
-      if (entry.compressionMethod === 8) {
-        if (typeof DecompressionStream !== "undefined") {
-          const ds = new DecompressionStream("deflate-raw");
-          const writer = ds.writable.getWriter();
-          writer.write(compressedData);
-          writer.close();
-          const outBuf = await new Response(ds.readable).arrayBuffer();
-          return new Uint8Array(outBuf);
-        }
-        throw new Error("Trình duyệt không hỗ trợ giải nén Deflate.");
-      }
-
-      throw new Error(`Không hỗ trợ kiểu nén ZIP mã ${entry.compressionMethod}`);
     }
 
-    async function parsePlist(bytes) {
-      const isBinary = bytes[0] === 0x62 && bytes[1] === 0x70 && bytes[2] === 0x6c && bytes[3] === 0x69;
-      if (isBinary) {
-        try {
-          const r = parseBinaryPlist(bytes);
-          if (r && typeof r === "object") return r;
-        } catch (_) {}
-        try {
-          if (window.bplistParser) {
-            const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-            const p = window.bplistParser.parseBuffer(ab);
-            if (p && p[0]) return p[0];
-          }
-        } catch (_) {}
-        try {
-          const r = plist.parse(new TextDecoder("utf-8", { fatal: false }).decode(bytes));
-          if (r) return r;
-        } catch (_) {}
-        throw new Error("Không thể parse binary plist.");
-      } else {
-        try {
-          const r = parseXMLPlist(new TextDecoder().decode(bytes));
-          if (r && Object.keys(r).length > 0) return r;
-        } catch (_) {}
-        try {
-          return plist.parse(new TextDecoder().decode(bytes));
-        } catch (e) {
-          throw new Error("Không thể parse XML plist: " + e.message);
-        }
-      }
-    }
+    async function handleLookupOrSearch() {
+      const raw = document.getElementById('queryInput').value.trim();
+      const country = document.getElementById('countrySelect').value;
+      const out = document.getElementById('appResult');
 
-    function parseBinaryPlist(bytes) {
-      const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-      const len = bytes.length, to = len - 32;
-      const ois = bytes[to + 6], ors = bytes[to + 7];
-      const nObj = ri64(dv, to + 8), topObj = ri64(dv, to + 16), otOff = ri64(dv, to + 24);
-      const offs = [];
-      for (let i = 0; i < nObj; i++) offs.push(riN(dv, otOff + i * ois, ois));
-      function rObj(idx) {
-        const off = offs[idx], mk = bytes[off], hi = (mk & 0xf0) >> 4, lo = mk & 0x0f;
-        if (mk === 0x00) return null;
-        if (mk === 0x08) return false;
-        if (mk === 0x09) return true;
-        if (hi === 0x1) return riN(dv, off + 1, 1 << lo);
-        if (hi === 0x2) return lo === 3 ? dv.getFloat64(off + 1, false) : dv.getFloat32(off + 1, false);
-        if (mk === 0x33) return new Date((dv.getFloat64(off + 1, false) + 978307200) * 1000).toISOString();
-        if (hi === 0x4) { const [s] = ds(lo, off); return "[Data " + s + "]"; }
-        if (hi === 0x5) { const [s, e] = ds(lo, off); let r = ""; for (let i = 0; i < s; i++) r += String.fromCharCode(bytes[off + 1 + e + i]); return r; }
-        if (hi === 0x6) { const [s, e] = ds(lo, off); let r = ""; for (let i = 0; i < s; i++) r += String.fromCodePoint(dv.getUint16(off + 1 + e + i * 2, false)); return r; }
-        if (hi === 0xa) { const [s, e] = ds(lo, off); const a = []; for (let i = 0; i < s; i++) a.push(rObj(riN(dv, off + 1 + e + i * ors, ors))); return a; }
-        if (hi === 0xd) {
-          const [s, e] = ds(lo, off); const o = {};
-          for (let i = 0; i < s; i++) {
-            const k = rObj(riN(dv, off + 1 + e + i * ors, ors));
-            const v = rObj(riN(dv, off + 1 + e + (s + i) * ors, ors));
-            o[k] = v;
-          }
-          return o;
-        }
-        return null;
-      }
-      function ds(lo, off) {
-        if (lo !== 0x0f) return [lo, 0];
-        const is = 1 << (bytes[off + 1] & 0x0f);
-        return [riN(dv, off + 2, is), 1 + is];
-      }
-      return rObj(topObj);
-    }
-    function riN(dv, off, n) { let v = 0; for (let i = 0; i < n; i++) v = v * 256 + dv.getUint8(off + i); return v; }
-    function ri64(dv, off) { return dv.getUint32(off, false) * 0x100000000 + dv.getUint32(off + 4, false); }
-
-    function parseXMLPlist(text) {
-      const doc = new DOMParser().parseFromString(text, "application/xml");
-      const root = doc.querySelector("plist > dict");
-      return root ? parseDict(root) : {};
-    }
-    function parseDict(node) {
-      const o = {}, c = [...node.children];
-      for (let i = 0; i < c.length; i += 2) {
-        if (c[i].tagName === "key" && c[i + 1]) o[c[i].textContent] = parseNode(c[i + 1]);
-      }
-      return o;
-    }
-    function parseNode(n) {
-      switch (n.tagName) {
-        case "string": return n.textContent;
-        case "integer": return parseInt(n.textContent, 10);
-        case "real": return parseFloat(n.textContent);
-        case "true": return true;
-        case "false": return false;
-        case "dict": return parseDict(n);
-        case "array": return [...n.children].map(parseNode);
-        default: return n.textContent;
-      }
-    }
-
-    async function fetchInfoFromProxyRange(rawUrl) {
-      const proxiedUrl = WORKER_PROXY + encodeURIComponent(rawUrl);
-
-      const probeResp = await fetch(proxiedUrl, {
-        headers: { Range: "bytes=0-0" },
-      });
-      if (probeResp.status !== 206) {
-        if (probeResp.body) await probeResp.body.cancel();
-        throw new Error(`Server trả về mã ${probeResp.status} (không hỗ trợ HTTP Range).`);
-      }
-
-      const totalSize = parseTotalSizeFromContentRange(probeResp.headers.get("Content-Range"));
-      if (probeResp.body) await probeResp.body.cancel();
-      if (!totalSize || totalSize <= 22) {
-        throw new Error("Không xác định được dung lượng file từ Content-Range.");
-      }
-
-      const tailLen = Math.min(totalSize, 65560);
-      const tailStart = totalSize - tailLen;
-      const tailEnd = totalSize - 1;
-
-      const tailResp = await fetch(proxiedUrl, {
-        headers: { Range: `bytes=${tailStart}-${tailEnd}` },
-      });
-      if (tailResp.status !== 206) {
-        if (tailResp.body) await tailResp.body.cancel();
-        throw new Error("Không đọc được phần cuối file theo dải byte.");
-      }
-
-      const tailBuf = new Uint8Array(await tailResp.arrayBuffer());
-      const eocd = findEOCD(tailBuf);
-      if (!eocd) {
-        throw new Error("Không tìm thấy mục lục ZIP ở cuối file.");
-      }
-
-      const cdStart = eocd.cdOffset;
-      const cdEnd = Math.min(totalSize - 1, cdStart + eocd.cdSize - 1);
-      const cdResp = await fetch(proxiedUrl, {
-        headers: { Range: `bytes=${cdStart}-${cdEnd}` },
-      });
-      if (cdResp.status !== 206) {
-        if (cdResp.body) await cdResp.body.cancel();
-        throw new Error("Không đọc được danh sách mục lục của file IPA.");
-      }
-
-      const cdBuf = new Uint8Array(await cdResp.arrayBuffer());
-      const entries = parseCentralDirectory(cdBuf);
-      const infoEntry = entries.find((e) => /^Payload\/[^/]+\.app\/Info\.plist$/i.test(e.name));
-      if (!infoEntry) {
-        throw new Error("Không tìm thấy Info.plist trong gói IPA.");
-      }
-
-      const infoBytes = await extractEntryByRange(proxiedUrl, infoEntry);
-      return await parsePlist(infoBytes);
-    }
-
-    document.getElementById("btnFetchInfo").addEventListener("click", async () => {
-      const ipa = ipaInput.value.trim();
-      resetInstallState();
-      setMinOsVisible(false);
-
-      if (!ipa || !ipa.startsWith("https://")) {
-        setStatus("Vui lòng nhập link .ipa hợp lệ bắt đầu bằng https://", "err");
+      if (!raw) {
+        setStatus('Vui lòng nhập tên ứng dụng, App ID hoặc link App Store.');
         return;
       }
 
-      const btn = document.getElementById("btnFetchInfo");
-      btn.disabled = true;
-      setStatus("Đang lấy thông tin từ file .ipa...");
+      setStatus('Đang tra cứu thông tin...');
+      out.innerHTML = '';
 
       try {
-        const info = await fetchInfoFromProxyRange(ipa);
-        const bundleId = (info.CFBundleIdentifier || "").trim();
-        const version = String(info.CFBundleShortVersionString || info.CFBundleVersion || "").trim();
-        const minOs = String(info.MinimumOSVersion || info.LSMinimumSystemVersion || "").trim();
-        const appTitle = (info.CFBundleDisplayName || info.CFBundleName || guessTitleFromUrl(ipa) || "").trim();
+        const appId = extractAppId(raw);
+        let data;
+        if (appId) {
+          data = await jsonp(`https://itunes.apple.com/lookup?id=${encodeURIComponent(appId)}&country=${encodeURIComponent(country)}`);
+        } else {
+          data = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(raw)}&entity=software&limit=5&country=${encodeURIComponent(country)}`);
+        }
 
-        document.getElementById("title").value = appTitle;
-        document.getElementById("bundleId").value = bundleId;
-        document.getElementById("version").value = version;
-        minOsInput.value = minOs;
-        setMinOsVisible(Boolean(minOs));
+        const items = Array.isArray(data.results) ? data.results.filter(r => r.wrapperType === 'software' || r.trackId) : [];
+        if (!items.length) {
+          setStatus('Không tìm thấy ứng dụng phù hợp.');
+          return;
+        }
 
-        setStatus("Đã điền thông tin tự động. Bạn có thể kiểm tra và bấm Tạo Liên Kết Cài Đặt.", "ok");
+        const first = items[0];
+        document.getElementById('bundlePurchaseInput').value = first.bundleId || '';
+
+        out.innerHTML = items.map(app => `
+          <div class="app-head">
+            <img class="app-icon" src="${app.artworkUrl100 || app.artworkUrl60 || ''}" alt="" />
+            <div>
+              <div><b>${escapeHtml(app.trackName || 'Không rõ tên')}</b> — <span class="mono">ID: ${app.trackId || '--'}</span></div>
+              <div class="meta">Bundle ID: <span class="mono">${escapeHtml(app.bundleId || '--')}</span> · Bản: ${escapeHtml(app.version || '--')} · iOS >= ${escapeHtml(app.minimumOsVersion || '--')}</div>
+              <div class="meta">NSX: ${escapeHtml(app.artistName || '--')} · Giá: ${app.formattedPrice || '--'}</div>
+            </div>
+          </div>
+        `).join('');
+
+        setStatus(`Đã tìm thấy ${items.length} kết quả. Bundle ID ưu tiên: ${first.bundleId || 'không có'}.`);
       } catch (err) {
-        setMinOsVisible(false);
-        setStatus(`Không lấy được thông tin tự động (${err.message || err}). Bạn vẫn có thể nhập thủ công rồi bấm Tạo Liên Kết Cài Đặt.`, "err");
-      } finally {
-        btn.disabled = false;
+        setStatus('Lỗi tra cứu: ' + err.message);
       }
-    });
+    }
 
-    document.getElementById("btnCreateInstall").addEventListener("click", () => {
-      const btn = document.getElementById("btnCreateInstall");
+    function callBackendAction(action) {
+      const base = apiInput.value.trim().replace(/\/+$/, '');
+      const rawQuery = document.getElementById('queryInput').value.trim();
+      const appId = extractAppId(rawQuery) || rawQuery;
+      const bundleId = document.getElementById('bundlePurchaseInput').value.trim();
+      const versionId = document.getElementById('versionIdInput').value.trim();
 
-      if (builtInstallUrl) {
-        window.location.href = builtInstallUrl;
+      if (!base) {
+        setStatus(
+          `Chưa cấu hình Backend API nên chưa thực thi "${action}" được.\n` +
+          `Thông tin hiện có -> App/Input: "${appId || '--'}", Bundle ID: "${bundleId || '--'}", Version ID: "${versionId || '(mới nhất)'}".`
+        );
         return;
       }
 
-      const ipa = ipaInput.value.trim();
-      const title = document.getElementById("title").value.trim();
-      const bundleId = document.getElementById("bundleId").value.trim();
-      const version = document.getElementById("version").value.trim();
+      setStatus(
+        `Đã chuẩn bị payload cho endpoint "${base}/api/${action}":\n` +
+        JSON.stringify({ appId, bundleId, versionId }, null, 2)
+      );
+    }
 
-      if (!ipa || !ipa.startsWith("https://")) {
-        setStatus("Vui lòng nhập link .ipa hợp lệ bắt đầu bằng https://", "err");
-        return;
-      }
-      if (!bundleId) {
-        setStatus("Vui lòng nhập Bundle ID trước khi tạo liên kết cài đặt.", "err");
-        return;
-      }
-
-      const params = new URLSearchParams();
-      params.set("ipa", ipa);
-      params.set("image", DEFAULT_IMAGE_URL);
-      params.set("bundle_id", bundleId);
-      if (version) params.set("version", version);
-      if (title) params.set("title", title);
-
-      const plistUrl = `${WORKER_PLIST}?${params.toString()}`;
-      builtPlistUrl = plistUrl;
-      builtInstallUrl = `itms-services://?action=download-manifest&url=${encodeURIComponent(plistUrl)}`;
-
-      const labelParts = ["Cài Đặt"];
-      if (title) labelParts.push(title);
-      if (version) labelParts.push(version);
-      btn.textContent = labelParts.join(" ");
-      btn.classList.add("ready");
-      setStatus("Đã tạo liên kết cài đặt. Nhấn nút bên dưới để cài đặt.", "ok");
-      showCopyBar();
-    });
-
-    ["title", "bundleId", "version"].forEach((id) => {
-      document.getElementById(id).addEventListener("input", resetInstallState);
-    });
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, s => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[s]));
+    }
   </script>
 </body>
 </html>
