@@ -5,64 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trình phát MIDI với SpessaSynth</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            max-width: 650px;
-            margin: 20px auto;
-            padding: 15px;
-        }
-        h2 {
-            font-size: 20px;
-        }
-        .nhom {
-            margin-bottom: 15px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-        input[type="file"] {
-            display: block;
-            margin-bottom: 10px;
-            width: 100%;
-            font-size: 16px;
-        }
-        button {
-            padding: 12px 24px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-right: 10px;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            background: #f8f8f8;
-        }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        #trangThai {
-            margin-top: 15px;
-            padding: 10px;
-            background: #f5f5f5;
-            border-radius: 4px;
-            font-size: 14px;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 650px; margin: 20px auto; padding: 15px; }
+        h2 { font-size: 20px; }
+        .nhom { margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="file"] { display: block; margin-bottom: 10px; width: 100%; font-size: 16px; }
+        button { padding: 12px 24px; font-size: 16px; cursor: pointer; margin-right: 10px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #ccc; background: #f8f8f8; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #trangThai { margin-top: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+        .btn-khoi-tao { background: #007aff; color: white; border: none; font-weight: bold; width: 100%; padding: 15px; font-size: 18px; }
     </style>
 </head>
 <body>
 
     <h2>Trình phát MIDI + SoundFont (.sf2)</h2>
 
+    <!-- Nút này BẮT BUỘC phải bấm đầu tiên trên iOS -->
+    <div class="nhom">
+        <label>Bước 0: Kích hoạt âm thanh (Bắt buộc trên iOS)</label>
+        <button id="initAudioBtn" class="btn-khoi-tao">🔊 Bấm để bật âm thanh</button>
+    </div>
+
     <div class="nhom">
         <label>1. Nạp SoundFont từ máy (.sf2 / .sf3 / .dls)</label>
-        <!-- Thêm application/octet-stream để iOS cho phép chọn file -->
         <input type="file" id="sf2Input" accept="application/octet-stream,.sf2,.sf3,.sfogg,.dls">
     </div>
 
@@ -77,33 +42,32 @@
         <button id="stopBtn" disabled>Dừng</button>
     </div>
 
-    <div id="trangThai">Đang chờ nạp file...</div>
+    <div id="trangThai">Vui lòng bấm "Bật âm thanh" trước khi nạp file...</div>
+
+    <!-- Bắt buộc phải có stbvorbis cho Safari/iOS -->
+    <script src="https://cdn.jsdelivr.net/npm/spessasynth_lib@4.4.0/dist/utils/stbvorbis.js"></script>
 
     <script type="module">
-        import {
-            WorkletSynthesizer,
-            Sequencer
-        } from 'https://cdn.jsdelivr.net/npm/spessasynth_lib@4.4.0/dist/spessasynth_lib.min.js';
+        import { WorkletSynthesizer, Sequencer } from 'https://cdn.jsdelivr.net/npm/spessasynth_lib@4.4.0/dist/spessasynth_lib.min.js';
 
-        const WORKLET_URL =
-            'https://cdn.jsdelivr.net/npm/spessasynth_lib@4.4.0/dist/spessasynth_processor.min.js';
+        const WORKLET_URL = 'https://cdn.jsdelivr.net/npm/spessasynth_lib@4.4.0/dist/spessasynth_processor.min.js';
 
         let audioContext = null;
         let synthesizer = null;
         let sequencer = null;
+        let audioReady = false; // Đánh dấu AudioContext đã sẵn sàng chưa
 
+        const initAudioBtn = document.getElementById('initAudioBtn');
         const sf2Input = document.getElementById('sf2Input');
         const midiInput = document.getElementById('midiInput');
         const playBtn = document.getElementById('playBtn');
         const stopBtn = document.getElementById('stopBtn');
         const trangThai = document.getElementById('trangThai');
 
-        function capNhatTrangThai(msg) {
-            trangThai.innerText = msg;
-        }
+        function capNhatTrangThai(msg) { trangThai.innerText = msg; }
 
         function kiemTraSanSang() {
-            if (synthesizer && sequencer) {
+            if (synthesizer && sequencer && audioReady) {
                 playBtn.disabled = false;
                 stopBtn.disabled = false;
             } else {
@@ -112,17 +76,49 @@
             }
         }
 
-        // ===== Nạp SoundFont =====
+        // 1. KHỞI TẠO AUDIO CONTEXT BẰNG TAP CỦA NGƯỜI DÙNG
+        initAudioBtn.addEventListener('click', async () => {
+            try {
+                capNhatTrangThai('Đang khởi tạo âm thanh...');
+                
+                // Tạo AudioContext ngay trong sự kiện click (user gesture)
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    await audioContext.audioWorklet.addModule(WORKLET_URL);
+                }
+                
+                // Resume AudioContext
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                }
+
+                audioReady = true;
+                initAudioBtn.disabled = true;
+                initAudioBtn.innerText = '✅ Âm thanh đã sẵn sàng';
+                capNhatTrangThai('Âm thanh đã bật. Vui lòng nạp SoundFont (.sf2).');
+                
+                // Kiểm tra nếu đã nạp file từ trước
+                kiemTraSanSang();
+
+            } catch (err) {
+                console.error(err);
+                capNhatTrangThai('Lỗi khởi tạo âm thanh: ' + err.message);
+            }
+        });
+
+        // 2. NẠP SOUNDFONT
         sf2Input.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            // Kiểm tra đuôi file thủ công (quan trọng cho iOS)
-            const allowedExts = ['.sf2', '.sf3', '.sfogg', '.dls'];
-            const fileName = file.name.toLowerCase();
-            const isValid = allowedExts.some(ext => fileName.endsWith(ext));
+            if (!audioReady) {
+                alert('Vui lòng bấm nút "Bật âm thanh" ở Bước 0 trước!');
+                e.target.value = '';
+                return;
+            }
 
-            if (!isValid) {
+            const allowedExts = ['.sf2', '.sf3', '.sfogg', '.dls'];
+            if (!allowedExts.some(ext => file.name.toLowerCase().endsWith(ext))) {
                 alert('Vui lòng chọn file SoundFont hợp lệ (.sf2, .sf3, .sfogg, .dls)');
                 e.target.value = '';
                 return;
@@ -132,38 +128,12 @@
                 capNhatTrangThai('Đang đọc file SoundFont...');
                 const arrayBuffer = await file.arrayBuffer();
 
-                // Tạo AudioContext nếu chưa có (phải do thao tác người dùng kích hoạt)
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    await audioContext.audioWorklet.addModule(WORKLET_URL);
-                }
+                if (sequencer) { try { sequencer.stop(); } catch (_) {} sequencer = null; }
+                if (synthesizer) { try { synthesizer.disconnect(); } catch (_) {} }
 
-                // Resume AudioContext ngay (iOS yêu cầu)
-                if (audioContext.state === 'suspended') {
-                    await audioContext.resume();
-                }
-
-                // Dừng sequencer cũ
-                if (sequencer) {
-                    try { sequencer.stop(); } catch (_) {}
-                    sequencer = null;
-                }
-
-                // Ngắt synthesizer cũ
-                if (synthesizer) {
-                    try { synthesizer.disconnect(); } catch (_) {}
-                }
-
-                // Tạo synthesizer mới
                 synthesizer = new WorkletSynthesizer(audioContext);
-
-                // Nạp SoundFont
                 await synthesizer.soundBankManager.addSoundBank(arrayBuffer, 'main');
-
-                if (synthesizer.isReady) {
-                    await synthesizer.isReady;
-                }
-
+                if (synthesizer.isReady) await synthesizer.isReady;
                 synthesizer.connect(audioContext.destination);
 
                 capNhatTrangThai(`Đã nạp SoundFont: ${file.name}`);
@@ -174,24 +144,21 @@
             }
         });
 
-        // ===== Nạp file MIDI =====
+        // 3. NẠP MIDI
         midiInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            // Kiểm tra đuôi file
-            const allowedExts = ['.mid', '.rmi', '.xmf', '.mxmf'];
-            const fileName = file.name.toLowerCase();
-            const isValid = allowedExts.some(ext => fileName.endsWith(ext));
-
-            if (!isValid) {
-                alert('Vui lòng chọn file MIDI hợp lệ (.mid, .rmi, .xmf, .mxmf)');
+            if (!audioReady || !synthesizer) {
+                alert('Vui lòng bật âm thanh và nạp SoundFont (.sf2) trước!');
                 e.target.value = '';
                 return;
             }
 
-            if (!synthesizer) {
-                capNhatTrangThai('Vui lòng nạp SoundFont (.sf2) trước.');
+            const allowedExts = ['.mid', '.rmi', '.xmf', '.mxmf'];
+            if (!allowedExts.some(ext => file.name.toLowerCase().endsWith(ext))) {
+                alert('Vui lòng chọn file MIDI hợp lệ (.mid, .rmi, .xmf, .mxmf)');
+                e.target.value = '';
                 return;
             }
 
@@ -199,18 +166,12 @@
                 capNhatTrangThai('Đang đọc file MIDI...');
                 const arrayBuffer = await file.arrayBuffer();
 
-                if (sequencer) {
-                    try { sequencer.stop(); } catch (_) {}
-                }
+                if (sequencer) { try { sequencer.stop(); } catch (_) {} }
 
                 sequencer = new Sequencer(synthesizer);
                 await sequencer.loadNewMIDI(arrayBuffer);
 
-                const thoiLuong =
-                    sequencer.duration !== undefined
-                        ? ` - Thời lượng: ${sequencer.duration.toFixed(1)} giây`
-                        : '';
-
+                const thoiLuong = sequencer.duration !== undefined ? ` - Thời lượng: ${sequencer.duration.toFixed(1)} giây` : '';
                 capNhatTrangThai(`Đã nạp MIDI: ${file.name}${thoiLuong}`);
                 kiemTraSanSang();
             } catch (err) {
@@ -219,14 +180,11 @@
             }
         });
 
-        // ===== Phát =====
+        // 4. PHÁT / DỪNG
         playBtn.addEventListener('click', async () => {
             if (!sequencer) return;
-
             try {
-                if (audioContext.state === 'suspended') {
-                    await audioContext.resume();
-                }
+                if (audioContext.state === 'suspended') await audioContext.resume();
                 sequencer.play();
                 capNhatTrangThai('Đang phát MIDI...');
             } catch (err) {
@@ -235,7 +193,6 @@
             }
         });
 
-        // ===== Dừng =====
         stopBtn.addEventListener('click', () => {
             if (!sequencer) return;
             try {
