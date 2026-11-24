@@ -1,262 +1,94 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IPA Tool Helper - Tra cứu &amp; Tải IPA</title>
-  <style>
-    :root {
-      --bg: #f4f6f9;
-      --card: #ffffff;
-      --ink: #16181d;
-      --muted: #667085;
-      --line: #e4e7ec;
-      --pri: #0066ff;
-      --pri-ink: #ffffff;
-      --soft: #eef4ff;
-      --warn-bg: #fff8eb;
-      --warn-ink: #9a5b00;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--ink);
-      padding: 16px;
-    }
-    .wrap { max-width: 760px; margin: 0 auto; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 14px;
-    }
-    h1 { font-size: 20px; margin: 0 0 6px; }
-    .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 14px; }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; }
-    input, select {
-      height: 40px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 0 12px;
-      font-size: 14px;
-      background: #fff;
-      color: var(--ink);
-    }
-    input.grow { flex: 1 1 240px; min-width: 0; }
-    button {
-      height: 40px;
-      border: 0;
-      border-radius: 10px;
-      padding: 0 14px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-p { background: var(--pri); color: var(--pri-ink); }
-    .btn-s { background: var(--soft); color: var(--pri); }
-    .btn-g { background: #eef1f5; color: var(--ink); }
-    .app-head { display: flex; gap: 12px; align-items: center; margin-top: 14px; }
-    .app-icon { width: 64px; height: 64px; border-radius: 14px; object-fit: cover; border: 1px solid var(--line); }
-    .meta { font-size: 13px; color: var(--muted); margin-top: 4px; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-    @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
-    .box {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px;
-      background: #fafbfd;
-    }
-    .box h3 { margin: 0 0 8px; font-size: 15px; }
-    .note {
-      background: var(--warn-bg);
-      color: var(--warn-ink);
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 13px;
-      margin-top: 10px;
-    }
-    .status { font-size: 13px; color: var(--muted); margin-top: 10px; white-space: pre-line; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trình phát MIDI SpessaSynth</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; }
+        #status { margin-bottom: 20px; color: #666; }
+        #playBtn { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>IPA Tool Helper (Chặng 1)</h1>
-      <p class="sub">Tìm ứng dụng hoặc dán link/ID App Store để lấy App ID, Bundle ID và chuẩn bị thao tác.</p>
 
-      <div class="row">
-        <input id="queryInput" class="grow" placeholder="Nhập tên app, App ID (VD: 389801252) hoặc link App Store..." />
-        <select id="countrySelect" title="Vùng App Store">
-          <option value="vn">VN</option>
-          <option value="us">US</option>
-        </select>
-        <button class="btn-p" id="btnSearch" onclick="handleLookupOrSearch()">Tra cứu</button>
-      </div>
+    <h2>Trình phát nhạc MIDI</h2>
+    <p id="status">Đang tải SoundFont...</p>
+    
+    <!-- Nút để chọn file MIDI từ máy -->
+    <input type="file" id="midi_input" accept=".mid, .rmi" disabled>
+    <br><br>
+    <button id="playBtn" disabled>Phát nhạc</button>
 
-      <div id="appResult"></div>
-      <div id="statusMsg" class="status">Sẵn sàng. Nhập từ khóa hoặc App ID/link rồi bấm Tra cứu.</div>
-    </div>
+    <script type="module">
+        // 1. Import các lớp cần thiết từ thư viện
+        import { Synthetizer } from 'https://cdn.jsdelivr.net/npm/spessasynth_lib@3.20.6/+esm';
+        import { Sequencer } from 'https://cdn.jsdelivr.net/npm/spessasynth_lib@3.20.6/+esm';
 
-    <div class="card">
-      <h3>Cấu hình Backend trung gian (Chặng 2–3)</h3>
-      <p class="sub">Hiện tại phần tra cứu metadata đã chạy trực tiếp; phần Thêm Đã mua &amp; Tải IPA cần nối API backend của bạn.</p>
-      <div class="row">
-        <input id="apiBaseInput" class="grow mono" placeholder="VD: https://api-cua-ban.example.com (để trống nếu chưa có)" oninput="saveApiBase()" />
-      </div>
+        const statusEl = document.getElementById('status');
+        const fileInput = document.getElementById('midi_input');
+        const playBtn = document.getElementById('playBtn');
 
-      <div class="grid-2">
-        <div class="box">
-          <h3>1. Thêm vào Đã mua</h3>
-          <div class="row">
-            <input id="bundlePurchaseInput" class="grow mono" placeholder="Bundle ID (tự điền khi tra cứu)" />
-            <button class="btn-s" onclick="callBackendAction('purchase')">Thêm Đã mua</button>
-          </div>
-        </div>
+        let synth;
+        let seq;
 
-        <div class="box">
-          <h3>2. Tải IPA theo Version ID</h3>
-          <div class="row" style="margin-bottom:8px;">
-            <input id="versionIdInput" class="grow mono" placeholder="Version ID (để trống = bản mới nhất)" />
-            <button class="btn-g" onclick="callBackendAction('versions')">Lấy Version</button>
-          </div>
-          <button class="btn-p" style="width:100%;" onclick="callBackendAction('download')">Tải IPA</button>
-        </div>
-      </div>
+        // 2. Hàm khởi tạo âm thanh
+        async function initAudio() {
+            try {
+                // Tải file SoundFont (SF2). Bạn có thể thay bằng file SF2 khác.
+                // Ví dụ này dùng một file SF2 mẫu có sẵn trên mạng.
+                const sfUrl = 'https://cdn.jsdelivr.net/gh/spessasus/SpessaSynth@master/src/website/soundfont.sf2';
+                const sfBuffer = await (await fetch(sfUrl)).arrayBuffer();
 
-      <div class="note">
-        <b>Lưu ý:</b> Trình duyệt tĩnh trên GitHub không tự đăng nhập Apple ID hay tải file .ipa gốc từ Apple nếu thiếu máy chủ/worker trung gian. Nên dùng <b>Apple ID phụ</b> khi thử nghiệm luồng đăng nhập.
-      </div>
-    </div>
-  </div>
+                // Tạo AudioContext (cần thiết cho Web Audio API)
+                const audioCtx = new AudioContext();
+                
+                // QUAN TRỌNG: Tải Worklet cho Synthetizer
+                // Đường dẫn này trỏ đến file xử lý âm thanh của thư viện
+                const workletUrl = 'https://cdn.jsdelivr.net/npm/spessasynth_lib@3.20.6/dist/spessasynth_processor.min.js';
+                await audioCtx.audioWorklet.addModule(workletUrl);
 
-  <script>
-    const API_KEY_STORAGE = 'ipatool_helper_api_base';
-    const apiInput = document.getElementById('apiBaseInput');
-    apiInput.value = localStorage.getItem(API_KEY_STORAGE) || '';
+                // Khởi tạo Synthetizer (bộ tổng hợp âm thanh)
+                synth = new Synthetizer(audioCtx.destination, sfBuffer);
 
-    function saveApiBase() {
-      localStorage.setItem(API_KEY_STORAGE, apiInput.value.trim());
-    }
-
-    function setStatus(msg) {
-      document.getElementById('statusMsg').textContent = msg;
-    }
-
-    function extractAppId(raw) {
-      const s = raw.trim();
-      if (/^\d+$/.test(s)) return s;
-      const m = s.match(/id(\d+)/i);
-      return m ? m[1] : null;
-    }
-
-    function jsonp(url) {
-      return new Promise((resolve, reject) => {
-        const cbName = '__itunes_cb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-        const script = document.createElement('script');
-        const timer = setTimeout(() => {
-          cleanup();
-          reject(new Error('Hết thời gian chờ phản hồi từ iTunes API'));
-        }, 10000);
-
-        function cleanup() {
-          clearTimeout(timer);
-          delete window[cbName];
-          if (script.parentNode) script.parentNode.removeChild(script);
+                statusEl.textContent = "Sẵn sàng! Hãy chọn một file MIDI.";
+                fileInput.disabled = false;
+                
+            } catch (error) {
+                statusEl.textContent = "Lỗi khi tải âm thanh: " + error.message;
+                console.error(error);
+            }
         }
 
-        window[cbName] = (data) => {
-          cleanup();
-          resolve(data);
-        };
+        // 3. Xử lý khi người dùng chọn file MIDI
+        fileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file || !synth) return;
 
-        const sep = url.includes('?') ? '&' : '?';
-        script.src = `${url}${sep}callback=${cbName}`;
-        script.onerror = () => {
-          cleanup();
-          reject(new Error('Không tải được dữ liệu từ iTunes API'));
-        };
-        document.body.appendChild(script);
-      });
-    }
+            statusEl.textContent = "Đang tải file MIDI...";
+            
+            // Đọc file MIDI
+            const midiBuffer = await file.arrayBuffer();
 
-    async function handleLookupOrSearch() {
-      const raw = document.getElementById('queryInput').value.trim();
-      const country = document.getElementById('countrySelect').value;
-      const out = document.getElementById('appResult');
+            // Khởi tạo Sequencer (bộ điều khiển phát nhạc) và kết nối với Synthetizer
+            seq = new Sequencer(midiBuffer, synth);
+            
+            statusEl.textContent = "Đã tải xong! Nhấn nút Phát nhạc.";
+            playBtn.disabled = false;
+        });
 
-      if (!raw) {
-        setStatus('Vui lòng nhập tên ứng dụng, App ID hoặc link App Store.');
-        return;
-      }
+        // 4. Xử lý nút Phát nhạc
+        playBtn.addEventListener('click', () => {
+            if (seq) {
+                // Bắt đầu phát
+                seq.play();
+                statusEl.textContent = "Đang phát nhạc...";
+                playBtn.disabled = true;
+            }
+        });
 
-      setStatus('Đang tra cứu thông tin...');
-      out.innerHTML = '';
-
-      try {
-        const appId = extractAppId(raw);
-        let data;
-        if (appId) {
-          data = await jsonp(`https://itunes.apple.com/lookup?id=${encodeURIComponent(appId)}&country=${encodeURIComponent(country)}`);
-        } else {
-          data = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(raw)}&entity=software&limit=5&country=${encodeURIComponent(country)}`);
-        }
-
-        const items = Array.isArray(data.results) ? data.results.filter(r => r.wrapperType === 'software' || r.trackId) : [];
-        if (!items.length) {
-          setStatus('Không tìm thấy ứng dụng phù hợp.');
-          return;
-        }
-
-        const first = items[0];
-        document.getElementById('bundlePurchaseInput').value = first.bundleId || '';
-
-        out.innerHTML = items.map(app => `
-          <div class="app-head">
-            <img class="app-icon" src="${app.artworkUrl100 || app.artworkUrl60 || ''}" alt="" />
-            <div>
-              <div><b>${escapeHtml(app.trackName || 'Không rõ tên')}</b> — <span class="mono">ID: ${app.trackId || '--'}</span></div>
-              <div class="meta">Bundle ID: <span class="mono">${escapeHtml(app.bundleId || '--')}</span> · Bản: ${escapeHtml(app.version || '--')} · iOS >= ${escapeHtml(app.minimumOsVersion || '--')}</div>
-              <div class="meta">NSX: ${escapeHtml(app.artistName || '--')} · Giá: ${app.formattedPrice || '--'}</div>
-            </div>
-          </div>
-        `).join('');
-
-        setStatus(`Đã tìm thấy ${items.length} kết quả. Bundle ID ưu tiên: ${first.bundleId || 'không có'}.`);
-      } catch (err) {
-        setStatus('Lỗi tra cứu: ' + err.message);
-      }
-    }
-
-    function callBackendAction(action) {
-      const base = apiInput.value.trim().replace(/\/+$/, '');
-      const rawQuery = document.getElementById('queryInput').value.trim();
-      const appId = extractAppId(rawQuery) || rawQuery;
-      const bundleId = document.getElementById('bundlePurchaseInput').value.trim();
-      const versionId = document.getElementById('versionIdInput').value.trim();
-
-      if (!base) {
-        setStatus(
-          `Chưa cấu hình Backend API nên chưa thực thi "${action}" được.\n` +
-          `Thông tin hiện có -> App/Input: "${appId || '--'}", Bundle ID: "${bundleId || '--'}", Version ID: "${versionId || '(mới nhất)'}".`
-        );
-        return;
-      }
-
-      setStatus(
-        `Đã chuẩn bị payload cho endpoint "${base}/api/${action}":\n` +
-        JSON.stringify({ appId, bundleId, versionId }, null, 2)
-      );
-    }
-
-    function escapeHtml(str) {
-      return String(str).replace(/[&<>"']/g, s => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-      }[s]));
-    }
-  </script>
+        // Khởi chạy
+        initAudio();
+    </script>
 </body>
 </html>
