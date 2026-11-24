@@ -2,93 +2,214 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trình phát MIDI SpessaSynth</title>
+    <title>Trình phát MIDI với SpessaSynth</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; }
-        #status { margin-bottom: 20px; color: #666; }
-        #playBtn { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        body {
+            font-family: sans-serif;
+            max-width: 650px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .nhom {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="file"] {
+            display: block;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        #trangThai {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
 
-    <h2>Trình phát nhạc MIDI</h2>
-    <p id="status">Đang tải SoundFont...</p>
-    
-    <!-- Nút để chọn file MIDI từ máy -->
-    <input type="file" id="midi_input" accept=".mid, .rmi" disabled>
-    <br><br>
-    <button id="playBtn" disabled>Phát nhạc</button>
+    <h2>Trình phát MIDI + SoundFont (.sf2)</h2>
+
+    <div class="nhom">
+        <label>1. Nạp SoundFont từ máy (.sf2 / .sf3 / .dls)</label>
+        <input type="file" id="sf2Input" accept=".sf2,.sf3,.sfogg,.dls">
+    </div>
+
+    <div class="nhom">
+        <label>2. Nạp file MIDI (.mid)</label>
+        <input type="file" id="midiInput" accept=".mid,.rmi,.xmf,.mxmf">
+    </div>
+
+    <div class="nhom">
+        <label>3. Điều khiển</label>
+        <button id="playBtn" disabled>Phát</button>
+        <button id="stopBtn" disabled>Dừng</button>
+    </div>
+
+    <div id="trangThai">Đang chờ nạp file...</div>
 
     <script type="module">
-        // 1. Import các lớp cần thiết từ thư viện
-        import { Synthetizer } from 'https://cdn.jsdelivr.net/npm/spessasynth_lib@3.20.6/+esm';
-        import { Sequencer } from 'https://cdn.jsdelivr.net/npm/spessasynth_lib@3.20.6/+esm';
+        // Import SpessaSynth từ CDN
+        import {
+            WorkletSynthesizer,
+            Sequencer
+        } from 'https://cdn.jsdelivr.net/npm/spessasynth_lib@4.4.0/dist/spessasynth_lib.min.js';
 
-        const statusEl = document.getElementById('status');
-        const fileInput = document.getElementById('midi_input');
+        // File xử lý AudioWorklet cũng phải lấy từ cùng CDN
+        const WORKLET_URL =
+            'https://cdn.jsdelivr.net/npm/spessasynth_lib@4.4.0/dist/spessasynth_processor.min.js';
+
+        let audioContext = null;
+        let synthesizer = null;
+        let sequencer = null;
+
+        const sf2Input = document.getElementById('sf2Input');
+        const midiInput = document.getElementById('midiInput');
         const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const trangThai = document.getElementById('trangThai');
 
-        let synth;
-        let seq;
+        function capNhatTrangThai(msg) {
+            trangThai.innerText = msg;
+        }
 
-        // 2. Hàm khởi tạo âm thanh
-        async function initAudio() {
-            try {
-                // Tải file SoundFont (SF2). Bạn có thể thay bằng file SF2 khác.
-                // Ví dụ này dùng một file SF2 mẫu có sẵn trên mạng.
-                const sfUrl = 'https://cdn.jsdelivr.net/gh/spessasus/SpessaSynth@master/src/website/soundfont.sf2';
-                const sfBuffer = await (await fetch(sfUrl)).arrayBuffer();
-
-                // Tạo AudioContext (cần thiết cho Web Audio API)
-                const audioCtx = new AudioContext();
-                
-                // QUAN TRỌNG: Tải Worklet cho Synthetizer
-                // Đường dẫn này trỏ đến file xử lý âm thanh của thư viện
-                const workletUrl = 'https://cdn.jsdelivr.net/npm/spessasynth_lib@3.20.6/dist/spessasynth_processor.min.js';
-                await audioCtx.audioWorklet.addModule(workletUrl);
-
-                // Khởi tạo Synthetizer (bộ tổng hợp âm thanh)
-                synth = new Synthetizer(audioCtx.destination, sfBuffer);
-
-                statusEl.textContent = "Sẵn sàng! Hãy chọn một file MIDI.";
-                fileInput.disabled = false;
-                
-            } catch (error) {
-                statusEl.textContent = "Lỗi khi tải âm thanh: " + error.message;
-                console.error(error);
+        function kiemTraSanSang() {
+            if (synthesizer && sequencer) {
+                playBtn.disabled = false;
+                stopBtn.disabled = false;
+            } else {
+                playBtn.disabled = true;
+                stopBtn.disabled = true;
             }
         }
 
-        // 3. Xử lý khi người dùng chọn file MIDI
-        fileInput.addEventListener('change', async (event) => {
-            const file = event.target.files[0];
-            if (!file || !synth) return;
+        // Nạp SoundFont từ máy
+        sf2Input.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-            statusEl.textContent = "Đang tải file MIDI...";
-            
-            // Đọc file MIDI
-            const midiBuffer = await file.arrayBuffer();
+            try {
+                capNhatTrangThai('Đang đọc file SoundFont...');
+                const arrayBuffer = await file.arrayBuffer();
 
-            // Khởi tạo Sequencer (bộ điều khiển phát nhạc) và kết nối với Synthetizer
-            seq = new Sequencer(midiBuffer, synth);
-            
-            statusEl.textContent = "Đã tải xong! Nhấn nút Phát nhạc.";
-            playBtn.disabled = false;
-        });
+                // Tạo AudioContext nếu chưa có
+                if (!audioContext) {
+                    audioContext = new AudioContext();
+                    await audioContext.audioWorklet.addModule(WORKLET_URL);
+                }
 
-        // 4. Xử lý nút Phát nhạc
-        playBtn.addEventListener('click', () => {
-            if (seq) {
-                // Bắt đầu phát
-                seq.play();
-                statusEl.textContent = "Đang phát nhạc...";
-                playBtn.disabled = true;
+                // Dừng sequencer cũ nếu có
+                if (sequencer) {
+                    sequencer.stop();
+                    sequencer = null;
+                }
+
+                // Ngắt synthesizer cũ nếu có
+                if (synthesizer) {
+                    try {
+                        synthesizer.disconnect();
+                    } catch (_) {}
+                }
+
+                // Tạo synthesizer mới
+                synthesizer = new WorkletSynthesizer(audioContext);
+
+                // Nạp SoundFont
+                await synthesizer.soundBankManager.addSoundBank(arrayBuffer, 'main');
+
+                // Chờ synthesizer sẵn sàng
+                if (synthesizer.isReady) {
+                    await synthesizer.isReady;
+                }
+
+                // Kết nối ra loa
+                synthesizer.connect(audioContext.destination);
+
+                capNhatTrangThai(`Đã nạp SoundFont: ${file.name}`);
+                kiemTraSanSang();
+            } catch (err) {
+                console.error(err);
+                capNhatTrangThai('Lỗi khi nạp SoundFont: ' + err.message);
             }
         });
 
-        // Khởi chạy
-        initAudio();
+        // Nạp file MIDI từ máy
+        midiInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!synthesizer) {
+                capNhatTrangThai('Vui lòng nạp SoundFont (.sf2) trước.');
+                return;
+            }
+
+            try {
+                capNhatTrangThai('Đang đọc file MIDI...');
+                const arrayBuffer = await file.arrayBuffer();
+
+                // Nếu đã có sequencer thì dừng lại
+                if (sequencer) {
+                    sequencer.stop();
+                }
+
+                // Tạo sequencer mới gắn với synthesizer hiện tại
+                sequencer = new Sequencer(synthesizer);
+
+                // Nạp MIDI
+                await sequencer.loadNewMIDI(arrayBuffer);
+
+                const thoiLuong =
+                    sequencer.duration !== undefined
+                        ? ` - Thời lượng: ${sequencer.duration.toFixed(1)} giây`
+                        : '';
+
+                capNhatTrangThai(`Đã nạp MIDI: ${file.name}${thoiLuong}`);
+                kiemTraSanSang();
+            } catch (err) {
+                console.error(err);
+                capNhatTrangThai('Lỗi khi nạp MIDI: ' + err.message);
+            }
+        });
+
+        // Phát MIDI
+        playBtn.addEventListener('click', async () => {
+            if (!sequencer) return;
+
+            try {
+                // Trình duyệt yêu cầu thao tác người dùng mới được phát audio
+                await audioContext.resume();
+
+                sequencer.play();
+                capNhatTrangThai('Đang phát MIDI...');
+            } catch (err) {
+                console.error(err);
+                capNhatTrangThai('Lỗi khi phát: ' + err.message);
+            }
+        });
+
+        // Dừng phát
+        stopBtn.addEventListener('click', () => {
+            if (!sequencer) return;
+
+            sequencer.stop();
+            sequencer.currentTime = 0;
+            capNhatTrangThai('Đã dừng.');
+        });
     </script>
 </body>
 </html>
