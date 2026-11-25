@@ -183,8 +183,7 @@
     </div>
 </div>
 
-<script>
-(function () {
+<script type="module">
     const sf2Input = document.getElementById("sf2Input");
     const midiInput = document.getElementById("midiInput");
     const sf2Status = document.getElementById("sf2Status");
@@ -200,19 +199,13 @@
     const speedSlider = document.getElementById("speedSlider");
     const speedVal = document.getElementById("speedVal");
 
-    const VERSION = "3.29.18";
-    const CDN_LIST = [
-        {
-            script: `https://cdn.jsdelivr.net/npm/spessasynth_lib@${VERSION}/dist/spessasynth_lib.min.js`,
-            worklet: `https://cdn.jsdelivr.net/npm/spessasynth_lib@${VERSION}/dist/spessasynth_processor.min.js`
-        },
-        {
-            script: `https://unpkg.com/spessasynth_lib@${VERSION}/dist/spessasynth_lib.min.js`,
-            worklet: `https://unpkg.com/spessasynth_lib@${VERSION}/dist/spessasynth_processor.min.js`
-        }
-    ];
+    const PKG_VERSION = "4.4.10";
+    const ESM_URL = `https://cdn.jsdelivr.net/npm/spessasynth_lib@${PKG_VERSION}/+esm`;
+    const WORKLET_URL = `https://cdn.jsdelivr.net/npm/spessasynth_lib@${PKG_VERSION}/dist/spessasynth_processor.min.js`;
 
-    let activeCdn = null;
+    let Synthetizer = null;
+    let Sequencer = null;
+    let workletAdded = false;
     let audioCtx = null;
     let synth = null;
     let seq = null;
@@ -225,51 +218,11 @@
         el.className = "status-badge" + (type === "ready" ? " ready" : "");
     }
 
-    function getGlobalClasses() {
-        const g = window.SpessaSynthLib || window;
-        const Synthetizer = g.Synthetizer || window.Synthetizer;
-        const Sequencer = g.Sequencer || window.Sequencer;
-        if (Synthetizer && Sequencer) {
-            return { Synthetizer, Sequencer };
-        }
-        return null;
-    }
-
-    function loadScriptTag(url) {
-        return new Promise((resolve, reject) => {
-            const s = document.createElement("script");
-            s.src = url;
-            s.async = true;
-            s.onload = () => resolve(true);
-            s.onerror = () => reject(new Error("Không tải được script: " + url));
-            document.head.appendChild(s);
-        });
-    }
-
-    async function ensureEngineScript() {
-        if (activeCdn && getGlobalClasses()) {
-            return activeCdn;
-        }
-        let lastError = null;
-        for (const cdn of CDN_LIST) {
-            try {
-                await loadScriptTag(cdn.script);
-                if (getGlobalClasses()) {
-                    activeCdn = cdn;
-                    return cdn;
-                }
-            } catch (err) {
-                lastError = err;
-            }
-        }
-        throw new Error(lastError ? lastError.message : "Không thể khởi tạo thư viện SpessaSynth");
-    }
-
-    async function initAudioEngine(sf2ArrayBuffer) {
-        const cdn = await ensureEngineScript();
-        const classes = getGlobalClasses();
-        if (!classes) {
-            throw new Error("Thiếu lớp Synthetizer hoặc Sequencer sau khi tải thư viện");
+    async function ensureEngine() {
+        if (!Synthetizer || !Sequencer) {
+            const mod = await import(ESM_URL);
+            Synthetizer = mod.Synthetizer;
+            Sequencer = mod.Sequencer;
         }
 
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -280,12 +233,14 @@
             await audioCtx.resume();
         }
 
-        await audioCtx.audioWorklet.addModule(cdn.worklet);
+        if (!workletAdded) {
+            await audioCtx.audioWorklet.addModule(WORKLET_URL);
+            workletAdded = true;
+        }
 
-        synth = new classes.Synthetizer(audioCtx.destination);
-        await synth.soundBankManager.addSoundBank(sf2ArrayBuffer, "main");
-        await synth.isReady;
-        sf2Loaded = true;
+        if (!synth) {
+            synth = new Synthetizer(audioCtx.destination);
+        }
     }
 
     function formatTime(sec) {
@@ -302,13 +257,10 @@
         setStatus(sf2Status, "Đang nạp SoundFont vào RAM...", "warn");
         try {
             const buffer = await file.arrayBuffer();
-            if (!synth) {
-                await initAudioEngine(buffer);
-            } else {
-                await synth.soundBankManager.addSoundBank(buffer, "main");
-                await synth.isReady;
-                sf2Loaded = true;
-            }
+            await ensureEngine();
+            await synth.soundBankManager.addSoundBank(buffer, "main");
+            await synth.isReady;
+            sf2Loaded = true;
             setStatus(sf2Status, `Đã nạp: ${file.name}`, "ready");
             checkReady();
         } catch (err) {
@@ -339,14 +291,10 @@
 
     function setupSequencer() {
         try {
-            const classes = getGlobalClasses();
-            if (!classes) {
-                throw new Error("Chưa khởi tạo được Sequencer");
-            }
             if (seq) {
                 seq.pause();
             }
-            seq = new classes.Sequencer([{ binary: midiBuffer }], synth);
+            seq = new Sequencer([{ binary: midiBuffer }], synth);
             seq.loop = false;
 
             seekBar.max = seq.duration || 100;
@@ -417,7 +365,6 @@
             seq.playbackRate = rate;
         }
     });
-})();
 </script>
 
 </body>
