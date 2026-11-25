@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trình phát MIDI Ổn định cho iPhone</title>
+    <title>Trình phát MIDI - HTML Midi Player</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
@@ -27,66 +27,67 @@
         }
         .file-label:active { background-color: #0056b3; }
 
-        /* Tùy chỉnh giao diện của html-midi-player cho đẹp hơn */
+        /* CSS cho thẻ midi-player và midi-visualizer */
         midi-player {
             width: 100%;
+            display: block;
             margin-top: 15px;
         }
-        midi-player::part(control-panel) {
-            background-color: #f8f9fa;
+
+        midi-visualizer {
+            display: block;
+            width: 100%;
+            height: 150px;
+            margin-top: 15px;
+            background: #f8f9fa;
             border-radius: 8px;
-            padding: 10px;
+            border: 1px solid #eee;
         }
     </style>
-    
-    <!-- Tải thư viện html-midi-player và Magenta (lõi xử lý âm thanh) -->
-    <script src="https://cdn.jsdelivr.net/npm/@magenta/music@^1.23.1/es6/core.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html-midi-player@^1.5.0/dist/html-midi-player.min.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>Trình phát MIDI</h1>
-        <p>Chọn tệp <strong>.mid</strong> để phát trực tiếp.</p>
+        <p>Chọn tệp <strong>.mid</strong> để phát.</p>
 
         <div class="file-input-wrapper">
             <input type="file" id="midiFileInput" accept=".mid,.midi,audio/midi,audio/x-midi">
             <label for="midiFileInput" class="file-label" id="fileLabel">Chọn tệp MIDI</label>
         </div>
 
-        <!-- Thẻ midi-player tự động tạo giao diện phát nhạc. Thuộc tính sound-font sẽ tự tải âm thanh chuẩn -->
-        <midi-player 
-            id="player" 
-            sound-font 
-            visualizer="#myVisualizer">
-        </midi-player>
+        <!-- Thẻ phát nhạc -->
+        <midi-player id="player" sound-font></midi-player>
 
-        <!-- Trình hiển thị nốt nhạc (Piano roll) - Tùy chọn -->
+        <!-- Trình hiển thị nốt nhạc -->
         <midi-visualizer type="piano-roll" id="myVisualizer"></midi-visualizer>
     </div>
+
+    <!-- Tải thư viện qua unpkg để tránh bị chặn mạng (Viettel) -->
+    <script src="https://unpkg.com/@magenta/music@^1.23.1/es6/core.js"></script>
+    <script src="https://unpkg.com/html-midi-player@^1.5.0/dist/html-midi-player.min.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const fileInput = document.getElementById('midiFileInput');
             const fileLabel = document.getElementById('fileLabel');
             const player = document.getElementById('player');
+            const visualizer = document.getElementById('myVisualizer');
 
             fileInput.addEventListener('change', function(event) {
                 const file = event.target.files[0];
                 if (!file) return;
 
-                // Cập nhật tên tệp trên nút bấm
+                // Hiển thị tên tệp
                 fileLabel.textContent = file.name;
 
-                // Tạo một đường dẫn ảo (Blob URL) từ tệp cục bộ để trình phát có thể đọc được
+                // Tạo URL từ file cục bộ
                 const fileUrl = URL.createObjectURL(file);
                 
-                // Gán nguồn cho trình phát
-                player.src = fileUrl;
+                // Kết nối visualizer với player (quan trọng để hiển thị nốt nhạc)
+                player.visualizer = visualizer;
                 
-                // Tự động cuộn xuống để thấy nút Play
-                setTimeout(() => {
-                    player.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300);
+                // Gán nguồn phát
+                player.src = fileUrl;
             });
         });
     </script>
