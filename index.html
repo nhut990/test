@@ -2,369 +2,661 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MIDI SoundFont Player</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IPA File Explorer</title>
+    <!-- Thư viện JSZip đọc file .ipa trực tiếp trên trình duyệt -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
-            --bg: #121212;
-            --card: #1e1e1e;
-            --primary: #00e676;
-            --primary-hover: #00c853;
-            --text: #ffffff;
-            --text-muted: #aaaaaa;
-            --border: #333333;
+            --bg-color: #f2f2f7;
+            --card-bg: #ffffff;
+            --text-primary: #000000;
+            --text-secondary: #8e8e93;
+            --accent-color: #007aff;
+            --border-color: #e5e5ea;
+            --hover-bg: #f9f9fb;
         }
+
         * {
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        body {
-            background-color: var(--bg);
-            color: var(--text);
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            padding-bottom: 30px;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
             display: flex;
-            justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         }
-        .player-container {
-            background: var(--card);
-            width: 100%;
-            max-width: 550px;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-            border: 1px solid var(--border);
-        }
-        h2 {
-            margin: 0 0 20px 0;
-            font-size: 1.4rem;
-            text-align: center;
-            color: var(--primary);
-        }
-        .file-group {
-            margin-bottom: 16px;
-            background: #262626;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px dashed #444;
-        }
-        .file-group label {
-            display: block;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-bottom: 6px;
+
+        header h1 {
+            font-size: 18px;
             font-weight: 600;
         }
-        input[type="file"] {
-            width: 100%;
-            color: var(--text);
-            font-size: 0.9rem;
-        }
-        .status-badge {
-            display: inline-block;
-            margin-top: 8px;
-            font-size: 0.82rem;
-            padding: 4px 8px;
-            border-radius: 5px;
-            background: #333;
-            color: #ffd54f;
-            word-break: break-word;
-            line-height: 1.35;
-        }
-        .status-badge.ready {
-            background: rgba(0, 230, 118, 0.15);
-            color: var(--primary);
-        }
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-            background: #333;
+
+        .btn-upload {
+            background-color: var(--accent-color);
             color: #fff;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
-        button:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
+
+        .btn-upload:active {
+            opacity: 0.8;
         }
-        button.btn-play {
-            background: var(--primary);
-            color: #000;
+
+        input[type="file"] {
+            display: none;
         }
-        button.btn-play:hover:not(:disabled) {
-            background: var(--primary-hover);
+
+        .container {
+            max-width: 800px;
+            margin: 16px auto;
+            padding: 0 12px;
         }
-        button:hover:not(:disabled):not(.btn-play) {
-            background: #444;
+
+        /* Vùng chọn file ban đầu */
+        .drop-zone {
+            background-color: var(--card-bg);
+            border: 2px dashed #c7c7cc;
+            border-radius: 14px;
+            padding: 40px 20px;
+            text-align: center;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
         }
-        .progress-container {
-            margin-bottom: 20px;
+
+        .drop-zone.dragover {
+            border-color: var(--accent-color);
+            background-color: rgba(0, 122, 255, 0.05);
         }
-        .time-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            color: var(--text-muted);
+
+        .drop-zone-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .drop-zone-title {
+            font-size: 16px;
+            font-weight: 600;
             margin-bottom: 6px;
         }
-        input[type="range"] {
-            width: 100%;
-            accent-color: var(--primary);
+
+        .drop-zone-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Thanh đường dẫn (Breadcrumb) */
+        .toolbar {
+            background-color: var(--card-bg);
+            border-radius: 12px 12px 0 0;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .btn-back {
+            background: #e5e5ea;
+            border: none;
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .btn-back:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+
+        .breadcrumb {
+            font-size: 14px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .breadcrumb span {
+            cursor: pointer;
+            color: var(--accent-color);
+            font-weight: 500;
+        }
+
+        .breadcrumb span.current {
+            color: var(--text-primary);
+            cursor: default;
+        }
+
+        /* Danh sách thư mục & tệp */
+        .file-list {
+            background-color: var(--card-bg);
+            border-radius: 0 0 12px 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.15s;
+            gap: 12px;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-item.folder {
             cursor: pointer;
         }
-        .sliders-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            background: #262626;
-            padding: 14px;
-            border-radius: 10px;
+
+        .file-item.folder:active, .file-item:hover {
+            background-color: var(--hover-bg);
         }
-        .slider-box label {
+
+        .item-icon {
+            font-size: 24px;
+            width: 30px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-name {
+            font-size: 15px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 3px;
+        }
+
+        .item-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-action {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-download {
+            background-color: rgba(0, 122, 255, 0.12);
+            color: var(--accent-color);
+        }
+
+        .btn-download:active {
+            background-color: rgba(0, 122, 255, 0.25);
+        }
+
+        .btn-view {
+            background-color: #e5e5ea;
+            color: var(--text-primary);
+        }
+
+        .status-bar {
+            text-align: center;
+            padding: 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Modal xem trước file text/plist/json */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 700px;
+            max-height: 85vh;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 5px;
+            align-items: center;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .modal-body {
+            padding: 16px;
+            overflow: auto;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            background: #fafafa;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
 <body>
 
-<div class="player-container">
-    <h2>🎹 MIDI SoundFont Player</h2>
+<header>
+    <h1>📦 IPA File Manager</h1>
+    <label class="btn-upload" for="ipaInput">
+        <span>Chọn tệp .IPA</span>
+    </label>
+    <input type="file" id="ipaInput" accept=".ipa,.zip,application/octet-stream">
+</header>
 
-    <div class="file-group">
-        <label>1. Chọn file SoundFont (.sf2 / .sf3)</label>
-        <input type="file" id="sf2Input" accept=".sf2,.sf3">
-        <div id="sf2Status" class="status-badge">Chưa nạp SoundFont</div>
+<div class="container">
+    <!-- Màn hình chờ chọn file -->
+    <div id="dropZone" class="drop-zone">
+        <div class="drop-zone-icon">📲</div>
+        <div class="drop-zone-title">Chọn hoặc kéo thả tệp .ipa vào đây</div>
+        <div class="drop-zone-desc">Mở cấu trúc thư mục bên trong và trích xuất bất kỳ tệp nào về máy</div>
     </div>
 
-    <div class="file-group">
-        <label>2. Chọn file nhạc MIDI (.mid / .midi)</label>
-        <input type="file" id="midiInput" accept=".mid,.midi">
-        <div id="midiStatus" class="status-badge">Chưa có file MIDI</div>
-    </div>
-
-    <div class="progress-container">
-        <div class="time-info">
-            <span id="currentTime">00:00</span>
-            <span id="totalTime">00:00</span>
+    <!-- Giao diện trình quản lý tệp -->
+    <div id="explorerContainer" class="hidden">
+        <div class="toolbar">
+            <button id="btnBack" class="btn-back" disabled>⬅ Quay lại</button>
+            <div id="breadcrumb" class="breadcrumb"></div>
         </div>
-        <input type="range" id="seekBar" value="0" min="0" max="100" step="0.1" disabled>
+        <div id="fileList" class="file-list"></div>
+        <div id="statusBar" class="status-bar"></div>
     </div>
+</div>
 
-    <div class="controls">
-        <button id="playBtn" class="btn-play" disabled>▶ Phát</button>
-        <button id="pauseBtn" disabled>⏸ Tạm dừng</button>
-        <button id="stopBtn" disabled>⏹ Dừng</button>
-    </div>
-
-    <div class="sliders-grid">
-        <div class="slider-box">
-            <label>Âm lượng <span id="volVal">100%</span></label>
-            <input type="range" id="volSlider" min="0" max="200" value="100">
+<!-- Modal xem nhanh nội dung file văn bản / XML -->
+<div id="previewModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span id="modalTitle">Xem tệp</span>
+            <button class="btn-action btn-view" onclick="closeModal()">Đóng</button>
         </div>
-        <div class="slider-box">
-            <label>Tốc độ (Tempo) <span id="speedVal">1.0x</span></label>
-            <input type="range" id="speedSlider" min="0.5" max="1.5" step="0.05" value="1.0">
+        <div id="modalBody" class="modal-body"></div>
+        <div class="modal-footer">
+            <button id="modalDownloadBtn" class="btn-action btn-download">Tải tệp này về máy</button>
         </div>
     </div>
 </div>
 
-<script type="module">
-    const sf2Input = document.getElementById("sf2Input");
-    const midiInput = document.getElementById("midiInput");
-    const sf2Status = document.getElementById("sf2Status");
-    const midiStatus = document.getElementById("midiStatus");
-    const playBtn = document.getElementById("playBtn");
-    const pauseBtn = document.getElementById("pauseBtn");
-    const stopBtn = document.getElementById("stopBtn");
-    const seekBar = document.getElementById("seekBar");
-    const currentTimeEl = document.getElementById("currentTime");
-    const totalTimeEl = document.getElementById("totalTime");
-    const volSlider = document.getElementById("volSlider");
-    const volVal = document.getElementById("volVal");
-    const speedSlider = document.getElementById("speedSlider");
-    const speedVal = document.getElementById("speedVal");
+<script>
+    let currentZip = null;
+    let currentPath = "";
+    let ipaFileName = "";
+    // Cấu trúc cây thư mục: { "Payload/": { folders: Set, files: [] } }
+    let fileTree = {};
 
-    const PKG_VERSION = "4.4.10";
-    const ESM_URL = `https://cdn.jsdelivr.net/npm/spessasynth_lib@${PKG_VERSION}/+esm`;
-    const WORKLET_URL = `https://cdn.jsdelivr.net/npm/spessasynth_lib@${PKG_VERSION}/dist/spessasynth_processor.min.js`;
+    const ipaInput = document.getElementById('ipaInput');
+    const dropZone = document.getElementById('dropZone');
+    const explorerContainer = document.getElementById('explorerContainer');
+    const fileListEl = document.getElementById('fileList');
+    const breadcrumbEl = document.getElementById('breadcrumb');
+    const btnBack = document.getElementById('btnBack');
+    const statusBar = document.getElementById('statusBar');
 
-    let Synthetizer = null;
-    let Sequencer = null;
-    let workletAdded = false;
-    let audioCtx = null;
-    let synth = null;
-    let seq = null;
-    let sf2Loaded = false;
-    let midiBuffer = null;
-    let updateTimer = null;
-
-    function setStatus(el, text, type = "warn") {
-        el.textContent = text;
-        el.className = "status-badge" + (type === "ready" ? " ready" : "");
-    }
-
-    async function ensureEngine() {
-        if (!Synthetizer || !Sequencer) {
-            const mod = await import(ESM_URL);
-            Synthetizer = mod.Synthetizer;
-            Sequencer = mod.Sequencer;
-        }
-
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!audioCtx) {
-            audioCtx = new AudioContextClass();
-        }
-        if (audioCtx.state === "suspended") {
-            await audioCtx.resume();
-        }
-
-        if (!workletAdded) {
-            await audioCtx.audioWorklet.addModule(WORKLET_URL);
-            workletAdded = true;
-        }
-
-        if (!synth) {
-            synth = new Synthetizer(audioCtx.destination);
-        }
-    }
-
-    function formatTime(sec) {
-        if (isNaN(sec) || sec < 0) return "00:00";
-        const m = Math.floor(sec / 60).toString().padStart(2, "0");
-        const s = Math.floor(sec % 60).toString().padStart(2, "0");
-        return `${m}:${s}`;
-    }
-
-    sf2Input.addEventListener("change", async (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-
-        setStatus(sf2Status, "Đang nạp SoundFont vào RAM...", "warn");
-        try {
-            const buffer = await file.arrayBuffer();
-            await ensureEngine();
-            await synth.soundBankManager.addSoundBank(buffer, "main");
-            await synth.isReady;
-            sf2Loaded = true;
-            setStatus(sf2Status, `Đã nạp: ${file.name}`, "ready");
-            checkReady();
-        } catch (err) {
-            sf2Loaded = false;
-            setStatus(sf2Status, `Lỗi nạp SF2: ${err && err.message ? err.message : err}`, "warn");
+    // Sự kiện chọn file
+    ipaInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            loadIpaFile(e.target.files[0]);
         }
     });
 
-    midiInput.addEventListener("change", async (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-
-        try {
-            midiBuffer = await file.arrayBuffer();
-            setStatus(midiStatus, `Đã chọn: ${file.name}`, "ready");
-            checkReady();
-        } catch (err) {
-            midiBuffer = null;
-            setStatus(midiStatus, `Lỗi đọc MIDI: ${err && err.message ? err.message : err}`, "warn");
+    // Sự kiện kéo thả
+    dropZone.addEventListener('click', () => ipaInput.click());
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            loadIpaFile(e.dataTransfer.files[0]);
         }
     });
 
-    function checkReady() {
-        if (sf2Loaded && midiBuffer) {
-            setupSequencer();
+    // Nút quay lại thư mục trước
+    btnBack.addEventListener('click', () => {
+        if (!currentPath) return;
+        const parts = currentPath.replace(/\/$/, '').split('/');
+        parts.pop();
+        const parentPath = parts.length > 0 ? parts.join('/') + '/' : '';
+        renderDirectory(parentPath);
+    });
+
+    // Đọc và phân tích cấu trúc file .ipa
+    async function loadIpaFile(file) {
+        ipaFileName = file.name;
+        dropZone.innerHTML = `<div class="drop-zone-icon">⏳</div><div class="drop-zone-title">Đang giải nén cấu trúc ${file.name}...</div>`;
+        
+        try {
+            const zip = await JSZip.loadAsync(file);
+            currentZip = zip;
+            buildFileTree(zip);
+
+            dropZone.classList.add('hidden');
+            explorerContainer.classList.remove('hidden');
+            renderDirectory("");
+        } catch (err) {
+            alert("Không thể đọc tệp này. Hãy đảm bảo đây là tệp .ipa hoặc .zip hợp lệ!\nChi tiết: " + err.message);
+            resetDropZone();
         }
     }
 
-    function setupSequencer() {
-        try {
-            if (seq) {
-                seq.pause();
+    function resetDropZone() {
+        dropZone.innerHTML = `
+            <div class="drop-zone-icon">📲</div>
+            <div class="drop-zone-title">Chọn hoặc kéo thả tệp .ipa vào đây</div>
+            <div class="drop-zone-desc">Mở cấu trúc thư mục bên trong và trích xuất bất kỳ tệp nào về máy</div>
+        `;
+    }
+
+    // Xây dựng cây thư mục từ danh sách đường dẫn phẳng của JSZip
+    function buildFileTree(zip) {
+        fileTree = { "": { folders: new Set(), files: [] } };
+
+        const ensureFolder = (folderPath) => {
+            if (!fileTree[folderPath]) {
+                fileTree[folderPath] = { folders: new Set(), files: [] };
             }
-            seq = new Sequencer([{ binary: midiBuffer }], synth);
-            seq.loop = false;
+        };
 
-            seekBar.max = seq.duration || 100;
-            seekBar.value = 0;
-            seekBar.disabled = false;
-            totalTimeEl.textContent = formatTime(seq.duration);
-            currentTimeEl.textContent = "00:00";
+        zip.forEach((relativePath, zipEntry) => {
+            const parts = relativePath.split('/').filter(p => p.length > 0);
+            let buildPath = "";
 
-            playBtn.disabled = false;
-            pauseBtn.disabled = false;
-            stopBtn.disabled = false;
-
-            playMidi();
-        } catch (err) {
-            setStatus(midiStatus, `Lỗi phát MIDI: ${err && err.message ? err.message : err}`, "warn");
-        }
-    }
-
-    function playMidi() {
-        if (!seq) return;
-        if (audioCtx && audioCtx.state === "suspended") {
-            audioCtx.resume();
-        }
-        seq.play();
-        clearInterval(updateTimer);
-        updateTimer = setInterval(() => {
-            if (seq && !seq.paused) {
-                seekBar.value = seq.currentTime;
-                currentTimeEl.textContent = formatTime(seq.currentTime);
+            // Tạo toàn bộ thư mục cha nếu trong zip không lưu entry thư mục rỗng
+            const folderDepth = zipEntry.dir ? parts.length : parts.length - 1;
+            for (let i = 0; i < folderDepth; i++) {
+                const parent = buildPath;
+                const folderName = parts[i];
+                buildPath += folderName + "/";
+                ensureFolder(parent);
+                ensureFolder(buildPath);
+                fileTree[parent].folders.add(folderName);
             }
-        }, 200);
+
+            // Nếu là tệp tin, thêm vào thư mục cha tương ứng
+            if (!zipEntry.dir) {
+                const fileName = parts[parts.length - 1];
+                ensureFolder(buildPath);
+                fileTree[buildPath].files.push({
+                    name: fileName,
+                    fullPath: relativePath,
+                    entry: zipEntry
+                });
+            }
+        });
     }
 
-    playBtn.addEventListener("click", playMidi);
+    // Hiển thị nội dung thư mục tại đường dẫn path
+    function renderDirectory(path) {
+        currentPath = path;
+        btnBack.disabled = (path === "");
+        renderBreadcrumb(path);
 
-    pauseBtn.addEventListener("click", () => {
-        if (seq) seq.pause();
-    });
+        const node = fileTree[path] || { folders: new Set(), files: [] };
+        const folders = Array.from(node.folders).sort((a, b) => a.localeCompare(b));
+        const files = node.files.sort((a, b) => a.name.localeCompare(b.name));
 
-    stopBtn.addEventListener("click", () => {
-        if (seq) {
-            seq.pause();
-            seq.currentTime = 0;
-            seekBar.value = 0;
-            currentTimeEl.textContent = "00:00";
+        fileListEl.innerHTML = "";
+
+        if (folders.length === 0 && files.length === 0) {
+            fileListEl.innerHTML = `<div style="padding: 30px; text-align: center; color: #8e8e93;">Thư mục trống</div>`;
         }
-    });
 
-    seekBar.addEventListener("input", () => {
-        if (seq) {
-            seq.currentTime = parseFloat(seekBar.value);
-            currentTimeEl.textContent = formatTime(seq.currentTime);
-        }
-    });
+        // 1. Render các thư mục trước
+        folders.forEach(folderName => {
+            const nextPath = path + folderName + "/";
+            const isAppBundle = folderName.endsWith('.app');
+            const icon = isAppBundle ? '📱' : '📁';
 
-    volSlider.addEventListener("input", () => {
-        const val = volSlider.value;
-        volVal.textContent = `${val}%`;
-        if (synth) {
-            synth.setMainVolume(val / 100);
-        }
-    });
+            const div = document.createElement('div');
+            div.className = 'file-item folder';
+            div.innerHTML = `
+                <div class="item-icon">${icon}</div>
+                <div class="item-info">
+                    <div class="item-name">${escapeHtml(folderName)}</div>
+                    <div class="item-meta">${isAppBundle ? 'Gói ứng dụng (.app)' : 'Thư mục'}</div>
+                </div>
+                <div style="color: #c7c7cc; font-size: 18px;">›</div>
+            `;
+            div.addEventListener('click', () => renderDirectory(nextPath));
+            fileListEl.appendChild(div);
+        });
 
-    speedSlider.addEventListener("input", () => {
-        const rate = parseFloat(speedSlider.value);
-        speedVal.textContent = `${rate.toFixed(2)}x`;
-        if (seq) {
-            seq.playbackRate = rate;
+        // 2. Render các tệp tin
+        files.forEach(fileObj => {
+            const rawSize = fileObj.entry._data ? fileObj.entry._data.uncompressedSize : 0;
+            const sizeStr = formatBytes(rawSize);
+            const icon = getFileIcon(fileObj.name);
+            const canPreview = isTextFile(fileObj.name) && rawSize < 1024 * 1024; // Xem trước file text < 1MB
+
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            div.innerHTML = `
+                <div class="item-icon">${icon}</div>
+                <div class="item-info">
+                    <div class="item-name">${escapeHtml(fileObj.name)}</div>
+                    <div class="item-meta">${sizeStr}</div>
+                </div>
+                <div class="item-actions">
+                    ${canPreview ? `<button class="btn-action btn-view" data-action="view">Xem</button>` : ''}
+                    <button class="btn-action btn-download" data-action="download">Tải về</button>
+                </div>
+            `;
+
+            // Gán sự kiện nút Tải về
+            div.querySelector('[data-action="download"]').addEventListener('click', (e) => {
+                e.stopPropagation();
+                downloadSingleFile(fileObj);
+            });
+
+            // Gán sự kiện nút Xem nhanh (nếu có)
+            const viewBtn = div.querySelector('[data-action="view"]');
+            if (viewBtn) {
+                viewBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    previewTextFile(fileObj);
+                });
+            }
+
+            fileListEl.appendChild(div);
+        });
+
+        statusBar.textContent = `${folders.length} thư mục, ${files.length} tệp`;
+    }
+
+    // Thanh điều hướng Breadcrumb
+    function renderBreadcrumb(path) {
+        breadcrumbEl.innerHTML = "";
+        
+        const rootSpan = document.createElement('span');
+        rootSpan.textContent = ipaFileName || "Gốc";
+        if (path === "") {
+            rootSpan.className = "current";
+        } else {
+            rootSpan.onclick = () => renderDirectory("");
         }
-    });
+        breadcrumbEl.appendChild(rootSpan);
+
+        if (!path) return;
+
+        const parts = path.split('/').filter(p => p.length > 0);
+        let accPath = "";
+        parts.forEach((part, idx) => {
+            const sep = document.createTextNode(" / ");
+            breadcrumbEl.appendChild(sep);
+
+            accPath += part + "/";
+            const targetPath = accPath;
+            const span = document.createElement('span');
+            span.textContent = part;
+
+            if (idx === parts.length - 1) {
+                span.className = "current";
+            } else {
+                span.onclick = () => renderDirectory(targetPath);
+            }
+            breadcrumbEl.appendChild(span);
+        });
+    }
+
+    // Trích xuất và tải 1 tệp bất kỳ về bộ nhớ máy
+    async function downloadSingleFile(fileObj) {
+        try {
+            const blob = await fileObj.entry.async("blob");
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileObj.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (err) {
+            alert("Lỗi khi tải tệp: " + err.message);
+        }
+    }
+
+    // Xem nhanh nội dung các tệp văn bản (Info.plist dạng XML, json, strings, txt...)
+    async function previewTextFile(fileObj) {
+        const modal = document.getElementById('previewModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const modalDownloadBtn = document.getElementById('modalDownloadBtn');
+
+        modalTitle.textContent = fileObj.name;
+        modalBody.textContent = "Đang tải nội dung...";
+        modal.classList.add('active');
+
+        modalDownloadBtn.onclick = () => downloadSingleFile(fileObj);
+
+        try {
+            const content = await fileObj.entry.async("string");
+            // Nếu là binary plist (bắt đầu bằng bplist00), báo cho người dùng biết
+            if (content.startsWith("bplist00")) {
+                modalBody.textContent = "[Tệp Binary Plist - Dữ liệu nhị phân]\nHãy bấm 'Tải tệp này về máy' để mở bằng trình đọc Plist chuyên dụng.";
+            } else {
+                modalBody.textContent = content;
+            }
+        } catch (err) {
+            modalBody.textContent = "Không thể đọc nội dung tệp: " + err.message;
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('previewModal').classList.remove('active');
+    }
+
+    // Tiện ích định dạng dung lượng
+    function formatBytes(bytes) {
+        if (!bytes || bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Tiện ích chọn icon theo đuôi tệp
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'icns'].includes(ext)) return '🖼️';
+        if (['plist', 'xml', 'json', 'strings'].includes(ext)) return '⚙️';
+        if (['dylib', 'framework', 'so', 'a'].includes(ext)) return '🧩';
+        if (['mp3', 'wav', 'm4a', 'caf', 'aac'].includes(ext)) return '🎵';
+        if (['mp4', 'mov'].includes(ext)) return '🎬';
+        if (['mobileprovision', 'cer', 'pem'].includes(ext)) return '📜';
+        if (['car'].includes(ext)) return '🎨';
+        return '📄';
+    }
+
+    function isTextFile(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        return ['plist', 'xml', 'json', 'txt', 'strings', 'md', 'html', 'js', 'css', 'entitlements'].includes(ext);
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>"']/g, m => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[m]));
+    }
 </script>
 
 </body>
