@@ -27,16 +27,15 @@
         <button id="stop_btn" disabled>⏹ Dừng</button>
     </div>
 
+    <!-- Tải thư viện stbvorbis.js để hỗ trợ giải mã âm thanh trên Safari/iOS -->
+    <script src="https://cdn.jsdelivr.net/npm/spessasynth_lib@4/dist/utils/stbvorbis.js"></script>
+
     <script type="module">
-        // 1. Import SpessaSynth từ CDN
         import { WorkletSynthesizer, Sequencer } from 'https://cdn.jsdelivr.net/npm/spessasynth_lib@4/+esm';
 
-        // 2. Cấu hình đường dẫn
         const WORKLET_URL = 'https://cdn.jsdelivr.net/npm/spessasynth_lib@4/dist/spessasynth_processor.min.js';
-        // Sử dụng GeneralUser GS SoundFont ổn định từ jsDelivr
         const SOUNDFONT_URL = 'https://cdn.jsdelivr.net/npm/generaluser@1.47.1/GeneralUser.sf2';
 
-        // 3. Lấy các phần tử DOM
         const statusEl = document.getElementById('status');
         const midiInput = document.getElementById('midi_input');
         const playBtn = document.getElementById('play_btn');
@@ -50,7 +49,6 @@
             statusEl.className = isError ? 'error' : '';
         }
 
-        // 4. Hàm khởi tạo chính
         async function init() {
             try {
                 updateStatus('Đang tải SoundFont...');
@@ -60,15 +58,14 @@
 
                 updateStatus('Đang khởi tạo Audio Engine...');
                 audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
-                
-                // Tải AudioWorklet processor
                 await audioContext.audioWorklet.addModule(WORKLET_URL);
 
-                // Khởi tạo Synthesizer
                 synth = new WorkletSynthesizer(audioContext);
                 await synth.soundBankManager.addSoundBank(sfBuffer, "main");
 
-                // Khởi tạo Sequencer và kết nối với Synthesizer
+                // ⭐️ BƯỚC QUAN TRỌNG: Kết nối đầu ra của synth với loa
+                synth.connect(audioContext.destination);
+
                 sequencer = new Sequencer(synth);
                 
                 isInitialized = true;
@@ -83,7 +80,6 @@
             }
         }
 
-        // 5. Xử lý sự kiện khi chọn tệp MIDI
         midiInput.addEventListener('change', async (event) => {
             const file = event.target.files[0];
             if (!file || !isInitialized) return;
@@ -91,21 +87,17 @@
             try {
                 updateStatus('Đang tải tệp MIDI...');
                 const midiBuffer = await file.arrayBuffer();
-                
-                // Nạp tệp MIDI vào sequencer
                 await sequencer.loadNewSongList([midiBuffer]);
                 updateStatus(`Đã tải: ${file.name}. Nhấn "Phát" để nghe.`);
-
             } catch (error) {
                 console.error("Lỗi tải MIDI:", error);
                 updateStatus(`Lỗi khi tải tệp MIDI: ${error.message}`, true);
             }
         });
 
-        // 6. Xử lý nút Phát (Đã tối ưu cho iOS Safari)
         playBtn.addEventListener('click', async () => {
             try {
-                // iOS yêu cầu AudioContext phải được resume thông qua thao tác người dùng
+                // ⭐️ Đảm bảo AudioContext được resume TRƯỚC khi phát trên iOS
                 if (audioContext.state === 'suspended') {
                     await audioContext.resume();
                 }
@@ -117,7 +109,6 @@
             }
         });
 
-        // 7. Xử lý nút Dừng
         stopBtn.addEventListener('click', () => {
             if (sequencer) {
                 sequencer.stop();
@@ -125,7 +116,6 @@
             }
         });
 
-        // Khởi chạy
         init();
     </script>
 </body>
