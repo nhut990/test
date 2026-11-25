@@ -14,7 +14,10 @@
             --text-muted: #aaaaaa;
             --border: #333333;
         }
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
         body {
             background-color: var(--bg);
             color: var(--text);
@@ -31,10 +34,15 @@
             max-width: 550px;
             border-radius: 16px;
             padding: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
             border: 1px solid var(--border);
         }
-        h2 { margin: 0 0 20px 0; font-size: 1.4rem; text-align: center; color: var(--primary); }
+        h2 {
+            margin: 0 0 20px 0;
+            font-size: 1.4rem;
+            text-align: center;
+            color: var(--primary);
+        }
         .file-group {
             margin-bottom: 16px;
             background: #262626;
@@ -49,19 +57,31 @@
             margin-bottom: 6px;
             font-weight: 600;
         }
-        input[type="file"] { width: 100%; color: var(--text); font-size: 0.9rem; }
+        input[type="file"] {
+            width: 100%;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
         .status-badge {
             display: inline-block;
-            margin-top: 6px;
-            font-size: 0.8rem;
-            padding: 3px 8px;
-            border-radius: 4px;
+            margin-top: 8px;
+            font-size: 0.82rem;
+            padding: 4px 8px;
+            border-radius: 5px;
             background: #333;
             color: #ffd54f;
             word-break: break-word;
+            line-height: 1.35;
         }
-        .status-badge.ready { background: rgba(0, 230, 118, 0.15); color: var(--primary); }
-        .controls { display: flex; gap: 10px; margin: 20px 0; }
+        .status-badge.ready {
+            background: rgba(0, 230, 118, 0.15);
+            color: var(--primary);
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
         button {
             flex: 1;
             padding: 12px;
@@ -72,13 +92,25 @@
             cursor: pointer;
             transition: 0.2s;
             background: #333;
-            color: white;
+            color: #fff;
         }
-        button:disabled { opacity: 0.4; cursor: not-allowed; }
-        button.btn-play { background: var(--primary); color: #000; }
-        button.btn-play:hover:not(:disabled) { background: var(--primary-hover); }
-        button:hover:not(:disabled):not(.btn-play) { background: #444; }
-        .progress-container { margin-bottom: 20px; }
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        button.btn-play {
+            background: var(--primary);
+            color: #000;
+        }
+        button.btn-play:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+        button:hover:not(:disabled):not(.btn-play) {
+            background: #444;
+        }
+        .progress-container {
+            margin-bottom: 20px;
+        }
         .time-info {
             display: flex;
             justify-content: space-between;
@@ -86,7 +118,11 @@
             color: var(--text-muted);
             margin-bottom: 6px;
         }
-        input[type="range"] { width: 100%; accent-color: var(--primary); cursor: pointer; }
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
         .sliders-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -147,7 +183,8 @@
     </div>
 </div>
 
-<script type="module">
+<script>
+(function () {
     const sf2Input = document.getElementById("sf2Input");
     const midiInput = document.getElementById("midiInput");
     const sf2Status = document.getElementById("sf2Status");
@@ -163,8 +200,19 @@
     const speedSlider = document.getElementById("speedSlider");
     const speedVal = document.getElementById("speedVal");
 
-    let Synthetizer = null;
-    let Sequencer = null;
+    const VERSION = "3.29.18";
+    const CDN_LIST = [
+        {
+            script: `https://cdn.jsdelivr.net/npm/spessasynth_lib@${VERSION}/dist/spessasynth_lib.min.js`,
+            worklet: `https://cdn.jsdelivr.net/npm/spessasynth_lib@${VERSION}/dist/spessasynth_processor.min.js`
+        },
+        {
+            script: `https://unpkg.com/spessasynth_lib@${VERSION}/dist/spessasynth_lib.min.js`,
+            worklet: `https://unpkg.com/spessasynth_lib@${VERSION}/dist/spessasynth_processor.min.js`
+        }
+    ];
+
+    let activeCdn = null;
     let audioCtx = null;
     let synth = null;
     let seq = null;
@@ -177,25 +225,64 @@
         el.className = "status-badge" + (type === "ready" ? " ready" : "");
     }
 
-    async function ensureLibLoaded() {
-        if (Synthetizer && Sequencer) return;
-        const mod = await import("https://esm.sh/spessasynth_lib@3.29.18");
-        Synthetizer = mod.Synthetizer;
-        Sequencer = mod.Sequencer;
+    function getGlobalClasses() {
+        const g = window.SpessaSynthLib || window;
+        const Synthetizer = g.Synthetizer || window.Synthetizer;
+        const Sequencer = g.Sequencer || window.Sequencer;
+        if (Synthetizer && Sequencer) {
+            return { Synthetizer, Sequencer };
+        }
+        return null;
+    }
+
+    function loadScriptTag(url) {
+        return new Promise((resolve, reject) => {
+            const s = document.createElement("script");
+            s.src = url;
+            s.async = true;
+            s.onload = () => resolve(true);
+            s.onerror = () => reject(new Error("Không tải được script: " + url));
+            document.head.appendChild(s);
+        });
+    }
+
+    async function ensureEngineScript() {
+        if (activeCdn && getGlobalClasses()) {
+            return activeCdn;
+        }
+        let lastError = null;
+        for (const cdn of CDN_LIST) {
+            try {
+                await loadScriptTag(cdn.script);
+                if (getGlobalClasses()) {
+                    activeCdn = cdn;
+                    return cdn;
+                }
+            } catch (err) {
+                lastError = err;
+            }
+        }
+        throw new Error(lastError ? lastError.message : "Không thể khởi tạo thư viện SpessaSynth");
     }
 
     async function initAudioEngine(sf2ArrayBuffer) {
-        await ensureLibLoaded();
+        const cdn = await ensureEngineScript();
+        const classes = getGlobalClasses();
+        if (!classes) {
+            throw new Error("Thiếu lớp Synthetizer hoặc Sequencer sau khi tải thư viện");
+        }
+
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            audioCtx = new AudioContextClass();
         }
         if (audioCtx.state === "suspended") {
             await audioCtx.resume();
         }
-        const workletUrl = "https://esm.sh/spessasynth_lib@3.29.18/dist/spessasynth_processor.min.js";
-        await audioCtx.audioWorklet.addModule(workletUrl);
 
-        synth = new Synthetizer(audioCtx.destination);
+        await audioCtx.audioWorklet.addModule(cdn.worklet);
+
+        synth = new classes.Synthetizer(audioCtx.destination);
         await synth.soundBankManager.addSoundBank(sf2ArrayBuffer, "main");
         await synth.isReady;
         sf2Loaded = true;
@@ -211,6 +298,7 @@
     sf2Input.addEventListener("change", async (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
+
         setStatus(sf2Status, "Đang nạp SoundFont vào RAM...", "warn");
         try {
             const buffer = await file.arrayBuffer();
@@ -225,20 +313,21 @@
             checkReady();
         } catch (err) {
             sf2Loaded = false;
-            setStatus(sf2Status, `Lỗi nạp SF2: ${err?.message || err}`, "warn");
+            setStatus(sf2Status, `Lỗi nạp SF2: ${err && err.message ? err.message : err}`, "warn");
         }
     });
 
     midiInput.addEventListener("change", async (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
+
         try {
             midiBuffer = await file.arrayBuffer();
             setStatus(midiStatus, `Đã chọn: ${file.name}`, "ready");
             checkReady();
         } catch (err) {
             midiBuffer = null;
-            setStatus(midiStatus, `Lỗi đọc MIDI: ${err?.message || err}`, "warn");
+            setStatus(midiStatus, `Lỗi đọc MIDI: ${err && err.message ? err.message : err}`, "warn");
         }
     });
 
@@ -250,26 +339,37 @@
 
     function setupSequencer() {
         try {
-            if (seq) seq.pause();
-            seq = new Sequencer([{ binary: midiBuffer }], synth);
+            const classes = getGlobalClasses();
+            if (!classes) {
+                throw new Error("Chưa khởi tạo được Sequencer");
+            }
+            if (seq) {
+                seq.pause();
+            }
+            seq = new classes.Sequencer([{ binary: midiBuffer }], synth);
             seq.loop = false;
+
             seekBar.max = seq.duration || 100;
             seekBar.value = 0;
             seekBar.disabled = false;
             totalTimeEl.textContent = formatTime(seq.duration);
             currentTimeEl.textContent = "00:00";
+
             playBtn.disabled = false;
             pauseBtn.disabled = false;
             stopBtn.disabled = false;
+
             playMidi();
         } catch (err) {
-            setStatus(midiStatus, `Lỗi phát MIDI: ${err?.message || err}`, "warn");
+            setStatus(midiStatus, `Lỗi phát MIDI: ${err && err.message ? err.message : err}`, "warn");
         }
     }
 
     function playMidi() {
         if (!seq) return;
-        if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+        if (audioCtx && audioCtx.state === "suspended") {
+            audioCtx.resume();
+        }
         seq.play();
         clearInterval(updateTimer);
         updateTimer = setInterval(() => {
@@ -281,7 +381,11 @@
     }
 
     playBtn.addEventListener("click", playMidi);
-    pauseBtn.addEventListener("click", () => { if (seq) seq.pause(); });
+
+    pauseBtn.addEventListener("click", () => {
+        if (seq) seq.pause();
+    });
+
     stopBtn.addEventListener("click", () => {
         if (seq) {
             seq.pause();
@@ -290,22 +394,30 @@
             currentTimeEl.textContent = "00:00";
         }
     });
+
     seekBar.addEventListener("input", () => {
         if (seq) {
             seq.currentTime = parseFloat(seekBar.value);
             currentTimeEl.textContent = formatTime(seq.currentTime);
         }
     });
+
     volSlider.addEventListener("input", () => {
         const val = volSlider.value;
         volVal.textContent = `${val}%`;
-        if (synth) synth.setMainVolume(val / 100);
+        if (synth) {
+            synth.setMainVolume(val / 100);
+        }
     });
+
     speedSlider.addEventListener("input", () => {
         const rate = parseFloat(speedSlider.value);
         speedVal.textContent = `${rate.toFixed(2)}x`;
-        if (seq) seq.playbackRate = rate;
+        if (seq) {
+            seq.playbackRate = rate;
+        }
     });
+})();
 </script>
 
 </body>
