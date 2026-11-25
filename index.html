@@ -1,13 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIDI SoundFont Player</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --primary: #00e676;
+            --primary-hover: #00c853;
+            --text: #ffffff;
+            --text-muted: #aaaaaa;
+            --border: #333333;
+        }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .player-container {
+            background: var(--card);
+            width: 100%;
+            max-width: 550px;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            border: 1px solid var(--border);
+        }
+        h2 { margin: 0 0 20px 0; font-size: 1.4rem; text-align: center; color: var(--primary); }
+        .file-group {
+            margin-bottom: 16px;
+            background: #262626;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px dashed #444;
+        }
+        .file-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        input[type="file"] { width: 100%; color: var(--text); font-size: 0.9rem; }
+        .status-badge {
+            display: inline-block;
+            margin-top: 6px;
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: #333;
+            color: #ffd54f;
+            word-break: break-word;
+        }
+        .status-badge.ready { background: rgba(0, 230, 118, 0.15); color: var(--primary); }
+        .controls { display: flex; gap: 10px; margin: 20px 0; }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #333;
+            color: white;
+        }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        button.btn-play { background: var(--primary); color: #000; }
+        button.btn-play:hover:not(:disabled) { background: var(--primary-hover); }
+        button:hover:not(:disabled):not(.btn-play) { background: #444; }
+        .progress-container { margin-bottom: 20px; }
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        input[type="range"] { width: 100%; accent-color: var(--primary); cursor: pointer; }
+        .sliders-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background: #262626;
+            padding: 14px;
+            border-radius: 10px;
+        }
+        .slider-box label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="player-container">
+    <h2>🎹 MIDI SoundFont Player</h2>
+
+    <div class="file-group">
+        <label>1. Chọn file SoundFont (.sf2 / .sf3)</label>
+        <input type="file" id="sf2Input" accept=".sf2,.sf3">
+        <div id="sf2Status" class="status-badge">Chưa nạp SoundFont</div>
+    </div>
+
+    <div class="file-group">
+        <label>2. Chọn file nhạc MIDI (.mid / .midi)</label>
+        <input type="file" id="midiInput" accept=".mid,.midi">
+        <div id="midiStatus" class="status-badge">Chưa có file MIDI</div>
+    </div>
+
+    <div class="progress-container">
+        <div class="time-info">
+            <span id="currentTime">00:00</span>
+            <span id="totalTime">00:00</span>
+        </div>
+        <input type="range" id="seekBar" value="0" min="0" max="100" step="0.1" disabled>
+    </div>
+
+    <div class="controls">
+        <button id="playBtn" class="btn-play" disabled>▶ Phát</button>
+        <button id="pauseBtn" disabled>⏸ Tạm dừng</button>
+        <button id="stopBtn" disabled>⏹ Dừng</button>
+    </div>
+
+    <div class="sliders-grid">
+        <div class="slider-box">
+            <label>Âm lượng <span id="volVal">100%</span></label>
+            <input type="range" id="volSlider" min="0" max="200" value="100">
+        </div>
+        <div class="slider-box">
+            <label>Tốc độ (Tempo) <span id="speedVal">1.0x</span></label>
+            <input type="range" id="speedSlider" min="0.5" max="1.5" step="0.05" value="1.0">
+        </div>
+    </div>
+</div>
+
 <script type="module">
-    import { Synthetizer, Sequencer } from "https://cdn.jsdelivr.net/npm/spessasynth_lib@3.29.18/+esm";
-
-    let audioCtx = null;
-    let synth = null;
-    let seq = null;
-    let sf2Loaded = false;
-    let midiBuffer = null;
-    let updateTimer = null;
-
     const sf2Input = document.getElementById("sf2Input");
     const midiInput = document.getElementById("midiInput");
     const sf2Status = document.getElementById("sf2Status");
@@ -23,20 +163,36 @@
     const speedSlider = document.getElementById("speedSlider");
     const speedVal = document.getElementById("speedVal");
 
+    let Synthetizer = null;
+    let Sequencer = null;
+    let audioCtx = null;
+    let synth = null;
+    let seq = null;
+    let sf2Loaded = false;
+    let midiBuffer = null;
+    let updateTimer = null;
+
     function setStatus(el, text, type = "warn") {
         el.textContent = text;
         el.className = "status-badge" + (type === "ready" ? " ready" : "");
     }
 
+    async function ensureLibLoaded() {
+        if (Synthetizer && Sequencer) return;
+        const mod = await import("https://esm.sh/spessasynth_lib@3.29.18");
+        Synthetizer = mod.Synthetizer;
+        Sequencer = mod.Sequencer;
+    }
+
     async function initAudioEngine(sf2ArrayBuffer) {
+        await ensureLibLoaded();
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
         if (audioCtx.state === "suspended") {
             await audioCtx.resume();
         }
-
-        const workletUrl = "https://cdn.jsdelivr.net/npm/spessasynth_lib@3.29.18/dist/spessasynth_processor.min.js";
+        const workletUrl = "https://esm.sh/spessasynth_lib@3.29.18/dist/spessasynth_processor.min.js";
         await audioCtx.audioWorklet.addModule(workletUrl);
 
         synth = new Synthetizer(audioCtx.destination);
@@ -55,9 +211,7 @@
     sf2Input.addEventListener("change", async (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
-
         setStatus(sf2Status, "Đang nạp SoundFont vào RAM...", "warn");
-
         try {
             const buffer = await file.arrayBuffer();
             if (!synth) {
@@ -70,7 +224,6 @@
             setStatus(sf2Status, `Đã nạp: ${file.name}`, "ready");
             checkReady();
         } catch (err) {
-            console.error(err);
             sf2Loaded = false;
             setStatus(sf2Status, `Lỗi nạp SF2: ${err?.message || err}`, "warn");
         }
@@ -79,13 +232,11 @@
     midiInput.addEventListener("change", async (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
-
         try {
             midiBuffer = await file.arrayBuffer();
             setStatus(midiStatus, `Đã chọn: ${file.name}`, "ready");
             checkReady();
         } catch (err) {
-            console.error(err);
             midiBuffer = null;
             setStatus(midiStatus, `Lỗi đọc MIDI: ${err?.message || err}`, "warn");
         }
@@ -99,25 +250,19 @@
 
     function setupSequencer() {
         try {
-            if (seq) {
-                seq.pause();
-            }
+            if (seq) seq.pause();
             seq = new Sequencer([{ binary: midiBuffer }], synth);
             seq.loop = false;
-
             seekBar.max = seq.duration || 100;
             seekBar.value = 0;
             seekBar.disabled = false;
             totalTimeEl.textContent = formatTime(seq.duration);
             currentTimeEl.textContent = "00:00";
-
             playBtn.disabled = false;
             pauseBtn.disabled = false;
             stopBtn.disabled = false;
-
             playMidi();
         } catch (err) {
-            console.error(err);
             setStatus(midiStatus, `Lỗi phát MIDI: ${err?.message || err}`, "warn");
         }
     }
@@ -126,10 +271,6 @@
         if (!seq) return;
         if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
         seq.play();
-        startProgressLoop();
-    }
-
-    function startProgressLoop() {
         clearInterval(updateTimer);
         updateTimer = setInterval(() => {
             if (seq && !seq.paused) {
@@ -140,11 +281,7 @@
     }
 
     playBtn.addEventListener("click", playMidi);
-
-    pauseBtn.addEventListener("click", () => {
-        if (seq) seq.pause();
-    });
-
+    pauseBtn.addEventListener("click", () => { if (seq) seq.pause(); });
     stopBtn.addEventListener("click", () => {
         if (seq) {
             seq.pause();
@@ -153,27 +290,23 @@
             currentTimeEl.textContent = "00:00";
         }
     });
-
     seekBar.addEventListener("input", () => {
         if (seq) {
             seq.currentTime = parseFloat(seekBar.value);
             currentTimeEl.textContent = formatTime(seq.currentTime);
         }
     });
-
     volSlider.addEventListener("input", () => {
         const val = volSlider.value;
         volVal.textContent = `${val}%`;
-        if (synth) {
-            synth.setMainVolume(val / 100);
-        }
+        if (synth) synth.setMainVolume(val / 100);
     });
-
     speedSlider.addEventListener("input", () => {
         const rate = parseFloat(speedSlider.value);
         speedVal.textContent = `${rate.toFixed(2)}x`;
-        if (seq) {
-            seq.playbackRate = rate;
-        }
+        if (seq) seq.playbackRate = rate;
     });
 </script>
+
+</body>
+</html>
