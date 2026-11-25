@@ -57,7 +57,8 @@
                 const sfBuffer = await sfResponse.arrayBuffer();
 
                 updateStatus('Đang khởi tạo Audio Engine...');
-                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
+                // ⭐️ Không ép buộc sampleRate để tránh lỗi xung đột phần cứng trên iOS
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 await audioContext.audioWorklet.addModule(WORKLET_URL);
 
                 synth = new WorkletSynthesizer(audioContext);
@@ -97,7 +98,7 @@
 
         playBtn.addEventListener('click', async () => {
             try {
-                // ⭐️ BƯỚC 1: Kích hoạt phiên âm thanh Playback cho iOS 17+
+                // 1. Kích hoạt phiên âm thanh Playback cho iOS 17+
                 if (navigator.audioSession) {
                     try {
                         if (navigator.audioSession.type !== "playback") {
@@ -108,22 +109,27 @@
                     }
                 }
 
-                // Resume AudioContext
+                // 2. Resume AudioContext
                 if (audioContext.state === 'suspended') {
                     await audioContext.resume();
                 }
 
-                // ⭐️ BƯỚC 2: Đánh thức AudioWorklet trên iOS (phát 1 âm thanh cực ngắn)
+                // 3. Đánh thức AudioWorklet bằng một xung âm thanh thực tế (không phải silence)
                 const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < data.length; i++) {
+                    // Tạo một tần số cực nhỏ, biên độ thấp để không gây tiếng ồn nhưng đủ đánh thức iOS
+                    data[i] = Math.sin(i * 0.1) * 0.001; 
+                }
                 const source = audioContext.createBufferSource();
                 source.buffer = buffer;
                 source.connect(audioContext.destination);
                 source.start(0);
 
-                // Đợi một chút để phần cứng âm thanh được đánh thức
-                await new Promise(resolve => setTimeout(resolve, 100));
+                // 4. Đợi phần cứng âm thanh khởi động
+                await new Promise(resolve => setTimeout(resolve, 150));
 
-                // ⭐️ BƯỚC 3: Phát nhạc
+                // 5. Phát nhạc
                 sequencer.play();
                 updateStatus('Đang phát...');
             } catch (error) {
