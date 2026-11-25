@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trình phát MIDI - HTML Midi Player</title>
+    <title>Trình phát MIDI - SpessaSynth</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
@@ -27,68 +27,214 @@
         }
         .file-label:active { background-color: #0056b3; }
 
-        /* CSS cho thẻ midi-player và midi-visualizer */
-        midi-player {
-            width: 100%;
-            display: block;
-            margin-top: 15px;
+        .controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px; }
+        button {
+            background-color: #e0e0e0; border: none; color: #333; padding: 12px 20px;
+            border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer;
+            transition: background-color 0.2s; flex: 1 1 auto; min-width: 80px;
+        }
+        button:active { background-color: #c0c0c0; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        #playBtn { background-color: #34c759; color: white; }
+        #playBtn:active { background-color: #28a745; }
+        #stopBtn { background-color: #ff3b30; color: white; }
+        #stopBtn:active { background-color: #d32f2f; }
+
+        .volume-control {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 15px;
+            font-size: 0.9rem; color: #555;
+        }
+        input[type="range"] {
+            flex-grow: 1; -webkit-appearance: none; height: 6px; background: #ddd; border-radius: 3px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 20px; height: 20px; background: #007aff;
+            border-radius: 50%; cursor: pointer;
         }
 
-        midi-visualizer {
-            display: block;
-            width: 100%;
-            height: 150px;
-            margin-top: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #eee;
-        }
+        .status { margin-top: 15px; font-size: 0.85rem; color: #888; min-height: 1.2em; }
+        .note { margin-top: 20px; font-size: 0.8rem; color: #999; border-top: 1px solid #eee; padding-top: 16px; text-align: left; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Trình phát MIDI</h1>
-        <p>Chọn tệp <strong>.mid</strong> để phát.</p>
+        <p>Chọn tệp <strong>.mid</strong> để phát với chất lượng âm thanh cao.</p>
 
         <div class="file-input-wrapper">
             <input type="file" id="midiFileInput" accept=".mid,.midi,audio/midi,audio/x-midi">
             <label for="midiFileInput" class="file-label" id="fileLabel">Chọn tệp MIDI</label>
         </div>
 
-        <!-- Thẻ phát nhạc -->
-        <midi-player id="player" sound-font></midi-player>
+        <div class="controls">
+            <button id="playBtn" disabled>Phát</button>
+            <button id="pauseBtn" disabled>Tạm dừng</button>
+            <button id="stopBtn" disabled>Dừng</button>
+        </div>
 
-        <!-- Trình hiển thị nốt nhạc -->
-        <midi-visualizer type="piano-roll" id="myVisualizer"></midi-visualizer>
+        <div class="volume-control">
+            <span>Âm lượng</span>
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8">
+        </div>
+
+        <div class="status" id="status">Đang tải thư viện...</div>
+
+        <div class="note">
+            <strong>Lưu ý cho iPhone:</strong> Bạn cần nhấn vào nút "Chọn tệp MIDI" hoặc nút "Phát" để cấp quyền phát âm thanh. Quá trình tải âm thanh (SoundFont) lần đầu có thể mất vài giây.
+        </div>
     </div>
 
-    <!-- Tải thư viện qua unpkg để tránh bị chặn mạng (Viettel) -->
-    <script src="https://unpkg.com/@magenta/music@^1.23.1/es6/core.js"></script>
-    <script src="https://unpkg.com/html-midi-player@^1.5.0/dist/html-midi-player.min.js"></script>
+    <!-- Sử dụng ES Module và CDN unpkg -->
+    <script type="module">
+        import { Synthetizer } from 'https://unpkg.com/spessasynth_lib@4.4.7/synthetizer/synthetizer.js';
+        import { Sequencer } from 'https://unpkg.com/spessasynth_lib@4.4.7/sequencer/sequencer.js';
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const fileInput = document.getElementById('midiFileInput');
-            const fileLabel = document.getElementById('fileLabel');
-            const player = document.getElementById('player');
-            const visualizer = document.getElementById('myVisualizer');
+        const fileInput = document.getElementById('midiFileInput');
+        const fileLabel = document.getElementById('fileLabel');
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const statusDiv = document.getElementById('status');
 
-            fileInput.addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                if (!file) return;
+        let audioContext = null;
+        let synthesizer = null;
+        let sequencer = null;
+        let isReady = false;
 
-                // Hiển thị tên tệp
-                fileLabel.textContent = file.name;
+        function updateStatus(msg) { statusDiv.textContent = msg; }
 
-                // Tạo URL từ file cục bộ
-                const fileUrl = URL.createObjectURL(file);
-                
-                // Kết nối visualizer với player (quan trọng để hiển thị nốt nhạc)
-                player.visualizer = visualizer;
-                
-                // Gán nguồn phát
-                player.src = fileUrl;
-            });
+        function setControlsEnabled(enabled) {
+            playBtn.disabled = !enabled;
+            pauseBtn.disabled = !enabled;
+            stopBtn.disabled = !enabled;
+        }
+
+        // Khởi tạo audio (phải gọi từ sự kiện người dùng)
+        async function initializeAudio() {
+            if (audioContext) return;
+
+            updateStatus('Đang khởi tạo AudioContext...');
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+            // Tải worklet processor
+            try {
+                const workletUrl = 'https://unpkg.com/spessasynth_lib@4.4.7/dist/spessasynth_processor.min.js';
+                await audioContext.audioWorklet.addModule(workletUrl);
+                console.log('Worklet processor đã được tải.');
+            } catch (e) {
+                console.error('Lỗi khi tải worklet:', e);
+                updateStatus('Lỗi: Không thể tải worklet xử lý âm thanh.');
+                return;
+            }
+
+            // Tải SoundFont (SF3)
+            updateStatus('Đang tải SoundFont (có thể mất vài giây)...');
+            const soundFontUrl = 'https://cdn.jsdelivr.net/gh/spessasus/soundfonts@main/FluidR3_GM.sf3';
+            let soundFontBuffer;
+            try {
+                const response = await fetch(soundFontUrl);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                soundFontBuffer = await response.arrayBuffer();
+                console.log('Đã tải SoundFont:', soundFontBuffer.byteLength, 'bytes');
+            } catch (e) {
+                console.error('Lỗi khi tải SoundFont:', e);
+                updateStatus('Lỗi: Không thể tải SoundFont. Hãy kiểm tra kết nối mạng.');
+                return;
+            }
+
+            // Khởi tạo Synthetizer
+            try {
+                synthesizer = new Synthetizer(audioContext.destination, soundFontBuffer);
+                synthesizer.setMasterVolume(volumeSlider.value);
+                isReady = true;
+                updateStatus('Hệ thống âm thanh đã sẵn sàng. Hãy chọn tệp MIDI.');
+                setControlsEnabled(true);
+            } catch (e) {
+                console.error('Lỗi khi khởi tạo Synthetizer:', e);
+                updateStatus('Lỗi: Không thể khởi tạo bộ tổng hợp âm thanh.');
+            }
+        }
+
+        // Xử lý chọn tệp
+        fileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            fileLabel.textContent = file.name;
+
+            // Khởi tạo audio nếu chưa (thao tác chọn tệp cũng là hành động người dùng)
+            if (!audioContext) {
+                await initializeAudio();
+            }
+            if (!synthesizer) {
+                updateStatus('Lỗi: Hệ thống âm thanh chưa sẵn sàng.');
+                return;
+            }
+
+            updateStatus('Đang đọc tệp MIDI...');
+            let midiBuffer;
+            try {
+                midiBuffer = await file.arrayBuffer();
+            } catch (e) {
+                updateStatus('Lỗi: Không thể đọc tệp.');
+                return;
+            }
+
+            if (sequencer) {
+                sequencer.stop();
+                sequencer = null;
+            }
+
+            try {
+                sequencer = new Sequencer(synthesizer);
+                await sequencer.loadMIDI(midiBuffer);
+                updateStatus(`Đã tải: "${file.name}". Nhấn "Phát" để bắt đầu.`);
+            } catch (e) {
+                console.error('Lỗi khi tải MIDI:', e);
+                updateStatus('Lỗi: Tệp MIDI không hợp lệ hoặc không thể xử lý.');
+            }
+        });
+
+        // Nút Phát
+        playBtn.addEventListener('click', async () => {
+            if (audioContext && audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+            if (!sequencer) {
+                updateStatus('Vui lòng chọn tệp MIDI trước.');
+                return;
+            }
+            try {
+                sequencer.play();
+                updateStatus('Đang phát...');
+            } catch (e) {
+                console.error('Lỗi khi phát:', e);
+                updateStatus('Lỗi khi phát tệp MIDI.');
+            }
+        });
+
+        // Nút Tạm dừng
+        pauseBtn.addEventListener('click', () => {
+            if (sequencer) {
+                sequencer.pause();
+                updateStatus('Đã tạm dừng.');
+            }
+        });
+
+        // Nút Dừng
+        stopBtn.addEventListener('click', () => {
+            if (sequencer) {
+                sequencer.stop();
+                updateStatus('Đã dừng.');
+            }
+        });
+
+        // Thanh trượt âm lượng
+        volumeSlider.addEventListener('input', (e) => {
+            if (synthesizer) {
+                synthesizer.setMasterVolume(e.target.value);
+            }
         });
     </script>
 </body>
