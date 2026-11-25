@@ -27,8 +27,8 @@
         <button id="stop_btn" disabled>⏹ Dừng</button>
     </div>
 
-    <!-- Tải thư viện stbvorbis.js để hỗ trợ giải mã âm thanh trên Safari/iOS -->
-    <script src="https://cdn.jsdelivr.net/npm/spessasynth_lib@4/dist/utils/stbvorbis.js"></script>
+    <!-- BẮT BUỘC: Tải stbvorbis_asm.js để giải mã âm thanh trên iOS Safari -->
+    <script src="https://cdn.jsdelivr.net/npm/spessasynth_lib@4/dist/utils/stbvorbis_asm.js"></script>
 
     <script type="module">
         import { WorkletSynthesizer, Sequencer } from 'https://cdn.jsdelivr.net/npm/spessasynth_lib@4/+esm';
@@ -63,7 +63,7 @@
                 synth = new WorkletSynthesizer(audioContext);
                 await synth.soundBankManager.addSoundBank(sfBuffer, "main");
 
-                // ⭐️ BƯỚC QUAN TRỌNG: Kết nối đầu ra của synth với loa
+                // Kết nối đầu ra của synth với loa
                 synth.connect(audioContext.destination);
 
                 sequencer = new Sequencer(synth);
@@ -97,10 +97,33 @@
 
         playBtn.addEventListener('click', async () => {
             try {
-                // ⭐️ Đảm bảo AudioContext được resume TRƯỚC khi phát trên iOS
+                // ⭐️ BƯỚC 1: Kích hoạt phiên âm thanh Playback cho iOS 17+
+                if (navigator.audioSession) {
+                    try {
+                        if (navigator.audioSession.type !== "playback") {
+                            navigator.audioSession.type = "playback";
+                        }
+                    } catch (e) {
+                        console.warn("Không thể thiết lập AudioSession:", e);
+                    }
+                }
+
+                // Resume AudioContext
                 if (audioContext.state === 'suspended') {
                     await audioContext.resume();
                 }
+
+                // ⭐️ BƯỚC 2: Đánh thức AudioWorklet trên iOS (phát 1 âm thanh cực ngắn)
+                const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate);
+                const source = audioContext.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioContext.destination);
+                source.start(0);
+
+                // Đợi một chút để phần cứng âm thanh được đánh thức
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // ⭐️ BƯỚC 3: Phát nhạc
                 sequencer.play();
                 updateStatus('Đang phát...');
             } catch (error) {
