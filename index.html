@@ -1,662 +1,761 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IPA File Explorer</title>
-    <!-- Thư viện JSZip đọc file .ipa trực tiếp trên trình duyệt -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <style>
-        :root {
-            --bg-color: #f2f2f7;
-            --card-bg: #ffffff;
-            --text-primary: #000000;
-            --text-secondary: #8e8e93;
-            --accent-color: #007aff;
-            --border-color: #e5e5ea;
-            --hover-bg: #f9f9fb;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            padding-bottom: 30px;
-        }
-
-        header {
-            background-color: var(--card-bg);
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-        }
-
-        header h1 {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .btn-upload {
-            background-color: var(--accent-color);
-            color: #fff;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-upload:active {
-            opacity: 0.8;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 16px auto;
-            padding: 0 12px;
-        }
-
-        /* Vùng chọn file ban đầu */
-        .drop-zone {
-            background-color: var(--card-bg);
-            border: 2px dashed #c7c7cc;
-            border-radius: 14px;
-            padding: 40px 20px;
-            text-align: center;
-            margin-top: 20px;
-            cursor: pointer;
-            transition: border-color 0.2s, background-color 0.2s;
-        }
-
-        .drop-zone.dragover {
-            border-color: var(--accent-color);
-            background-color: rgba(0, 122, 255, 0.05);
-        }
-
-        .drop-zone-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-        }
-
-        .drop-zone-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-
-        .drop-zone-desc {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        /* Thanh đường dẫn (Breadcrumb) */
-        .toolbar {
-            background-color: var(--card-bg);
-            border-radius: 12px 12px 0 0;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            overflow-x: auto;
-            white-space: nowrap;
-        }
-
-        .btn-back {
-            background: #e5e5ea;
-            border: none;
-            border-radius: 6px;
-            padding: 5px 10px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-primary);
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .btn-back:disabled {
-            opacity: 0.4;
-            cursor: default;
-        }
-
-        .breadcrumb {
-            font-size: 14px;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .breadcrumb span {
-            cursor: pointer;
-            color: var(--accent-color);
-            font-weight: 500;
-        }
-
-        .breadcrumb span.current {
-            color: var(--text-primary);
-            cursor: default;
-        }
-
-        /* Danh sách thư mục & tệp */
-        .file-list {
-            background-color: var(--card-bg);
-            border-radius: 0 0 12px 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-
-        .file-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border-color);
-            transition: background-color 0.15s;
-            gap: 12px;
-        }
-
-        .file-item:last-child {
-            border-bottom: none;
-        }
-
-        .file-item.folder {
-            cursor: pointer;
-        }
-
-        .file-item.folder:active, .file-item:hover {
-            background-color: var(--hover-bg);
-        }
-
-        .item-icon {
-            font-size: 24px;
-            width: 30px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        .item-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .item-name {
-            font-size: 15px;
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-bottom: 3px;
-        }
-
-        .item-meta {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .item-actions {
-            display: flex;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-
-        .btn-action {
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-download {
-            background-color: rgba(0, 122, 255, 0.12);
-            color: var(--accent-color);
-        }
-
-        .btn-download:active {
-            background-color: rgba(0, 122, 255, 0.25);
-        }
-
-        .btn-view {
-            background-color: #e5e5ea;
-            color: var(--text-primary);
-        }
-
-        .status-bar {
-            text-align: center;
-            padding: 12px;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        /* Modal xem trước file text/plist/json */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 200;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--card-bg);
-            width: 100%;
-            max-width: 700px;
-            max-height: 85vh;
-            border-radius: 14px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .modal-header {
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 600;
-            font-size: 15px;
-        }
-
-        .modal-body {
-            padding: 16px;
-            overflow: auto;
-            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            background: #fafafa;
-            flex: 1;
-        }
-
-        .modal-footer {
-            padding: 12px 16px;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kiểm tra Pin iPhone từ Dữ liệu Phân tích</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 18px;
+      display: flex;
+      justify-content: center;
+    }
+    .container { width: 100%; max-width: 580px; }
+    h1 { font-size: 1.3rem; margin: 0 0 6px; text-align: center; }
+    p.subtitle {
+      color: var(--muted);
+      font-size: 0.88rem;
+      text-align: center;
+      margin: 0 0 18px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .file-drop {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s;
+      display: block;
+    }
+    .file-drop:hover, .file-drop.dragover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .file-drop.disabled { opacity: 0.55; pointer-events: none; }
+    input[type="file"] { display: none; }
+    .file-name {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: var(--accent);
+      word-break: break-all;
+    }
+    textarea {
+      width: 100%;
+      height: 110px;
+      background: #0b1120;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px;
+      font-size: 0.85rem;
+      margin-top: 12px;
+      resize: vertical;
+    }
+    .btn-row { display: flex; gap: 10px; margin-top: 12px; }
+    button {
+      flex: 1;
+      padding: 11px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #0f172a; }
+    .btn-primary:hover:not(:disabled) { opacity: 0.92; }
+    .btn-secondary { background: #334155; color: var(--text); }
+    .btn-secondary:hover:not(:disabled) { background: #475569; }
+    .btn-copy {
+      background: #0284c7;
+      color: #ffffff;
+      margin-top: 12px;
+      width: 100%;
+    }
+    .btn-copy.copied { background: var(--good); color: #0f172a; }
+    .result-box { display: none; }
+    .result-header {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .model-code {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 500;
+      background: #0f172a;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 0;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      font-size: 0.93rem;
+      gap: 12px;
+    }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { color: var(--muted); }
+    .stat-value { font-weight: 600; text-align: right; }
+    .sub-val {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 400;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .badge {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      display: inline-block;
+    }
+    .good { background: rgba(34, 197, 94, 0.2); color: var(--good); }
+    .warn { background: rgba(245, 158, 11, 0.2); color: var(--warn); }
+    .bad  { background: rgba(239, 68, 68, 0.2); color: var(--bad); }
+    .note {
+      margin-top: 12px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.5;
+      background: rgba(15, 23, 42, 0.5);
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .note strong { color: var(--text); }
+    .error-msg {
+      color: var(--bad);
+      font-size: 0.88rem;
+      margin-top: 10px;
+      display: none;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border: 2px solid rgba(15, 23, 42, 0.3);
+      border-top-color: #0f172a;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: -2px;
+      margin-right: 6px;
+    }
+  </style>
 </head>
 <body>
 
-<header>
-    <h1>📦 IPA File Manager</h1>
-    <label class="btn-upload" for="ipaInput">
-        <span>Chọn tệp .IPA</span>
-    </label>
-    <input type="file" id="ipaInput" accept=".ipa,.zip,application/octet-stream">
-</header>
-
 <div class="container">
-    <!-- Màn hình chờ chọn file -->
-    <div id="dropZone" class="drop-zone">
-        <div class="drop-zone-icon">📲</div>
-        <div class="drop-zone-title">Chọn hoặc kéo thả tệp .ipa vào đây</div>
-        <div class="drop-zone-desc">Mở cấu trúc thư mục bên trong và trích xuất bất kỳ tệp nào về máy</div>
+  <h1>🔋 Phân tích Pin iPhone</h1>
+  <p class="subtitle">Hỗ trợ đọc trực tiếp tệp Analytics (.ips, .json, .synced, .gz) trên trình duyệt</p>
+
+  <div class="card">
+    <label class="file-drop" id="dropZone" for="fileInput">
+      📂 <strong>Chạm để chọn hoặc kéo thả tệp Analytics</strong><br>
+      <span style="font-size: 0.8rem; color: var(--muted);">Tự động giải nén tệp .gz / .synced từ mục Dữ liệu phân tích</span>
+      <input type="file" id="fileInput">
+      <div class="file-name" id="fileName"></div>
+    </label>
+
+    <textarea id="rawText" placeholder="Hoặc dán trực tiếp nội dung tệp Dữ liệu phân tích vào đây..."></textarea>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="btnAnalyze" onclick="analyzeData()">Phân tích ngay</button>
+      <button class="btn-secondary" id="btnClear" onclick="clearAll()">Xóa</button>
+    </div>
+    <div id="errorMsg" class="error-msg"></div>
+  </div>
+
+  <div id="resultBox" class="card result-box">
+    <div class="result-header">
+      <span id="deviceTitle">Thông tin pin iPhone</span>
+      <span class="model-code" id="deviceCodeBadge">--</span>
     </div>
 
-    <!-- Giao diện trình quản lý tệp -->
-    <div id="explorerContainer" class="hidden">
-        <div class="toolbar">
-            <button id="btnBack" class="btn-back" disabled>⬅ Quay lại</button>
-            <div id="breadcrumb" class="breadcrumb"></div>
-        </div>
-        <div id="fileList" class="file-list"></div>
-        <div id="statusBar" class="status-bar"></div>
+    <div class="stat-row">
+      <span class="stat-label">📅 Dữ liệu ngày:</span>
+      <span class="stat-value" id="resDate">--</span>
     </div>
-</div>
+    <div class="stat-row">
+      <span class="stat-label">🔋 Dung lượng thiết kế:</span>
+      <span class="stat-value" id="resDesign">--</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">🏭 Dung lượng xuất xưởng (FCC):</span>
+      <span class="stat-value" id="resMaxFCC">--</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">⚡ Dung lượng thực tế hiện tại:</span>
+      <span class="stat-value" id="resNominal">--</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">❤️ Sức khỏe pin (theo chuẩn):</span>
+      <span class="stat-value" id="resHealth">--</span>
+    </div>
+    <div class="stat-row" id="rowFccHealth" style="display: none;">
+      <span class="stat-label">📈 Sức khỏe pin (theo xuất xưởng):</span>
+      <span class="stat-value" id="resFccHealth">--</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">🔄 Chu kỳ sạc (0 - 100%):</span>
+      <span class="stat-value" id="resCycle">--</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">📊 Dung lượng thô tối đa:</span>
+      <span class="stat-value" id="resRawMax">--</span>
+    </div>
 
-<!-- Modal xem nhanh nội dung file văn bản / XML -->
-<div id="previewModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <span id="modalTitle">Xem tệp</span>
-            <button class="btn-action btn-view" onclick="closeModal()">Đóng</button>
-        </div>
-        <div id="modalBody" class="modal-body"></div>
-        <div class="modal-footer">
-            <button id="modalDownloadBtn" class="btn-action btn-download">Tải tệp này về máy</button>
-        </div>
+    <button class="btn-copy" id="btnCopy" onclick="copySummary()">📋 Sao chép kết quả</button>
+
+    <div class="note" id="resNote">
+      Lưu ý: Dung lượng thiết kế là thông số chuẩn của Apple. Một số máy đời mới có sự khác biệt nhẹ giữa bản dùng SIM vật lý và bản chỉ dùng eSIM.
     </div>
+  </div>
 </div>
 
 <script>
-    let currentZip = null;
-    let currentPath = "";
-    let ipaFileName = "";
-    // Cấu trúc cây thư mục: { "Payload/": { folders: Set, files: [] } }
-    let fileTree = {};
+  "use strict";
 
-    const ipaInput = document.getElementById('ipaInput');
-    const dropZone = document.getElementById('dropZone');
-    const explorerContainer = document.getElementById('explorerContainer');
-    const fileListEl = document.getElementById('fileList');
-    const breadcrumbEl = document.getElementById('breadcrumb');
-    const btnBack = document.getElementById('btnBack');
-    const statusBar = document.getElementById('statusBar');
+  // =========================================================================
+  // CẤU HÌNH
+  // =========================================================================
+  const MAX_FILE_SIZE = 200 * 1024 * 1024;   // 200 MB – chặn file quá lớn
+  const MIN_FILE_SIZE = 10;                  // <10 byte coi như file rỗng
+  const DESIGN_TOLERANCE = 0.15;             // cho phép lệch 15% so với spec
+  const HEALTH_ANOMALY_THRESHOLD = 150;      // >150% là bất thường → cảnh báo
 
-    // Sự kiện chọn file
-    ipaInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            loadIpaFile(e.target.files[0]);
-        }
-    });
+  const IPHONE_SPECS = {
+    "iPhone5,1": { name: "iPhone 5", cap: 1440 },
+    "iPhone5,2": { name: "iPhone 5", cap: 1440 },
+    "iPhone5,3": { name: "iPhone 5c", cap: 1510 },
+    "iPhone5,4": { name: "iPhone 5c", cap: 1510 },
+    "iPhone6,1": { name: "iPhone 5s", cap: 1560 },
+    "iPhone6,2": { name: "iPhone 5s", cap: 1560 },
+    "iPhone7,2": { name: "iPhone 6", cap: 1810 },
+    "iPhone7,1": { name: "iPhone 6 Plus", cap: 2915 },
+    "iPhone8,1": { name: "iPhone 6s", cap: 1715 },
+    "iPhone8,2": { name: "iPhone 6s Plus", cap: 2750 },
+    "iPhone8,4": { name: "iPhone SE (Thế hệ 1)", cap: 1624 },
+    "iPhone9,1": { name: "iPhone 7", cap: 1960 },
+    "iPhone9,3": { name: "iPhone 7", cap: 1960 },
+    "iPhone9,2": { name: "iPhone 7 Plus", cap: 2900 },
+    "iPhone9,4": { name: "iPhone 7 Plus", cap: 2900 },
+    "iPhone10,1": { name: "iPhone 8", cap: 1821 },
+    "iPhone10,4": { name: "iPhone 8", cap: 1821 },
+    "iPhone10,2": { name: "iPhone 8 Plus", cap: 2691 },
+    "iPhone10,5": { name: "iPhone 8 Plus", cap: 2691 },
+    "iPhone10,3": { name: "iPhone X", cap: 2716 },
+    "iPhone10,6": { name: "iPhone X", cap: 2716 },
+    "iPhone11,2": { name: "iPhone XS", cap: 2658 },
+    "iPhone11,4": { name: "iPhone XS Max", cap: 3174 },
+    "iPhone11,6": { name: "iPhone XS Max", cap: 3174 },
+    "iPhone11,8": { name: "iPhone XR", cap: 2942 },
+    "iPhone12,1": { name: "iPhone 11", cap: 3110 },
+    "iPhone12,3": { name: "iPhone 11 Pro", cap: 3046 },
+    "iPhone12,5": { name: "iPhone 11 Pro Max", cap: 3969 },
+    "iPhone12,8": { name: "iPhone SE (2020)", cap: 1821 },
+    "iPhone13,1": { name: "iPhone 12 mini", cap: 2227 },
+    "iPhone13,2": { name: "iPhone 12", cap: 2815 },
+    "iPhone13,3": { name: "iPhone 12 Pro", cap: 2815 },
+    "iPhone13,4": { name: "iPhone 12 Pro Max", cap: 3687 },
+    "iPhone14,4": { name: "iPhone 13 mini", cap: 2406 },
+    "iPhone14,5": { name: "iPhone 13", cap: 3227 },
+    "iPhone14,2": { name: "iPhone 13 Pro", cap: 3095 },
+    "iPhone14,3": { name: "iPhone 13 Pro Max", cap: 4352 },
+    "iPhone14,6": { name: "iPhone SE (2022)", cap: 2018 },
+    "iPhone14,7": { name: "iPhone 14", cap: 3279 },
+    "iPhone14,8": { name: "iPhone 14 Plus", cap: 4325 },
+    "iPhone15,2": { name: "iPhone 14 Pro", cap: 3200 },
+    "iPhone15,3": { name: "iPhone 14 Pro Max", cap: 4323 },
+    "iPhone15,4": { name: "iPhone 15", cap: 3349 },
+    "iPhone15,5": { name: "iPhone 15 Plus", cap: 4383 },
+    "iPhone16,1": { name: "iPhone 15 Pro", cap: 3274 },
+    "iPhone16,2": { name: "iPhone 15 Pro Max", cap: 4422 },
+    "iPhone17,3": { name: "iPhone 16", cap: 3561 },
+    "iPhone17,4": { name: "iPhone 16 Plus", cap: 4674 },
+    "iPhone17,1": { name: "iPhone 16 Pro", cap: 3582 },
+    "iPhone17,2": { name: "iPhone 16 Pro Max", cap: 4685 },
+    "iPhone17,5": { name: "iPhone 16e", cap: 4005 },
+    "iPhone18,3": { name: "iPhone 17", cap: 3692 },
+    "iPhone18,4": { name: "iPhone Air", cap: 3149 },
+    "iPhone18,1": { name: "iPhone 17 Pro", cap: 3988, altNote: "Bản khay SIM: 3988 mAh | Bản chỉ eSIM: 4252 mAh" },
+    "iPhone18,2": { name: "iPhone 17 Pro Max", cap: 4823, altNote: "Bản khay SIM: 4823 mAh | Bản chỉ eSIM: 5088 mAh" },
+    "iPhone18,5": { name: "iPhone 17e", cap: 4005 },
+    "iPhone19,1": { name: "iPhone 18 Pro", cap: 4056, altNote: "Bản khay SIM: 4056 mAh | Bản chỉ eSIM: 4288 mAh" },
+    "iPhone19,2": { name: "iPhone 18 Pro Max", cap: 5391, altNote: "Bản khay SIM: 5391 mAh | Bản chỉ eSIM: 5567 mAh" },
+    "iPhone19,3": { name: "iPhone 18", cap: 3850 }
+  };
 
-    // Sự kiện kéo thả
-    dropZone.addEventListener('click', () => ipaInput.click());
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('dragover');
-    });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-        if (e.dataTransfer.files.length > 0) {
-            loadIpaFile(e.dataTransfer.files[0]);
-        }
-    });
+  // =========================================================================
+  // TRẠNG THÁI
+  // =========================================================================
+  let lastSummaryText = "";
+  let currentFileName = "";
+  let isBusy = false;
 
-    // Nút quay lại thư mục trước
-    btnBack.addEventListener('click', () => {
-        if (!currentPath) return;
-        const parts = currentPath.replace(/\/$/, '').split('/');
-        parts.pop();
-        const parentPath = parts.length > 0 ? parts.join('/') + '/' : '';
-        renderDirectory(parentPath);
-    });
+  const fileInput   = document.getElementById("fileInput");
+  const dropZone    = document.getElementById("dropZone");
+  const btnAnalyze  = document.getElementById("btnAnalyze");
+  const btnClear    = document.getElementById("btnClear");
 
-    // Đọc và phân tích cấu trúc file .ipa
-    async function loadIpaFile(file) {
-        ipaFileName = file.name;
-        dropZone.innerHTML = `<div class="drop-zone-icon">⏳</div><div class="drop-zone-title">Đang giải nén cấu trúc ${file.name}...</div>`;
-        
-        try {
-            const zip = await JSZip.loadAsync(file);
-            currentZip = zip;
-            buildFileTree(zip);
+  // =========================================================================
+  // TIỆN ÍCH
+  // =========================================================================
+  function setBusy(state) {
+    isBusy = state;
+    fileInput.disabled = state;
+    btnClear.disabled = state;
+    dropZone.classList.toggle("disabled", state);
+    if (state) {
+      btnAnalyze.innerHTML = '<span class="spinner"></span>Đang xử lý...';
+      btnAnalyze.disabled = true;
+    } else {
+      btnAnalyze.textContent = "Phân tích ngay";
+      btnAnalyze.disabled = false;
+    }
+  }
 
-            dropZone.classList.add('hidden');
-            explorerContainer.classList.remove('hidden');
-            renderDirectory("");
-        } catch (err) {
-            alert("Không thể đọc tệp này. Hãy đảm bảo đây là tệp .ipa hoặc .zip hợp lệ!\nChi tiết: " + err.message);
-            resetDropZone();
-        }
+  // Lấy match CUỐI CÙNG (giá trị mới nhất) thay vì match đầu tiên
+  function extractLastNumber(text, regexList) {
+    for (const regex of regexList) {
+      const flags = regex.flags.includes("g") ? regex.flags : regex.flags + "g";
+      const re = new RegExp(regex.source, flags);
+      let last = null, m;
+      while ((m = re.exec(text)) !== null) {
+        const val = parseInt(m[1], 10);
+        if (!Number.isNaN(val)) last = val;
+        if (m.index === re.lastIndex) re.lastIndex++; // tránh vòng lặp vô hạn
+      }
+      if (last !== null) return last;
+    }
+    return null;
+  }
+
+  function extractLastString(text, regexList) {
+    for (const regex of regexList) {
+      const flags = regex.flags.includes("g") ? regex.flags : regex.flags + "g";
+      const re = new RegExp(regex.source, flags);
+      let last = null, m;
+      while ((m = re.exec(text)) !== null) {
+        if (m[1]) last = m[1].trim();
+        if (m.index === re.lastIndex) re.lastIndex++;
+      }
+      if (last !== null) return last;
+    }
+    return null;
+  }
+
+  function formatHealthBadge(nominal, baseCap) {
+    if (!nominal || !baseCap || nominal <= 0 || baseCap <= 0) {
+      return { text: "Không xác định", html: "Không xác định", pct: null };
+    }
+    const pct = (nominal / baseCap) * 100;
+    const pctFormatted = pct.toFixed(1).replace(".", ",");
+    let badgeClass = "good";
+    if (pct < 80) badgeClass = "bad";
+    else if (pct < 85) badgeClass = "warn";
+
+    // Cảnh báo dữ liệu bất thường (>150% → chắc chắn sai)
+    if (pct > HEALTH_ANOMALY_THRESHOLD) {
+      return {
+        text: `${pctFormatted}% (⚠ bất thường)`,
+        html: `<span class="badge bad">${pctFormatted}% ⚠</span>`,
+        pct
+      };
+    }
+    return {
+      text: `${pctFormatted}%`,
+      html: `<span class="badge ${badgeClass}">${pctFormatted}%</span>`,
+      pct
+    };
+  }
+
+  function showError(msg) {
+    const errorBox = document.getElementById("errorMsg");
+    errorBox.textContent = msg;
+    errorBox.style.display = "block";
+  }
+
+  function clearError() {
+    const errorBox = document.getElementById("errorMsg");
+    errorBox.textContent = "";
+    errorBox.style.display = "none";
+  }
+
+  // =========================================================================
+  // XỬ LÝ FILE
+  // =========================================================================
+  fileInput.addEventListener("change", function (e) {
+    if (e.target.files && e.target.files[0]) {
+      processFile(e.target.files[0]);
+    }
+  });
+
+  dropZone.addEventListener("dragover", function (e) {
+    e.preventDefault();
+    if (!isBusy) dropZone.classList.add("dragover");
+  });
+  dropZone.addEventListener("dragleave", function () {
+    dropZone.classList.remove("dragover");
+  });
+  dropZone.addEventListener("drop", function (e) {
+    e.preventDefault();
+    dropZone.classList.remove("dragover");
+    if (!isBusy && e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
+    }
+  });
+
+  async function processFile(file) {
+    if (isBusy) return;
+
+    clearError();
+    document.getElementById("resultBox").style.display = "none";
+
+    // ---- Validate file ----
+    if (!file || file.size < MIN_FILE_SIZE) {
+      showError("Tệp rỗng hoặc không hợp lệ. Hãy kiểm tra lại tệp Analytics.");
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      const mb = (file.size / 1024 / 1024).toFixed(1);
+      showError(`Tệp quá lớn (${mb} MB > 200 MB). Hãy tách tệp theo từng ngày hoặc chọn tệp nhỏ hơn.`);
+      return;
     }
 
-    function resetDropZone() {
-        dropZone.innerHTML = `
-            <div class="drop-zone-icon">📲</div>
-            <div class="drop-zone-title">Chọn hoặc kéo thả tệp .ipa vào đây</div>
-            <div class="drop-zone-desc">Mở cấu trúc thư mục bên trong và trích xuất bất kỳ tệp nào về máy</div>
-        `;
-    }
+    currentFileName = file.name;
+    document.getElementById("fileName").textContent = "Tệp đã chọn: " + file.name;
+    setBusy(true);
 
-    // Xây dựng cây thư mục từ danh sách đường dẫn phẳng của JSZip
-    function buildFileTree(zip) {
-        fileTree = { "": { folders: new Set(), files: [] } };
+    try {
+      let textContent = "";
+      // Kiểm tra magic bytes Gzip (0x1f 0x8b)
+      const headerBuf = await file.slice(0, 2).arrayBuffer();
+      const headerBytes = new Uint8Array(headerBuf);
+      const isGzip = headerBytes.length === 2 && headerBytes[0] === 0x1f && headerBytes[1] === 0x8b;
 
-        const ensureFolder = (folderPath) => {
-            if (!fileTree[folderPath]) {
-                fileTree[folderPath] = { folders: new Set(), files: [] };
-            }
-        };
-
-        zip.forEach((relativePath, zipEntry) => {
-            const parts = relativePath.split('/').filter(p => p.length > 0);
-            let buildPath = "";
-
-            // Tạo toàn bộ thư mục cha nếu trong zip không lưu entry thư mục rỗng
-            const folderDepth = zipEntry.dir ? parts.length : parts.length - 1;
-            for (let i = 0; i < folderDepth; i++) {
-                const parent = buildPath;
-                const folderName = parts[i];
-                buildPath += folderName + "/";
-                ensureFolder(parent);
-                ensureFolder(buildPath);
-                fileTree[parent].folders.add(folderName);
-            }
-
-            // Nếu là tệp tin, thêm vào thư mục cha tương ứng
-            if (!zipEntry.dir) {
-                const fileName = parts[parts.length - 1];
-                ensureFolder(buildPath);
-                fileTree[buildPath].files.push({
-                    name: fileName,
-                    fullPath: relativePath,
-                    entry: zipEntry
-                });
-            }
-        });
-    }
-
-    // Hiển thị nội dung thư mục tại đường dẫn path
-    function renderDirectory(path) {
-        currentPath = path;
-        btnBack.disabled = (path === "");
-        renderBreadcrumb(path);
-
-        const node = fileTree[path] || { folders: new Set(), files: [] };
-        const folders = Array.from(node.folders).sort((a, b) => a.localeCompare(b));
-        const files = node.files.sort((a, b) => a.name.localeCompare(b.name));
-
-        fileListEl.innerHTML = "";
-
-        if (folders.length === 0 && files.length === 0) {
-            fileListEl.innerHTML = `<div style="padding: 30px; text-align: center; color: #8e8e93;">Thư mục trống</div>`;
-        }
-
-        // 1. Render các thư mục trước
-        folders.forEach(folderName => {
-            const nextPath = path + folderName + "/";
-            const isAppBundle = folderName.endsWith('.app');
-            const icon = isAppBundle ? '📱' : '📁';
-
-            const div = document.createElement('div');
-            div.className = 'file-item folder';
-            div.innerHTML = `
-                <div class="item-icon">${icon}</div>
-                <div class="item-info">
-                    <div class="item-name">${escapeHtml(folderName)}</div>
-                    <div class="item-meta">${isAppBundle ? 'Gói ứng dụng (.app)' : 'Thư mục'}</div>
-                </div>
-                <div style="color: #c7c7cc; font-size: 18px;">›</div>
-            `;
-            div.addEventListener('click', () => renderDirectory(nextPath));
-            fileListEl.appendChild(div);
-        });
-
-        // 2. Render các tệp tin
-        files.forEach(fileObj => {
-            const rawSize = fileObj.entry._data ? fileObj.entry._data.uncompressedSize : 0;
-            const sizeStr = formatBytes(rawSize);
-            const icon = getFileIcon(fileObj.name);
-            const canPreview = isTextFile(fileObj.name) && rawSize < 1024 * 1024; // Xem trước file text < 1MB
-
-            const div = document.createElement('div');
-            div.className = 'file-item';
-            div.innerHTML = `
-                <div class="item-icon">${icon}</div>
-                <div class="item-info">
-                    <div class="item-name">${escapeHtml(fileObj.name)}</div>
-                    <div class="item-meta">${sizeStr}</div>
-                </div>
-                <div class="item-actions">
-                    ${canPreview ? `<button class="btn-action btn-view" data-action="view">Xem</button>` : ''}
-                    <button class="btn-action btn-download" data-action="download">Tải về</button>
-                </div>
-            `;
-
-            // Gán sự kiện nút Tải về
-            div.querySelector('[data-action="download"]').addEventListener('click', (e) => {
-                e.stopPropagation();
-                downloadSingleFile(fileObj);
-            });
-
-            // Gán sự kiện nút Xem nhanh (nếu có)
-            const viewBtn = div.querySelector('[data-action="view"]');
-            if (viewBtn) {
-                viewBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    previewTextFile(fileObj);
-                });
-            }
-
-            fileListEl.appendChild(div);
-        });
-
-        statusBar.textContent = `${folders.length} thư mục, ${files.length} tệp`;
-    }
-
-    // Thanh điều hướng Breadcrumb
-    function renderBreadcrumb(path) {
-        breadcrumbEl.innerHTML = "";
-        
-        const rootSpan = document.createElement('span');
-        rootSpan.textContent = ipaFileName || "Gốc";
-        if (path === "") {
-            rootSpan.className = "current";
+      if (isGzip) {
+        if ("DecompressionStream" in window) {
+          const ds = new DecompressionStream("gzip");
+          const decompressedStream = file.stream().pipeThrough(ds);
+          textContent = await new Response(decompressedStream).text();
         } else {
-            rootSpan.onclick = () => renderDirectory("");
+          showError("Trình duyệt của bạn chưa hỗ trợ tự động giải nén Gzip (.gz / .synced). Vui lòng giải nén trước rồi chọn lại tệp.");
+          return;
         }
-        breadcrumbEl.appendChild(rootSpan);
+      } else {
+        textContent = await file.text();
+      }
 
-        if (!path) return;
+      if (!textContent || !textContent.trim()) {
+        showError("Nội dung tệp rỗng sau khi đọc / giải nén.");
+        return;
+      }
 
-        const parts = path.split('/').filter(p => p.length > 0);
-        let accPath = "";
-        parts.forEach((part, idx) => {
-            const sep = document.createTextNode(" / ");
-            breadcrumbEl.appendChild(sep);
+      document.getElementById("rawText").value = textContent;
+      analyzeData();
+    } catch (err) {
+      console.error(err);
+      showError("Không thể đọc hoặc giải nén tệp này. Hãy thử mở tệp bằng ứng dụng Ghi chú hoặc Tệp và dán nội dung vào ô bên dưới.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
-            accPath += part + "/";
-            const targetPath = accPath;
-            const span = document.createElement('span');
-            span.textContent = part;
+  // =========================================================================
+  // PHÂN TÍCH
+  // =========================================================================
+  function analyzeData() {
+    if (isBusy) return;
 
-            if (idx === parts.length - 1) {
-                span.className = "current";
-            } else {
-                span.onclick = () => renderDirectory(targetPath);
-            }
-            breadcrumbEl.appendChild(span);
-        });
+    const text = document.getElementById("rawText").value.trim();
+    const resultBox = document.getElementById("resultBox");
+
+    clearError();
+    resultBox.style.display = "none";
+
+    if (!text) {
+      showError("Vui lòng chọn tệp Analytics hoặc dán nội dung văn bản vào ô trống.");
+      return;
     }
 
-    // Trích xuất và tải 1 tệp bất kỳ về bộ nhớ máy
-    async function downloadSingleFile(fileObj) {
-        try {
-            const blob = await fileObj.entry.async("blob");
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = fileObj.name;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
-        } catch (err) {
-            alert("Lỗi khi tải tệp: " + err.message);
+    // ---- Trích xuất số liệu ----
+    const cycleCount = extractLastNumber(text, [
+      /"last_value_CycleCount"\s*:\s*(\d+)/i,
+      /"CycleCount"\s*:\s*(\d+)/i,
+      /"com\.apple\.power\.battery\.CycleCount"\s*:\s*(\d+)/i,
+      /<key>com\.apple\.power\.battery\.CycleCount<\/key>\s*<integer>(\d+)<\/integer>/i
+    ]);
+
+    const nominalCap = extractLastNumber(text, [
+      /"last_value_NominalChargeCapacity"\s*:\s*(\d+)/i,
+      /"NominalChargeCapacity"\s*:\s*(\d+)/i,
+      /"com\.apple\.power\.battery\.NominalChargeCapacity"\s*:\s*(\d+)/i,
+      /<key>com\.apple\.power\.battery\.NominalChargeCapacity<\/key>\s*<integer>(\d+)<\/integer>/i
+    ]);
+
+    const rawMaxCap = extractLastNumber(text, [
+      /"last_value_AppleRawMaxCapacity"\s*:\s*(\d+)/i,
+      /"AppleRawMaxCapacity"\s*:\s*(\d+)/i,
+      /"com\.apple\.power\.battery\.AppleRawMaxCapacity"\s*:\s*(\d+)/i
+    ]);
+
+    const maxFCC = extractLastNumber(text, [
+      /"last_value_MaximumFCC"\s*:\s*(\d+)/i,
+      /"MaximumFCC"\s*:\s*(\d+)/i,
+      /"com\.apple\.power\.battery\.MaximumFCC"\s*:\s*(\d+)/i
+    ]);
+
+    const fileDesignCap = extractLastNumber(text, [
+      /"last_value_DesignCapacity"\s*:\s*(\d+)/i,
+      /"DesignCapacity"\s*:\s*(\d+)/i,
+      /"com\.apple\.power\.battery\.DesignCapacity"\s*:\s*(\d+)/i
+    ]);
+
+    if (nominalCap === null && cycleCount === null && rawMaxCap === null) {
+      showError("Không tìm thấy dữ liệu pin trong nội dung này. Hãy đảm bảo bạn chọn đúng tệp 'Analytics-...' (tạo tự động hằng ngày), không phải tệp nhật ký lỗi ứng dụng.");
+      return;
+    }
+
+    // ---- Xác định model ----
+    const productCode = extractLastString(text, [
+      /"product"\s*:\s*"(iPhone\d+,\d+)"/i,
+      /"ProductType"\s*:\s*"(iPhone\d+,\d+)"/i,
+      /<key>ProductType<\/key>\s*<string>(iPhone\d+,\d+)<\/string>/i
+    ]);
+
+    let deviceName = "iPhone";
+    let designCap = fileDesignCap;
+    let designSource = "file";
+    let extraNote = "";
+    let unknownModelNote = "";
+
+    if (productCode && IPHONE_SPECS[productCode]) {
+      const spec = IPHONE_SPECS[productCode];
+      deviceName = spec.name;
+
+      // Validate fileDesignCap với spec (chỉ chấp nhận nếu lệch ≤ 15%)
+      if (fileDesignCap && fileDesignCap > 1000) {
+        const diff = Math.abs(fileDesignCap - spec.cap) / spec.cap;
+        if (diff <= DESIGN_TOLERANCE) {
+          designCap = fileDesignCap;
+          designSource = "file";
+        } else {
+          designCap = spec.cap;
+          designSource = "spec";
         }
+      } else {
+        designCap = spec.cap;
+        designSource = "spec";
+      }
+
+      if (spec.altNote) {
+        extraNote = `<br>• <strong>Thông tin biến thể:</strong> ${spec.altNote}.`;
+      }
+    } else if (productCode) {
+      deviceName = `iPhone (${productCode})`;
+      unknownModelNote = `<br>• <strong>Lưu ý:</strong> Mã <code>${productCode}</code> chưa có trong cơ sở dữ liệu. Dung lượng thiết kế lấy từ file (nếu có).`;
+    } else {
+      unknownModelNote = `<br>• <strong>Lưu ý:</strong> Không đọc được mã máy từ file. Dung lượng thiết kế lấy từ file (nếu có).`;
     }
 
-    // Xem nhanh nội dung các tệp văn bản (Info.plist dạng XML, json, strings, txt...)
-    async function previewTextFile(fileObj) {
-        const modal = document.getElementById('previewModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalBody = document.getElementById('modalBody');
-        const modalDownloadBtn = document.getElementById('modalDownloadBtn');
+    // ---- Ngày ----
+    let rawTimestamp = extractLastString(text, [
+      /"timestamp"\s*:\s*"(\d{4}-\d{2}-\d{2})/i,
+      /"timestamp"\s*:\s*"(\d{4}\/\d{2}\/\d{2})/i,
+      /"timestamp"\s*:\s*"(\d{2}\/\d{2}\/\d{4})/i
+    ]);
 
-        modalTitle.textContent = fileObj.name;
-        modalBody.textContent = "Đang tải nội dung...";
-        modal.classList.add('active');
-
-        modalDownloadBtn.onclick = () => downloadSingleFile(fileObj);
-
-        try {
-            const content = await fileObj.entry.async("string");
-            // Nếu là binary plist (bắt đầu bằng bplist00), báo cho người dùng biết
-            if (content.startsWith("bplist00")) {
-                modalBody.textContent = "[Tệp Binary Plist - Dữ liệu nhị phân]\nHãy bấm 'Tải tệp này về máy' để mở bằng trình đọc Plist chuyên dụng.";
-            } else {
-                modalBody.textContent = content;
-            }
-        } catch (err) {
-            modalBody.textContent = "Không thể đọc nội dung tệp: " + err.message;
+    // Nếu không có, thử dùng epoch timestamp (giây hoặc ms)
+    if (!rawTimestamp) {
+      const epoch = extractLastNumber(text, [
+        /"timestamp"\s*:\s*(\d{10,13})/i
+      ]);
+      if (epoch !== null) {
+        const ms = epoch > 1e12 ? epoch : epoch * 1000;
+        const d = new Date(ms);
+        if (!isNaN(d.getTime())) {
+          const y = d.getFullYear();
+          const mo = String(d.getMonth() + 1).padStart(2, "0");
+          const da = String(d.getDate()).padStart(2, "0");
+          rawTimestamp = `${y}-${mo}-${da}`;
         }
+      }
     }
 
-    function closeModal() {
-        document.getElementById('previewModal').classList.remove('active');
+    // Fallback lấy từ tên file
+    if (!rawTimestamp && currentFileName) {
+      const nameMatch = currentFileName.match(/(\d{4}-\d{2}-\d{2})/);
+      if (nameMatch) rawTimestamp = nameMatch[1];
     }
 
-    // Tiện ích định dạng dung lượng
-    function formatBytes(bytes) {
-        if (!bytes || bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    let formattedDate = "Không rõ";
+    if (rawTimestamp) {
+      const parts = rawTimestamp.replace(/\//g, "-").split("-");
+      // Xử lý 2 kiểu: YYYY-MM-DD hoặc DD-MM-YYYY
+      if (parts[0].length === 4) {
+        formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      } else {
+        formattedDate = `${parts[0]}/${parts[1]}/${parts[2]}`;
+      }
     }
 
-    // Tiện ích chọn icon theo đuôi tệp
-    function getFileIcon(filename) {
-        const ext = filename.split('.').pop().toLowerCase();
-        if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'icns'].includes(ext)) return '🖼️';
-        if (['plist', 'xml', 'json', 'strings'].includes(ext)) return '⚙️';
-        if (['dylib', 'framework', 'so', 'a'].includes(ext)) return '🧩';
-        if (['mp3', 'wav', 'm4a', 'caf', 'aac'].includes(ext)) return '🎵';
-        if (['mp4', 'mov'].includes(ext)) return '🎬';
-        if (['mobileprovision', 'cer', 'pem'].includes(ext)) return '📜';
-        if (['car'].includes(ext)) return '🎨';
-        return '📄';
+    // ---- Tính sức khỏe ----
+    const stdHealth = formatHealthBadge(nominalCap, designCap);
+    const fccHealth = formatHealthBadge(nominalCap, maxFCC);
+
+    // ---- Hiển thị ----
+    const designText = designCap ? `${designCap} mAh` : "Không rõ";
+    const designSub  = designSource === "spec"
+      ? "Theo thông số Apple"
+      : (designSource === "file" ? "Theo file Analytics" : "");
+    const maxFccText = maxFCC ? `${maxFCC} mAh` : "Không có";
+    const nominalText = nominalCap ? `${nominalCap} mAh` : "Không rõ";
+    const cycleText   = cycleCount !== null ? `${cycleCount} lần` : "Không rõ";
+    const rawMaxText  = rawMaxCap ? `${rawMaxCap} mAh` : "Không có";
+
+    document.getElementById("deviceTitle").textContent = `Thông tin pin ${deviceName}`;
+    document.getElementById("deviceCodeBadge").textContent = productCode || "Không rõ mã";
+    document.getElementById("resDate").textContent = formattedDate;
+    document.getElementById("resDesign").innerHTML =
+      `${designText}${designSub ? `<span class="sub-val">${designSub}</span>` : ""}`;
+    document.getElementById("resMaxFCC").textContent = maxFccText;
+    document.getElementById("resNominal").textContent = nominalText;
+    document.getElementById("resHealth").innerHTML = stdHealth.html;
+    document.getElementById("resCycle").textContent = cycleText;
+    document.getElementById("resRawMax").textContent = rawMaxText;
+
+    const rowFccHealth = document.getElementById("rowFccHealth");
+    if (maxFCC && nominalCap) {
+      rowFccHealth.style.display = "flex";
+      document.getElementById("resFccHealth").innerHTML = fccHealth.html;
+    } else {
+      rowFccHealth.style.display = "none";
     }
 
-    function isTextFile(filename) {
-        const ext = filename.split('.').pop().toLowerCase();
-        return ['plist', 'xml', 'json', 'txt', 'strings', 'md', 'html', 'js', 'css', 'entitlements'].includes(ext);
+    document.getElementById("resNote").innerHTML = `
+      • <strong>Sức khỏe theo chuẩn:</strong> So sánh dung lượng thực tế với thông số danh định của Apple (${designText}).<br>
+      • <strong>Dung lượng xuất xưởng (FCC):</strong> Mức tối đa thực tế của riêng viên pin khi mới xuất xưởng (thường cao hơn chuẩn 1–4% ở pin zin mới).${extraNote}${unknownModelNote}
+    `;
+
+    // ---- Summary để copy ----
+    lastSummaryText = [
+      `Thông tin pin ${deviceName}${productCode ? ` (${productCode})` : ""}:`,
+      `- Dữ liệu ngày: ${formattedDate}`,
+      `- Dung lượng thiết kế: ${designText}${designSub ? ` (${designSub})` : ""}`,
+      maxFCC ? `- Dung lượng xuất xưởng (FCC): ${maxFccText}` : null,
+      `- Dung lượng thực tế: ${nominalText}`,
+      `- Sức khỏe pin (chuẩn): ${stdHealth.text}`,
+      (maxFCC && nominalCap) ? `- Sức khỏe pin (theo FCC): ${fccHealth.text}` : null,
+      `- Chu kỳ sạc (0 - 100%): ${cycleText}`
+    ].filter(Boolean).join("\n");
+
+    resultBox.style.display = "block";
+  }
+
+  // =========================================================================
+  // COPY (có fallback cho file://)
+  // =========================================================================
+  function copySummary() {
+    if (!lastSummaryText) return;
+
+    const btn = document.getElementById("btnCopy");
+
+    function onSuccess() {
+      btn.textContent = "✅ Đã sao chép kết quả!";
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.textContent = "📋 Sao chép kết quả";
+        btn.classList.remove("copied");
+      }, 2000);
     }
 
-    function escapeHtml(str) {
-        return str.replace(/[&<>"']/g, m => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-        }[m]));
+    function fallbackCopy() {
+      const ta = document.createElement("textarea");
+      ta.value = lastSummaryText;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "-1000px";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      let ok = false;
+      try {
+        ok = document.execCommand("copy");
+      } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+
+      if (ok) {
+        onSuccess();
+      } else {
+        // Hiển thị hộp cho người dùng tự copy
+        const box = document.getElementById("rawText");
+        const old = box.value;
+        box.value = lastSummaryText;
+        box.focus();
+        box.select();
+        alert("Trình duyệt không cho phép tự sao chép. Nội dung đã được đưa vào ô văn bản — hãy nhấn Ctrl+C / Cmd+C để sao chép.\n\n" + lastSummaryText);
+        box.value = old;
+      }
     }
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(lastSummaryText)
+        .then(onSuccess)
+        .catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+  }
+
+  // =========================================================================
+  // XÓA
+  // =========================================================================
+  function clearAll() {
+    fileInput.value = "";
+    document.getElementById("fileName").textContent = "";
+    document.getElementById("rawText").value = "";
+    clearError();
+    document.getElementById("resultBox").style.display = "none";
+    lastSummaryText = "";
+    currentFileName = "";
+  }
 </script>
 
 </body>
