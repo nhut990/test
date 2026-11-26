@@ -7,10 +7,12 @@
   <style>
     :root {
       --bg: #000000;
-      --popup-bg: rgba(28, 28, 30, 0.95);
+      --card: #1c1c1e;
+      --popup-bg: rgba(28, 28, 30, 0.96);
       --text: #ffffff;
       --text-muted: #98989d;
       --blue: #0A84FF;
+      --accent: #30D158;
       --separator: #38383A;
     }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -18,7 +20,8 @@
       background: var(--bg);
       color: var(--text);
       margin: 0;
-      height: 100vh;
+      min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -26,12 +29,31 @@
       padding: 20px;
     }
     .landing { text-align: center; width: 100%; max-width: 400px; }
-    .landing h1 { font-size: 1.5rem; margin-bottom: 10px; }
-    .landing p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 30px; line-height: 1.5; }
-    .btn-upload {
-      background: #1c1c1e;
-      color: var(--text);
+    .landing h1 { font-size: 1.5rem; margin: 0 0 8px; }
+    .landing .sub { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 20px; line-height: 1.45; }
+
+    .guide-box {
+      background: var(--card);
       border: 1px solid var(--separator);
+      border-radius: 14px;
+      padding: 16px;
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    .guide-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; }
+    .guide-steps {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #e5e5ea;
+    }
+    .guide-steps b { color: #ffffff; }
+
+    .btn-upload {
+      background: var(--blue);
+      color: var(--text);
+      border: none;
       padding: 15px 20px;
       border-radius: 12px;
       font-size: 1rem;
@@ -44,9 +66,9 @@
       gap: 10px;
       transition: 0.2s;
     }
-    .btn-upload:active { background: #2c2c2e; }
+    .btn-upload:active { opacity: 0.85; }
     input[type="file"] { display: none; }
-    .loading { font-size: 0.9rem; color: var(--text-muted); text-align: center; display: none; margin-top: 20px; }
+    .loading { font-size: 0.9rem; color: var(--text-muted); text-align: center; display: none; margin-top: 16px; }
 
     /* Popup iOS */
     .popup-overlay {
@@ -61,29 +83,73 @@
       z-index: 1000;
       opacity: 0;
       transition: opacity 0.2s ease;
-      padding: 20px;
+      padding: 16px;
     }
     .popup-overlay.active { display: flex; opacity: 1; }
     .popup-box {
       background: var(--popup-bg);
       width: 100%;
-      max-width: 340px;
+      max-width: 390px;
       border-radius: 14px;
       overflow: hidden;
       transform: scale(0.95);
       transition: transform 0.2s ease;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      max-height: 90vh;
+      max-height: 90dvh;
       overflow-y: auto;
     }
     .popup-overlay.active .popup-box { transform: scale(1); }
-    .popup-content { padding: 20px; text-align: left; }
-    .popup-title { font-size: 1rem; font-weight: 600; margin-bottom: 16px; line-height: 1.4; }
-    .info-line { font-size: 0.95rem; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 6px; line-height: 1.4; }
-    .note-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 16px; line-height: 1.4; }
+    .popup-content { padding: 18px; text-align: left; }
+    .popup-title { font-size: 1rem; font-weight: 600; margin-bottom: 14px; line-height: 1.4; }
+
+    /* Bảng kẻ ô từng dòng — luôn 1 hàng ở mọi hướng ngang/dọc */
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--separator);
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .spec-table tr {
+      border-bottom: 1px solid var(--separator);
+    }
+    .spec-table tr:last-child {
+      border-bottom: none;
+    }
+    .spec-table th,
+    .spec-table td {
+      padding: 10px 12px;
+      font-size: 0.88rem;
+      line-height: 1.25;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    .spec-table th {
+      text-align: left;
+      font-weight: 500;
+      color: var(--text);
+      width: 1%;
+    }
+    .spec-table td {
+      text-align: right;
+      font-weight: 700;
+      color: var(--accent);
+      border-left: 1px solid var(--separator);
+    }
+
+    @media (max-width: 380px) {
+      .spec-table th,
+      .spec-table td {
+        padding: 9px 8px;
+        font-size: 0.8rem;
+      }
+    }
+
+    .note-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 14px; line-height: 1.4; }
 
     .select-container {
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       background: #2c2c2e;
       border-radius: 8px;
       padding: 8px;
@@ -113,21 +179,31 @@
       border: none;
       padding: 14px;
       font-size: 1rem;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
       outline: none;
+      color: var(--blue);
     }
     .popup-actions button:active { background: rgba(255,255,255,0.1); }
-    .popup-actions button:first-child { border-right: 1px solid var(--separator); color: var(--text); }
-    .popup-actions button:last-child { color: var(--blue); font-weight: 600; }
   </style>
 </head>
 <body>
 
   <div class="landing" id="landing">
-    <h1>🔋 Kiểm tra Pin</h1>
-    <p>Chọn tệp <b>"Analytics-..."</b> trong Cài đặt → Quyền riêng tư → Phân tích & Cải tiến.<br><i>(Bỏ qua tệp có chữ 'session')</i></p>
-    <label class="btn-upload" for="fileInput">📂 Chọn tệp Dữ liệu phân tích</label>
+    <h1>🔋 Kiểm tra Pin iPhone</h1>
+    <p class="sub">Xem số lần sạc và dung lượng pin thực tế từ file phân tích của máy.</p>
+
+    <div class="guide-box">
+      <div class="guide-title">Cách lấy file nhanh:</div>
+      <ol class="guide-steps">
+        <li>Mở <b>Cài đặt</b> → <b>Quyền riêng tư & Bảo mật</b>.</li>
+        <li>Chọn <b>Phân tích & Cải tiến</b> → <b>Dữ liệu phân tích</b>.</li>
+        <li>Tìm file bắt đầu bằng <b>Analytics-YYYY-MM-DD</b> (ưu tiên file ngày gần nhất).</li>
+        <li>Bấm nút <b>Chia sẻ</b> → <b>Lưu vào Tệp</b>, rồi tải lên bên dưới.</li>
+      </ol>
+    </div>
+
+    <label class="btn-upload" for="fileInput">📂 Tải file Analytics lên</label>
     <input type="file" id="fileInput" accept=".ips,.json,.synced,.gz,.txt">
     <div class="loading" id="loadingMsg">⏳ Đang xử lý tệp...</div>
   </div>
@@ -142,15 +218,35 @@
             <select id="deviceSelect"><option value="">-- Đang tải --</option></select>
           </div>
         </div>
-        <div class="info-line">📅 Dữ liệu ngày: <span id="valDate">--</span></div>
-        <div class="info-line">🟩 Dung lượng pin thiết kế: <span id="valDesign">--</span></div>
-        <div class="info-line">🔋 Dung lượng pin thực tế: <span id="valNominal">--</span></div>
-        <div class="info-line">❤️ Sức khỏe pin: <span id="valHealth">--</span></div>
-        <div class="info-line">🛠️ Chu kỳ sạc (0 - 100%): <span id="valCycle">--</span></div>
+
+        <table class="spec-table">
+          <tbody>
+            <tr>
+              <th>📅 Dữ liệu ngày</th>
+              <td id="valDate">--</td>
+            </tr>
+            <tr>
+              <th>🔋 Pin thiết kế</th>
+              <td id="valDesign">--</td>
+            </tr>
+            <tr>
+              <th>🔋 Pin thực tế</th>
+              <td id="valNominal">--</td>
+            </tr>
+            <tr>
+              <th>❤️ Sức khỏe pin</th>
+              <td id="valHealth">--</td>
+            </tr>
+            <tr>
+              <th>🛠️ Chu kỳ sạc</th>
+              <td id="valCycle">--</td>
+            </tr>
+          </tbody>
+        </table>
+
         <div class="note-text">Lưu ý: Dung lượng thiết kế là thông số mà Apple in trên viên pin của iPhone.</div>
       </div>
       <div class="popup-actions">
-        <button type="button" onclick="closePopup()">Hủy</button>
         <button type="button" onclick="closePopup()">Xong</button>
       </div>
     </div>
@@ -210,7 +306,6 @@
   const deviceSelect = document.getElementById("deviceSelect");
   const selectContainer = document.getElementById("selectContainer");
 
-  // Khởi tạo dropdown
   function initDropdown() {
     const sorted = Object.entries(IPHONE_SPECS).sort((a, b) => a[1].name.localeCompare(b[1].name));
     const added = new Set();
@@ -227,7 +322,6 @@
   }
   initDropdown();
 
-  // Cho phép đổi máy bất cứ lúc nào (kể cả sau khi đã chọn)
   deviceSelect.addEventListener("change", function() {
     const code = this.value;
     if (code && IPHONE_SPECS[code]) {
@@ -236,14 +330,12 @@
     }
   });
 
-  // Đóng popup bằng ESC
   document.addEventListener("keydown", function(e) {
     if (e.key === "Escape" && popupOverlay.classList.contains("active")) {
       closePopup();
     }
   });
 
-  // Đọc file
   fileInput.addEventListener("change", async function(e) {
     if (!e.target.files || !e.target.files[0]) return;
     const file = e.target.files[0];
@@ -294,7 +386,6 @@
     }
   });
 
-  // Lấy số CUỐI CÙNG (mới nhất) trong text
   function extractLastNumber(text, regexList) {
     for (const regex of regexList) {
       const flags = regex.flags.includes("g") ? regex.flags : regex.flags + "g";
@@ -325,12 +416,10 @@
   }
 
   function processData(text) {
-    // Reset state
     extractedNominal = null;
     extractedCycle = null;
     extractedDate = "--";
 
-    // Lấy dữ liệu pin — hỗ trợ CẢ JSON và XML plist (iOS cũ)
     extractedNominal = extractLastNumber(text, [
       /"last_value_NominalChargeCapacity"\s*:\s*(\d+)/i,
       /"NominalChargeCapacity"\s*:\s*(\d+)/i,
@@ -344,13 +433,11 @@
       /<key>com\.apple\.power\.battery\.CycleCount<\/key>\s*<integer>(\d+)<\/integer>/i
     ]);
 
-    // ✅ FIX: Kiểm tra === null thay vì !value (vì cycle = 0 là hợp lệ cho máy mới)
     if (extractedNominal === null && extractedCycle === null) {
       alert("❌ Không tìm thấy dữ liệu pin trong file này.\n\nLưu ý:\n- Phải là file Analytics đầy đủ (không phải file session hay log lỗi app).\n- Nếu chắc chắn đúng file, có thể iOS chưa tổng hợp đủ dữ liệu, hãy thử file mới hơn.");
       return;
     }
 
-    // Lấy ngày
     let rawDate = extractLastString(text, [
       /"timestamp"\s*:\s*"(\d{4}-\d{2}-\d{2})/i,
       /"timestamp"\s*:\s*"(\d{4}\/\d{2}\/\d{2})/i
@@ -368,7 +455,6 @@
       extractedDate = "Không rõ";
     }
 
-    // Tự động nhận diện model — hỗ trợ JSON và XML
     const productCode = extractLastString(text, [
       /"product"\s*:\s*"(iPhone\d+,\d+)"/i,
       /"ProductType"\s*:\s*"(iPhone\d+,\d+)"/i,
@@ -376,12 +462,10 @@
     ]);
 
     if (productCode && IPHONE_SPECS[productCode]) {
-      // Nhận diện thành công
       selectContainer.style.display = "none";
       document.getElementById("deviceTitle").textContent = `Thông tin pin ${IPHONE_SPECS[productCode].name} của bạn:`;
       calculateAndRender(productCode);
     } else {
-      // Không nhận diện được → hiện dropdown
       selectContainer.style.display = "block";
       deviceSelect.value = "";
       document.getElementById("deviceTitle").textContent = "Không nhận diện được dòng máy";
@@ -399,11 +483,9 @@
     const spec = IPHONE_SPECS[productCode];
     let designCap = spec.cap;
 
-    // Tự động chọn biến thể phù hợp (SIM vs eSIM)
     if (spec.capAlt && extractedNominal !== null) {
       const diffMain = Math.abs(extractedNominal - spec.cap) / spec.cap;
       const diffAlt  = Math.abs(extractedNominal - spec.capAlt) / spec.capAlt;
-      // Chọn biến thể gần hơn
       if (diffAlt < diffMain) designCap = spec.capAlt;
     }
 
