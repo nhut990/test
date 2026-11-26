@@ -15,6 +15,7 @@
       --good: #22c55e;
       --warn: #f59e0b;
       --bad: #ef4444;
+      --info: #8b5cf6;
     }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body {
@@ -146,6 +147,18 @@
     .good { background: rgba(34, 197, 94, 0.2); color: var(--good); }
     .warn { background: rgba(245, 158, 11, 0.2); color: var(--warn); }
     .bad  { background: rgba(239, 68, 68, 0.2); color: var(--bad); }
+    .info { background: rgba(139, 92, 246, 0.2); color: var(--info); }
+    .unconfirmed-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      color: var(--warn);
+      background: rgba(245, 158, 11, 0.15);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+      font-weight: 600;
+    }
     .note {
       margin-top: 12px;
       font-size: 0.8rem;
@@ -156,6 +169,13 @@
       border-radius: 8px;
     }
     .note strong { color: var(--text); }
+    .note code {
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
     .error-msg {
       color: var(--bad);
       font-size: 0.88rem;
@@ -254,12 +274,21 @@
   // =========================================================================
   // CẤU HÌNH
   // =========================================================================
-  const MAX_FILE_SIZE = 200 * 1024 * 1024;   // 200 MB – chặn file quá lớn
-  const MIN_FILE_SIZE = 10;                  // <10 byte coi như file rỗng
-  const DESIGN_TOLERANCE = 0.15;             // cho phép lệch 15% so với spec
-  const HEALTH_ANOMALY_THRESHOLD = 150;      // >150% là bất thường → cảnh báo
+  const MAX_FILE_SIZE = 200 * 1024 * 1024;
+  const MIN_FILE_SIZE = 10;
+  const DESIGN_TOLERANCE = 0.15;
+  const VARIANT_MATCH_TOLERANCE = 0.05;  // khớp biến thể chặt hơn (5%)
+  const HEALTH_ANOMALY_THRESHOLD = 150;
 
+  // =========================================================================
+  // DATABASE
+  // - cap     : dung lượng chuẩn (bản khay SIM vật lý hoặc mặc định)
+  // - capAlt  : dung lượng biến thể (bản eSIM-only, nếu có)
+  // - altNote : ghi chú hiển thị cho người dùng
+  // - unconfirmed : true nếu Apple chưa công bố chính thức
+  // =========================================================================
   const IPHONE_SPECS = {
+    // ========== Dòng cũ ==========
     "iPhone5,1": { name: "iPhone 5", cap: 1440 },
     "iPhone5,2": { name: "iPhone 5", cap: 1440 },
     "iPhone5,3": { name: "iPhone 5c", cap: 1510 },
@@ -268,57 +297,109 @@
     "iPhone6,2": { name: "iPhone 5s", cap: 1560 },
     "iPhone7,2": { name: "iPhone 6", cap: 1810 },
     "iPhone7,1": { name: "iPhone 6 Plus", cap: 2915 },
+
+    // ========== iPhone 6s / SE 1 ==========
     "iPhone8,1": { name: "iPhone 6s", cap: 1715 },
     "iPhone8,2": { name: "iPhone 6s Plus", cap: 2750 },
     "iPhone8,4": { name: "iPhone SE (Thế hệ 1)", cap: 1624 },
+
+    // ========== iPhone 7 ==========
     "iPhone9,1": { name: "iPhone 7", cap: 1960 },
     "iPhone9,3": { name: "iPhone 7", cap: 1960 },
     "iPhone9,2": { name: "iPhone 7 Plus", cap: 2900 },
     "iPhone9,4": { name: "iPhone 7 Plus", cap: 2900 },
+
+    // ========== iPhone 8 / X ==========
     "iPhone10,1": { name: "iPhone 8", cap: 1821 },
     "iPhone10,4": { name: "iPhone 8", cap: 1821 },
     "iPhone10,2": { name: "iPhone 8 Plus", cap: 2691 },
     "iPhone10,5": { name: "iPhone 8 Plus", cap: 2691 },
     "iPhone10,3": { name: "iPhone X", cap: 2716 },
     "iPhone10,6": { name: "iPhone X", cap: 2716 },
+
+    // ========== iPhone XS / XR ==========
     "iPhone11,2": { name: "iPhone XS", cap: 2658 },
     "iPhone11,4": { name: "iPhone XS Max", cap: 3174 },
     "iPhone11,6": { name: "iPhone XS Max", cap: 3174 },
     "iPhone11,8": { name: "iPhone XR", cap: 2942 },
+
+    // ========== iPhone 11 / SE 2020 ==========
     "iPhone12,1": { name: "iPhone 11", cap: 3110 },
     "iPhone12,3": { name: "iPhone 11 Pro", cap: 3046 },
     "iPhone12,5": { name: "iPhone 11 Pro Max", cap: 3969 },
     "iPhone12,8": { name: "iPhone SE (2020)", cap: 1821 },
+
+    // ========== iPhone 12 ==========
     "iPhone13,1": { name: "iPhone 12 mini", cap: 2227 },
     "iPhone13,2": { name: "iPhone 12", cap: 2815 },
     "iPhone13,3": { name: "iPhone 12 Pro", cap: 2815 },
     "iPhone13,4": { name: "iPhone 12 Pro Max", cap: 3687 },
+
+    // ========== iPhone 13 / SE 2022 ==========
     "iPhone14,4": { name: "iPhone 13 mini", cap: 2406 },
     "iPhone14,5": { name: "iPhone 13", cap: 3227 },
     "iPhone14,2": { name: "iPhone 13 Pro", cap: 3095 },
     "iPhone14,3": { name: "iPhone 13 Pro Max", cap: 4352 },
     "iPhone14,6": { name: "iPhone SE (2022)", cap: 2018 },
+
+    // ========== iPhone 14 ==========
     "iPhone14,7": { name: "iPhone 14", cap: 3279 },
     "iPhone14,8": { name: "iPhone 14 Plus", cap: 4325 },
     "iPhone15,2": { name: "iPhone 14 Pro", cap: 3200 },
     "iPhone15,3": { name: "iPhone 14 Pro Max", cap: 4323 },
+
+    // ========== iPhone 15 ==========
     "iPhone15,4": { name: "iPhone 15", cap: 3349 },
     "iPhone15,5": { name: "iPhone 15 Plus", cap: 4383 },
     "iPhone16,1": { name: "iPhone 15 Pro", cap: 3274 },
     "iPhone16,2": { name: "iPhone 15 Pro Max", cap: 4422 },
+
+    // ========== iPhone 16 series ==========
     "iPhone17,3": { name: "iPhone 16", cap: 3561 },
     "iPhone17,4": { name: "iPhone 16 Plus", cap: 4674 },
     "iPhone17,1": { name: "iPhone 16 Pro", cap: 3582 },
     "iPhone17,2": { name: "iPhone 16 Pro Max", cap: 4685 },
-    "iPhone17,5": { name: "iPhone 16e", cap: 4005 },
+    "iPhone17,5": { name: "iPhone 16e", cap: 4005 },   // ✅ teardown Feb 2025
+
+    // ========== iPhone 17 series (có đa biến thể SIM/eSIM) ==========
     "iPhone18,3": { name: "iPhone 17", cap: 3692 },
     "iPhone18,4": { name: "iPhone Air", cap: 3149 },
-    "iPhone18,1": { name: "iPhone 17 Pro", cap: 3988, altNote: "Bản khay SIM: 3988 mAh | Bản chỉ eSIM: 4252 mAh" },
-    "iPhone18,2": { name: "iPhone 17 Pro Max", cap: 4823, altNote: "Bản khay SIM: 4823 mAh | Bản chỉ eSIM: 5088 mAh" },
+    "iPhone18,1": {
+      name: "iPhone 17 Pro",
+      cap: 3988,        // bản có khay SIM vật lý
+      capAlt: 4252,     // bản chỉ eSIM (US/Nhật/UAE…)
+      altNote: "Bản khay SIM: 3988 mAh | Bản chỉ eSIM: 4252 mAh"
+    },
+    "iPhone18,2": {
+      name: "iPhone 17 Pro Max",
+      cap: 4823,
+      capAlt: 5088,
+      altNote: "Bản khay SIM: 4823 mAh | Bản chỉ eSIM: 5088 mAh"
+    },
+    // ✅ iPhone 17e — đã chính thức bán từ 11/03/2026
     "iPhone18,5": { name: "iPhone 17e", cap: 4005 },
-    "iPhone19,1": { name: "iPhone 18 Pro", cap: 4056, altNote: "Bản khay SIM: 4056 mAh | Bản chỉ eSIM: 4288 mAh" },
-    "iPhone19,2": { name: "iPhone 18 Pro Max", cap: 5391, altNote: "Bản khay SIM: 5391 mAh | Bản chỉ eSIM: 5567 mAh" },
-    "iPhone19,3": { name: "iPhone 18", cap: 3850 }
+
+    // ========== iPhone 18 series — CHƯA ĐƯỢC APPLE XÁC NHẬN ==========
+    "iPhone19,1": {
+      name: "iPhone 18 Pro",
+      cap: 4056,
+      capAlt: 4288,
+      unconfirmed: true,
+      altNote: "⚠ Chưa xác nhận. Dự đoán: bản khay SIM 4056 mAh | eSIM 4288 mAh"
+    },
+    "iPhone19,2": {
+      name: "iPhone 18 Pro Max",
+      cap: 5391,
+      capAlt: 5567,
+      unconfirmed: true,
+      altNote: "⚠ Chưa xác nhận. Dự đoán: bản khay SIM 5391 mAh | eSIM 5567 mAh"
+    },
+    "iPhone19,3": {
+      name: "iPhone 18",
+      cap: 3850,
+      unconfirmed: true,
+      altNote: "⚠ Chưa xác nhận. Dự đoán: 3850 mAh"
+    }
   };
 
   // =========================================================================
@@ -328,10 +409,10 @@
   let currentFileName = "";
   let isBusy = false;
 
-  const fileInput   = document.getElementById("fileInput");
-  const dropZone    = document.getElementById("dropZone");
-  const btnAnalyze  = document.getElementById("btnAnalyze");
-  const btnClear    = document.getElementById("btnClear");
+  const fileInput  = document.getElementById("fileInput");
+  const dropZone   = document.getElementById("dropZone");
+  const btnAnalyze = document.getElementById("btnAnalyze");
+  const btnClear   = document.getElementById("btnClear");
 
   // =========================================================================
   // TIỆN ÍCH
@@ -350,7 +431,6 @@
     }
   }
 
-  // Lấy match CUỐI CÙNG (giá trị mới nhất) thay vì match đầu tiên
   function extractLastNumber(text, regexList) {
     for (const regex of regexList) {
       const flags = regex.flags.includes("g") ? regex.flags : regex.flags + "g";
@@ -359,7 +439,7 @@
       while ((m = re.exec(text)) !== null) {
         const val = parseInt(m[1], 10);
         if (!Number.isNaN(val)) last = val;
-        if (m.index === re.lastIndex) re.lastIndex++; // tránh vòng lặp vô hạn
+        if (m.index === re.lastIndex) re.lastIndex++;
       }
       if (last !== null) return last;
     }
@@ -390,7 +470,6 @@
     if (pct < 80) badgeClass = "bad";
     else if (pct < 85) badgeClass = "warn";
 
-    // Cảnh báo dữ liệu bất thường (>150% → chắc chắn sai)
     if (pct > HEALTH_ANOMALY_THRESHOLD) {
       return {
         text: `${pctFormatted}% (⚠ bất thường)`,
@@ -417,13 +496,53 @@
     errorBox.style.display = "none";
   }
 
+  // Chọn dung lượng thiết kế tốt nhất dựa trên giá trị file + spec
+  function resolveDesignCapacity(fileDesignCap, spec) {
+    // Trường hợp không có spec → dùng file
+    if (!spec) {
+      return {
+        designCap: fileDesignCap,
+        source: fileDesignCap ? "file" : "none",
+        variantMatched: false
+      };
+    }
+
+    const candidates = [spec.cap];
+    if (spec.capAlt) candidates.push(spec.capAlt);
+
+    // Có file value → thử khớp với các biến thể
+    if (fileDesignCap && fileDesignCap > 1000) {
+      // Ưu tiên khớp chặt (5%) với bất kỳ biến thể nào
+      for (const c of candidates) {
+        if (Math.abs(fileDesignCap - c) / c <= VARIANT_MATCH_TOLERANCE) {
+          return { designCap: fileDesignCap, source: "file", variantMatched: true };
+        }
+      }
+      // Nới lỏng hơn (15%) — vẫn chấp nhận giá trị file
+      for (const c of candidates) {
+        if (Math.abs(fileDesignCap - c) / c <= DESIGN_TOLERANCE) {
+          return { designCap: fileDesignCap, source: "file", variantMatched: true };
+        }
+      }
+      // Không khớp → chọn biến thể gần nhất
+      let nearest = candidates[0];
+      for (const c of candidates) {
+        if (Math.abs(fileDesignCap - c) < Math.abs(fileDesignCap - nearest)) {
+          nearest = c;
+        }
+      }
+      return { designCap: nearest, source: "spec", variantMatched: false };
+    }
+
+    // Không có file value → dùng spec (biến thể đầu tiên)
+    return { designCap: spec.cap, source: "spec", variantMatched: false };
+  }
+
   // =========================================================================
   // XỬ LÝ FILE
   // =========================================================================
   fileInput.addEventListener("change", function (e) {
-    if (e.target.files && e.target.files[0]) {
-      processFile(e.target.files[0]);
-    }
+    if (e.target.files && e.target.files[0]) processFile(e.target.files[0]);
   });
 
   dropZone.addEventListener("dragover", function (e) {
@@ -443,18 +562,16 @@
 
   async function processFile(file) {
     if (isBusy) return;
-
     clearError();
     document.getElementById("resultBox").style.display = "none";
 
-    // ---- Validate file ----
     if (!file || file.size < MIN_FILE_SIZE) {
       showError("Tệp rỗng hoặc không hợp lệ. Hãy kiểm tra lại tệp Analytics.");
       return;
     }
     if (file.size > MAX_FILE_SIZE) {
       const mb = (file.size / 1024 / 1024).toFixed(1);
-      showError(`Tệp quá lớn (${mb} MB > 200 MB). Hãy tách tệp theo từng ngày hoặc chọn tệp nhỏ hơn.`);
+      showError(`Tệp quá lớn (${mb} MB > 200 MB). Hãy tách tệp theo từng ngày.`);
       return;
     }
 
@@ -464,7 +581,6 @@
 
     try {
       let textContent = "";
-      // Kiểm tra magic bytes Gzip (0x1f 0x8b)
       const headerBuf = await file.slice(0, 2).arrayBuffer();
       const headerBytes = new Uint8Array(headerBuf);
       const isGzip = headerBytes.length === 2 && headerBytes[0] === 0x1f && headerBytes[1] === 0x8b;
@@ -475,7 +591,7 @@
           const decompressedStream = file.stream().pipeThrough(ds);
           textContent = await new Response(decompressedStream).text();
         } else {
-          showError("Trình duyệt của bạn chưa hỗ trợ tự động giải nén Gzip (.gz / .synced). Vui lòng giải nén trước rồi chọn lại tệp.");
+          showError("Trình duyệt chưa hỗ trợ tự động giải nén Gzip. Vui lòng giải nén trước.");
           return;
         }
       } else {
@@ -491,7 +607,7 @@
       analyzeData();
     } catch (err) {
       console.error(err);
-      showError("Không thể đọc hoặc giải nén tệp này. Hãy thử mở tệp bằng ứng dụng Ghi chú hoặc Tệp và dán nội dung vào ô bên dưới.");
+      showError("Không thể đọc hoặc giải nén tệp này. Hãy thử mở tệp bằng ứng dụng Ghi chú rồi dán nội dung vào ô bên dưới.");
     } finally {
       setBusy(false);
     }
@@ -502,10 +618,8 @@
   // =========================================================================
   function analyzeData() {
     if (isBusy) return;
-
     const text = document.getElementById("rawText").value.trim();
     const resultBox = document.getElementById("resultBox");
-
     clearError();
     resultBox.style.display = "none";
 
@@ -514,7 +628,6 @@
       return;
     }
 
-    // ---- Trích xuất số liệu ----
     const cycleCount = extractLastNumber(text, [
       /"last_value_CycleCount"\s*:\s*(\d+)/i,
       /"CycleCount"\s*:\s*(\d+)/i,
@@ -548,11 +661,10 @@
     ]);
 
     if (nominalCap === null && cycleCount === null && rawMaxCap === null) {
-      showError("Không tìm thấy dữ liệu pin trong nội dung này. Hãy đảm bảo bạn chọn đúng tệp 'Analytics-...' (tạo tự động hằng ngày), không phải tệp nhật ký lỗi ứng dụng.");
+      showError("Không tìm thấy dữ liệu pin. Hãy chắc chắn đây là tệp 'Analytics-...' (không phải tệp log lỗi).");
       return;
     }
 
-    // ---- Xác định model ----
     const productCode = extractLastString(text, [
       /"product"\s*:\s*"(iPhone\d+,\d+)"/i,
       /"ProductType"\s*:\s*"(iPhone\d+,\d+)"/i,
@@ -560,52 +672,34 @@
     ]);
 
     let deviceName = "iPhone";
-    let designCap = fileDesignCap;
-    let designSource = "file";
     let extraNote = "";
     let unknownModelNote = "";
+    let isUnconfirmed = false;
+    const spec = (productCode && IPHONE_SPECS[productCode]) ? IPHONE_SPECS[productCode] : null;
 
-    if (productCode && IPHONE_SPECS[productCode]) {
-      const spec = IPHONE_SPECS[productCode];
+    if (spec) {
       deviceName = spec.name;
-
-      // Validate fileDesignCap với spec (chỉ chấp nhận nếu lệch ≤ 15%)
-      if (fileDesignCap && fileDesignCap > 1000) {
-        const diff = Math.abs(fileDesignCap - spec.cap) / spec.cap;
-        if (diff <= DESIGN_TOLERANCE) {
-          designCap = fileDesignCap;
-          designSource = "file";
-        } else {
-          designCap = spec.cap;
-          designSource = "spec";
-        }
-      } else {
-        designCap = spec.cap;
-        designSource = "spec";
-      }
-
-      if (spec.altNote) {
-        extraNote = `<br>• <strong>Thông tin biến thể:</strong> ${spec.altNote}.`;
-      }
+      if (spec.altNote) extraNote = `<br>• <strong>Biến thể:</strong> ${spec.altNote}.`;
+      if (spec.unconfirmed) isUnconfirmed = true;
     } else if (productCode) {
       deviceName = `iPhone (${productCode})`;
-      unknownModelNote = `<br>• <strong>Lưu ý:</strong> Mã <code>${productCode}</code> chưa có trong cơ sở dữ liệu. Dung lượng thiết kế lấy từ file (nếu có).`;
+      unknownModelNote = `<br>• <strong>Lưu ý:</strong> Mã <code>${productCode}</code> chưa có trong DB. Dung lượng thiết kế lấy từ file (nếu có).`;
     } else {
-      unknownModelNote = `<br>• <strong>Lưu ý:</strong> Không đọc được mã máy từ file. Dung lượng thiết kế lấy từ file (nếu có).`;
+      unknownModelNote = `<br>• <strong>Lưu ý:</strong> Không đọc được mã máy. Dung lượng thiết kế lấy từ file (nếu có).`;
     }
 
-    // ---- Ngày ----
+    // Chọn design capacity có tính đến biến thể
+    const { designCap, source: designSource, variantMatched } = resolveDesignCapacity(fileDesignCap, spec);
+
+    // Ngày
     let rawTimestamp = extractLastString(text, [
       /"timestamp"\s*:\s*"(\d{4}-\d{2}-\d{2})/i,
       /"timestamp"\s*:\s*"(\d{4}\/\d{2}\/\d{2})/i,
       /"timestamp"\s*:\s*"(\d{2}\/\d{2}\/\d{4})/i
     ]);
 
-    // Nếu không có, thử dùng epoch timestamp (giây hoặc ms)
     if (!rawTimestamp) {
-      const epoch = extractLastNumber(text, [
-        /"timestamp"\s*:\s*(\d{10,13})/i
-      ]);
+      const epoch = extractLastNumber(text, [/"timestamp"\s*:\s*(\d{10,13})/i]);
       if (epoch !== null) {
         const ms = epoch > 1e12 ? epoch : epoch * 1000;
         const d = new Date(ms);
@@ -618,7 +712,6 @@
       }
     }
 
-    // Fallback lấy từ tên file
     if (!rawTimestamp && currentFileName) {
       const nameMatch = currentFileName.match(/(\d{4}-\d{2}-\d{2})/);
       if (nameMatch) rawTimestamp = nameMatch[1];
@@ -627,7 +720,6 @@
     let formattedDate = "Không rõ";
     if (rawTimestamp) {
       const parts = rawTimestamp.replace(/\//g, "-").split("-");
-      // Xử lý 2 kiểu: YYYY-MM-DD hoặc DD-MM-YYYY
       if (parts[0].length === 4) {
         formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
       } else {
@@ -635,21 +727,26 @@
       }
     }
 
-    // ---- Tính sức khỏe ----
+    // Tính health
     const stdHealth = formatHealthBadge(nominalCap, designCap);
     const fccHealth = formatHealthBadge(nominalCap, maxFCC);
 
-    // ---- Hiển thị ----
     const designText = designCap ? `${designCap} mAh` : "Không rõ";
-    const designSub  = designSource === "spec"
-      ? "Theo thông số Apple"
-      : (designSource === "file" ? "Theo file Analytics" : "");
+    let designSub = "";
+    if (designSource === "spec") {
+      designSub = variantMatched ? "Theo thông số Apple" : "Theo thông số Apple (file không khớp biến thể)";
+    } else if (designSource === "file") {
+      designSub = "Theo file Analytics";
+    }
     const maxFccText = maxFCC ? `${maxFCC} mAh` : "Không có";
     const nominalText = nominalCap ? `${nominalCap} mAh` : "Không rõ";
     const cycleText   = cycleCount !== null ? `${cycleCount} lần` : "Không rõ";
     const rawMaxText  = rawMaxCap ? `${rawMaxCap} mAh` : "Không có";
 
-    document.getElementById("deviceTitle").textContent = `Thông tin pin ${deviceName}`;
+    // Header — thêm badge "chưa xác nhận" nếu có
+    const titleEl = document.getElementById("deviceTitle");
+    titleEl.innerHTML = `Thông tin pin ${deviceName}` +
+      (isUnconfirmed ? `<span class="unconfirmed-badge">⚠ CHƯA XÁC NHẬN</span>` : "");
     document.getElementById("deviceCodeBadge").textContent = productCode || "Không rõ mã";
     document.getElementById("resDate").textContent = formattedDate;
     document.getElementById("resDesign").innerHTML =
@@ -668,14 +765,18 @@
       rowFccHealth.style.display = "none";
     }
 
+    let unconfirmedNote = "";
+    if (isUnconfirmed) {
+      unconfirmedNote = `<br>• <strong style="color:var(--warn)">⚠ Cảnh báo:</strong> Dung lượng pin của dòng máy này <strong>chưa được Apple công bố chính thức</strong>. Kết quả chỉ mang tính tham khảo.`;
+    }
+
     document.getElementById("resNote").innerHTML = `
-      • <strong>Sức khỏe theo chuẩn:</strong> So sánh dung lượng thực tế với thông số danh định của Apple (${designText}).<br>
-      • <strong>Dung lượng xuất xưởng (FCC):</strong> Mức tối đa thực tế của riêng viên pin khi mới xuất xưởng (thường cao hơn chuẩn 1–4% ở pin zin mới).${extraNote}${unknownModelNote}
+      • <strong>Sức khỏe theo chuẩn:</strong> So sánh dung lượng thực tế với dung lượng thiết kế (${designText}).<br>
+      • <strong>Dung lượng xuất xưởng (FCC):</strong> Mức tối đa thực tế của pin khi mới xuất xưởng (thường cao hơn chuẩn 1–4% ở pin zin mới).${extraNote}${unknownModelNote}${unconfirmedNote}
     `;
 
-    // ---- Summary để copy ----
     lastSummaryText = [
-      `Thông tin pin ${deviceName}${productCode ? ` (${productCode})` : ""}:`,
+      `Thông tin pin ${deviceName}${productCode ? ` (${productCode})` : ""}${isUnconfirmed ? " [CHƯA XÁC NHẬN]" : ""}:`,
       `- Dữ liệu ngày: ${formattedDate}`,
       `- Dung lượng thiết kế: ${designText}${designSub ? ` (${designSub})` : ""}`,
       maxFCC ? `- Dung lượng xuất xưởng (FCC): ${maxFccText}` : null,
@@ -689,11 +790,10 @@
   }
 
   // =========================================================================
-  // COPY (có fallback cho file://)
+  // COPY
   // =========================================================================
   function copySummary() {
     if (!lastSummaryText) return;
-
     const btn = document.getElementById("btnCopy");
 
     function onSuccess() {
@@ -716,29 +816,23 @@
       ta.select();
       ta.setSelectionRange(0, ta.value.length);
       let ok = false;
-      try {
-        ok = document.execCommand("copy");
-      } catch (e) { ok = false; }
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
       document.body.removeChild(ta);
-
       if (ok) {
         onSuccess();
       } else {
-        // Hiển thị hộp cho người dùng tự copy
         const box = document.getElementById("rawText");
         const old = box.value;
         box.value = lastSummaryText;
         box.focus();
         box.select();
-        alert("Trình duyệt không cho phép tự sao chép. Nội dung đã được đưa vào ô văn bản — hãy nhấn Ctrl+C / Cmd+C để sao chép.\n\n" + lastSummaryText);
+        alert("Trình duyệt không cho phép tự sao chép. Nội dung đã được đưa vào ô văn bản — hãy nhấn Ctrl+C / Cmd+C.\n\n" + lastSummaryText);
         box.value = old;
       }
     }
 
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(lastSummaryText)
-        .then(onSuccess)
-        .catch(fallbackCopy);
+      navigator.clipboard.writeText(lastSummaryText).then(onSuccess).catch(fallbackCopy);
     } else {
       fallbackCopy();
     }
