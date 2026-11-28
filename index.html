@@ -1,514 +1,876 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Kiểm tra Pin iPhone</title>
-  <style>
-    :root {
-      --bg: #000000;
-      --card: #1c1c1e;
-      --popup-bg: rgba(28, 28, 30, 0.96);
-      --text: #ffffff;
-      --text-muted: #98989d;
-      --blue: #0A84FF;
-      --accent: #30D158;
-      --separator: #38383A;
-    }
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      margin: 0;
-      min-height: 100vh;
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .landing { text-align: center; width: 100%; max-width: 400px; }
-    .landing h1 { font-size: 1.5rem; margin: 0 0 8px; }
-    .landing .sub { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 20px; line-height: 1.45; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minh Nhựt - Công Cụ & Ứng Dụng Web</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .guide-box {
-      background: var(--card);
-      border: 1px solid var(--separator);
-      border-radius: 14px;
-      padding: 16px;
-      text-align: left;
-      margin-bottom: 20px;
-    }
-    .guide-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; }
-    .guide-steps {
-      margin: 0;
-      padding-left: 18px;
-      font-size: 0.88rem;
-      line-height: 1.6;
-      color: #e5e5ea;
-    }
-    .guide-steps b { color: #ffffff; }
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1e40af;
+            --secondary: #7c3aed;
+            --accent: #ec4899;
+            --success: #10b981;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --bg-light: #f9fafb;
+            --bg-white: #ffffff;
+            --border: #e5e7eb;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-lg: 0 10px 25px rgba(37, 99, 235, 0.1);
+            --shadow-xl: 0 20px 40px rgba(37, 99, 235, 0.15);
 
-    .btn-upload {
-      background: var(--blue);
-      color: var(--text);
-      border: none;
-      padding: 15px 20px;
-      border-radius: 12px;
-      font-size: 1rem;
-      font-weight: 600;
-      width: 100%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: 0.2s;
-    }
-    .btn-upload:active { opacity: 0.85; }
-    input[type="file"] { display: none; }
-    .loading { font-size: 0.9rem; color: var(--text-muted); text-align: center; display: none; margin-top: 16px; }
+            /* Màu Tết */
+            --tet-red: #b71c1c;
+            --tet-red-dark: #7a0000;
+            --tet-gold: #ffd700;
+            --tet-gold-soft: #ffe57f;
+        }
 
-    /* Popup iOS */
-    .popup-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-      padding: 16px;
-    }
-    .popup-overlay.active { display: flex; opacity: 1; }
-    .popup-box {
-      background: var(--popup-bg);
-      width: 100%;
-      max-width: 390px;
-      border-radius: 14px;
-      overflow: hidden;
-      transform: scale(0.95);
-      transition: transform 0.2s ease;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      max-height: 90dvh;
-      overflow-y: auto;
-    }
-    .popup-overlay.active .popup-box { transform: scale(1); }
-    .popup-content { padding: 18px; text-align: left; }
-    .popup-title { font-size: 1rem; font-weight: 600; margin-bottom: 14px; line-height: 1.4; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #f0f4ff 0%, #f9fafb 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
 
-    /* Bảng kẻ ô từng dòng — luôn 1 hàng ở mọi hướng ngang/dọc */
-    .spec-table {
-      width: 100%;
-      border-collapse: collapse;
-      border: 1px solid var(--separator);
-      border-radius: 10px;
-      overflow: hidden;
-      background: rgba(255, 255, 255, 0.03);
-    }
-    .spec-table tr {
-      border-bottom: 1px solid var(--separator);
-    }
-    .spec-table tr:last-child {
-      border-bottom: none;
-    }
-    .spec-table th,
-    .spec-table td {
-      padding: 10px 12px;
-      font-size: 0.88rem;
-      line-height: 1.25;
-      white-space: nowrap;
-      vertical-align: middle;
-    }
-    .spec-table th {
-      text-align: left;
-      font-weight: 500;
-      color: var(--text);
-      width: 1%;
-    }
-    .spec-table td {
-      text-align: right;
-      font-weight: 700;
-      color: var(--accent);
-      border-left: 1px solid var(--separator);
-    }
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 60px 20px 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
 
-    @media (max-width: 380px) {
-      .spec-table th,
-      .spec-table td {
-        padding: 9px 8px;
-        font-size: 0.8rem;
-      }
-    }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+        }
 
-    .note-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 14px; line-height: 1.4; }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 10s ease-in-out infinite reverse;
+        }
 
-    .select-container {
-      margin-bottom: 14px;
-      background: #2c2c2e;
-      border-radius: 8px;
-      padding: 8px;
-      display: none;
-    }
-    .select-container label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; padding-left: 4px; }
-    .select-wrapper { position: relative; }
-    .select-wrapper::after {
-      content: "▼"; position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-      font-size: 0.6rem; color: var(--text-muted); pointer-events: none;
-    }
-    select {
-      width: 100%;
-      background: transparent;
-      border: none;
-      color: var(--text);
-      font-size: 0.95rem;
-      outline: none;
-      padding: 4px;
-      appearance: none;
-      -webkit-appearance: none;
-    }
-    .popup-actions { display: flex; border-top: 1px solid var(--separator); }
-    .popup-actions button {
-      flex: 1;
-      background: transparent;
-      border: none;
-      padding: 14px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      outline: none;
-      color: var(--blue);
-    }
-    .popup-actions button:active { background: rgba(255,255,255,0.1); }
-  </style>
+        .header-content {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+            margin-bottom: 24px;
+            animation: slideDown 0.8s ease-out 0.1s backwards;
+            font-weight: 500;
+        }
+
+        .year-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.9em;
+            border: 1px solid rgba(255,255,255,0.3);
+            animation: slideDown 0.8s ease-out 0.2s backwards;
+        }
+
+        /* ============================================
+           COUNTDOWN TẾT — Khung màu Tết đỏ + vàng gold
+           ============================================ */
+        .countdown {
+            margin-top: 32px;
+            background: linear-gradient(135deg, var(--tet-red) 0%, var(--tet-red-dark) 100%);
+            border: 2px solid var(--tet-gold);
+            border-radius: 18px;
+            padding: 26px 20px 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 10px 40px rgba(183, 28, 28, 0.45),
+                0 0 30px rgba(255, 215, 0, 0.2),
+                inset 0 0 60px rgba(0, 0, 0, 0.2);
+            animation: slideDown 0.8s ease-out 0.3s backwards;
+        }
+
+        /* Vân hoa vàng nhẹ phía sau */
+        .countdown::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(255, 215, 0, 0.08) 0%, transparent 45%);
+            pointer-events: none;
+        }
+
+        /* Lồng đèn hai bên (trang trí) */
+        .countdown .lantern-l,
+        .countdown .lantern-r {
+            position: absolute;
+            top: 8px;
+            font-size: 1.8em;
+            opacity: 0.85;
+            z-index: 1;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
+        }
+
+        .countdown .lantern-l {
+            left: 14px;
+            animation: sway 3s ease-in-out infinite;
+        }
+
+        .countdown .lantern-r {
+            right: 14px;
+            animation: sway 3s ease-in-out infinite reverse;
+        }
+
+        @keyframes sway {
+            0%, 100% { transform: rotate(-10deg); }
+            50%      { transform: rotate(10deg); }
+        }
+
+        .countdown-title {
+            font-size: 1em;
+            font-weight: 800;
+            margin-bottom: 16px;
+            text-align: center;
+            color: var(--tet-gold);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .countdown-timer {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .countdown-item {
+            flex: 1;
+            max-width: 100px;
+            background: rgba(255, 215, 0, 0.12);
+            border: 1px solid rgba(255, 215, 0, 0.45);
+            border-radius: 10px;
+            padding: 12px 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: transform 0.2s ease, background 0.3s ease;
+        }
+
+        .countdown-item:hover {
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .countdown-value {
+            font-size: 2em;
+            font-weight: 800;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            color: var(--tet-gold);
+            text-shadow: 0 2px 12px rgba(255, 215, 0, 0.55);
+        }
+
+        .countdown-label {
+            font-size: 0.7em;
+            font-weight: 600;
+            color: rgba(255, 235, 200, 0.95);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Hiệu ứng nảy nhẹ mỗi khi giây đổi */
+        .countdown-value.tick {
+            animation: tickPop 0.25s ease-out;
+        }
+
+        @keyframes tickPop {
+            0%   { transform: scale(1.18); opacity: 0.75; }
+            100% { transform: scale(1);    opacity: 1; }
+        }
+
+        /* Câu "Còn ... nữa là giao thừa ..." */
+        .countdown-sentence {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px dashed rgba(255, 215, 0, 0.4);
+            text-align: center;
+            color: #fff5e6;
+            font-size: 0.95em;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+
+        .countdown-sentence strong {
+            color: var(--tet-gold);
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 1px 6px rgba(255, 215, 0, 0.5);
+            padding: 0 2px;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-white);
+            border-radius: 12px;
+            padding: 20px 24px;
+            text-decoration: none;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-md);
+            border: 2px solid rgba(37, 99, 235, 0.25);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.03) 0%, rgba(124, 58, 237, 0.03) 100%);
+        }
+
+        .card-icon {
+            font-size: 2em;
+            flex-shrink: 0;
+            display: inline-block;
+            animation: appear 0.6s ease-out backwards;
+        }
+
+        .card-content {
+            flex: 1;
+            text-align: left;
+        }
+
+        .card h3 {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .card p {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .card-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .card-link:hover {
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Category Sections */
+        .category {
+            margin-bottom: 60px;
+        }
+
+        .category-title {
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .category-title::before {
+            content: '';
+            width: 4px;
+            height: 28px;
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+            border-radius: 2px;
+        }
+
+        .cards-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--text-primary);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+        }
+
+        .copyright {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+
+        /* Watermark */
+        .watermark {
+            position: fixed;
+            right: 8px;
+            bottom: 4px;
+            font-size: 0.7em;
+            opacity: 0.15;
+            margin: 0;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* Animations */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(20px); }
+        }
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Stagger animation for cards (tối đa 6 card mỗi grid) */
+        .card {
+            animation: appear 0.6s ease-out backwards;
+        }
+
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        .card:nth-child(5) { animation-delay: 0.5s; }
+        .card:nth-child(6) { animation-delay: 0.6s; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 40px 20px 60px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+
+            .category-title {
+                font-size: 1.3em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 16px;
+            }
+
+            .header h1 {
+                font-size: 1.6em;
+                margin-bottom: 8px;
+            }
+
+            .card {
+                flex-direction: column;
+                text-align: center;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .card-content {
+                text-align: center;
+            }
+
+            .card-icon {
+                font-size: 1.8em;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .footer-links {
+                gap: 16px;
+            }
+
+            /* Responsive cho countdown */
+            .countdown {
+                padding: 22px 12px 16px;
+                margin-top: 24px;
+                border-radius: 14px;
+            }
+            .countdown-value { font-size: 1.5em; }
+            .countdown-label { font-size: 0.62em; }
+            .countdown-timer { gap: 6px; }
+            .countdown-item { padding: 9px 4px; }
+            .countdown-title { font-size: 0.88em; }
+            .countdown-sentence { font-size: 0.82em; }
+            .countdown .lantern-l,
+            .countdown .lantern-r { font-size: 1.4em; top: 4px; }
+        }
+
+        /* Utility */
+        .text-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
 </head>
 <body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1>Minh Nhựt</h1>
+            <p>Bộ Công Cụ & Ứng Dụng Web</p>
+            <div class="year-badge">✨ Năm 2026 - Thành Công & Hạnh Phúc</div>
 
-  <div class="landing" id="landing">
-    <h1>🔋 Kiểm tra Pin iPhone</h1>
-    <p class="sub">Xem số lần sạc và dung lượng pin thực tế từ file phân tích của máy.</p>
+            <!-- Countdown Tết 2027 - Màu Tết -->
+            <div class="countdown">
+                <span class="lantern-l">🏮</span>
+                <span class="lantern-r">🏮</span>
 
-    <div class="guide-box">
-      <div class="guide-title">Cách lấy file nhanh:</div>
-      <ol class="guide-steps">
-        <li>Mở <b>Cài đặt</b> → <b>Quyền riêng tư & Bảo mật</b>.</li>
-        <li>Chọn <b>Phân tích & Cải tiến</b> → <b>Dữ liệu phân tích</b>.</li>
-        <li>Tìm file bắt đầu bằng <b>Analytics-YYYY-MM-DD</b> (ưu tiên file ngày gần nhất).</li>
-        <li>Bấm nút <b>Chia sẻ</b> → <b>Lưu vào Tệp</b>, rồi tải lên bên dưới.</li>
-      </ol>
-    </div>
+                <div class="countdown-title">🧧 Tết Nguyên Đán Đinh Mùi 2027 🧧</div>
 
-    <label class="btn-upload" for="fileInput">📂 Tải file Analytics lên</label>
-    <input type="file" id="fileInput" accept=".ips,.json,.synced,.gz,.txt">
-    <div class="loading" id="loadingMsg">⏳ Đang xử lý tệp...</div>
-  </div>
+                <div class="countdown-timer">
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="cd-days">--</span>
+                        <span class="countdown-label">Ngày</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="cd-hours">--</span>
+                        <span class="countdown-label">Giờ</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="cd-minutes">--</span>
+                        <span class="countdown-label">Phút</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="cd-seconds">--</span>
+                        <span class="countdown-label">Giây</span>
+                    </div>
+                </div>
 
-  <div class="popup-overlay" id="popupOverlay">
-    <div class="popup-box">
-      <div class="popup-content">
-        <div class="popup-title" id="deviceTitle">Thông tin pin iPhone của bạn:</div>
-        <div class="select-container" id="selectContainer">
-          <label>Vui lòng chọn dòng máy của bạn:</label>
-          <div class="select-wrapper">
-            <select id="deviceSelect"><option value="">-- Đang tải --</option></select>
-          </div>
+                <div class="countdown-sentence" id="cd-sentence">
+                    Còn <strong id="cd-s-days">--</strong> ngày
+                    <strong id="cd-s-hours">--</strong> giờ
+                    <strong id="cd-s-minutes">--</strong> phút
+                    <strong id="cd-s-seconds">--</strong> giây
+                    nữa là giao thừa Tết Nguyên Đán Đinh Mùi 2027 🎊
+                </div>
+            </div>
         </div>
+    </header>
 
-        <table class="spec-table">
-          <tbody>
-            <tr>
-              <th>📅 Dữ liệu ngày</th>
-              <td id="valDate">--</td>
-            </tr>
-            <tr>
-              <th>🔋 Pin thiết kế</th>
-              <td id="valDesign">--</td>
-            </tr>
-            <tr>
-              <th>🔋 Pin thực tế</th>
-              <td id="valNominal">--</td>
-            </tr>
-            <tr>
-              <th>❤️ Sức khỏe pin</th>
-              <td id="valHealth">--</td>
-            </tr>
-            <tr>
-              <th>🛠️ Chu kỳ sạc</th>
-              <td id="valCycle">--</td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Category: Multimedia -->
+        <section class="category">
+            <h2 class="category-title">🎵 Âm Thanh & Đa Phương Tiện</h2>
+            <div class="cards-grid">
+                <a href="https://nhut990.github.io/audio/" class="card">
+                    <div class="card-icon">🎙️</div>
+                    <div class="card-content">
+                        <h3>Audio</h3>
+                        <p>Những bài hát không lời bất hủ, nhạc nền đài truyền hình, radio và ký ức xưa</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
 
-        <div class="note-text">Lưu ý: Dung lượng thiết kế là thông số mà Apple in trên viên pin của iPhone.</div>
-      </div>
-      <div class="popup-actions">
-        <button type="button" onclick="closePopup()">Xong</button>
-      </div>
+                <a href="https://nhut990.github.io/piano/" class="card">
+                    <div class="card-icon">🎹</div>
+                    <div class="card-content">
+                        <h3>Giả Lập Piano</h3>
+                        <p>Piano ảo với giao diện tương tác thực tế</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/piano/chord/" class="card">
+                    <div class="card-icon">🎼</div>
+                    <div class="card-content">
+                        <h3>Hợp Âm Piano</h3>
+                        <p>Tìm hiểu và thực hành các hợp âm piano</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Category: Design & Color -->
+        <section class="category">
+            <h2 class="category-title">🎨 Thiết Kế & Màu Sắc</h2>
+            <div class="cards-grid">
+                <a href="https://nhut990.github.io/color/" class="card">
+                    <div class="card-icon">🎨</div>
+                    <div class="card-content">
+                        <h3>Xem Mã Màu</h3>
+                        <p>Khám phá và quản lý các mã màu hex, RGB, HSL</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/color/lcd/" class="card">
+                    <div class="card-icon">📺</div>
+                    <div class="card-content">
+                        <h3>Test Màn Hình</h3>
+                        <p>Kiểm tra và hiệu chỉnh màu sắc màn hình</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Category: Testing & Tools -->
+        <section class="category">
+            <h2 class="category-title">🛠️ Công Cụ & Kiểm Tra</h2>
+            <div class="cards-grid">
+                <a href="https://nhut990.github.io/camtest/" class="card">
+                    <div class="card-icon">📷</div>
+                    <div class="card-content">
+                        <h3>Test Camera & Micro</h3>
+                        <p>Kiểm tra camera và microphone của thiết bị</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/qr-code/" class="card">
+                    <div class="card-icon">📱</div>
+                    <div class="card-content">
+                        <h3>Tạo & Đọc Mã QR</h3>
+                        <p>Tạo mã QR nhanh chóng và quét mã QR từ hình ảnh</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/keyboard-test/" class="card">
+                    <div class="card-icon">⌨️</div>
+                    <div class="card-content">
+                        <h3>Test Bàn Phím PC, Laptop</h3>
+                        <p>Kiểm tra các phím bàn phím và chức năng tương ứng</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/html-Tester/" class="card">
+                    <div class="card-icon">💻</div>
+                    <div class="card-content">
+                        <h3>HTML Tester</h3>
+                        <p>Soạn, chạy thử và xem trước code HTML/CSS/JS trực tiếp trên trình duyệt</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/photo-gps/" class="card">
+                    <div class="card-icon">📍</div>
+                    <div class="card-content">
+                        <h3>Xác Định Vị Trí Từ Hình Ảnh</h3>
+                        <p>Trích xuất tọa độ GPS từ ảnh gốc, hỗ trợ JPG, PNG, HEIC</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/calculator/" class="card">
+                    <div class="card-icon">🧮</div>
+                    <div class="card-content">
+                        <h3>Máy Tính</h3>
+                        <p>Máy tính toán online cơ bản thông minh, có lưu lại lịch sử tính toán</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Category: Productivity -->
+        <section class="category">
+            <h2 class="category-title">📅 Năng Suất & Tổ Chức</h2>
+            <div class="cards-grid">
+                <a href="https://nhut990.github.io/lich/" class="card">
+                    <div class="card-icon">📆</div>
+                    <div class="card-content">
+                        <h3>Lịch</h3>
+                        <p>Quản lý lịch và sự kiện hàng ngày</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Category: System & Apps -->
+        <section class="category">
+            <h2 class="category-title">💻 Hệ Thống & Ứng Dụng</h2>
+            <div class="cards-grid">
+                <a href="https://nhut990.github.io/Windows/" class="card">
+                    <div class="card-icon">🪟</div>
+                    <div class="card-content">
+                        <h3>Windows</h3>
+                        <p>Công cụ, phần mềm, bản ISO và hướng dẫn cài đặt Windows</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/appcuios/" class="card">
+                    <div class="card-icon">📱</div>
+                    <div class="card-content">
+                        <h3>Ứng Dụng iOS Cũ</h3>
+                        <p>Truy cập ứng dụng iOS phiên bản cũ</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/Bundle/" class="card">
+                    <div class="card-icon">📦</div>
+                    <div class="card-content">
+                        <h3>Tìm Bundle ID</h3>
+                        <p>Tìm Bundle ID của ứng dụng App Store</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+
+                <a href="https://nhut990.github.io/i/" class="card">
+                    <div class="card-icon">🔗</div>
+                    <div class="card-content">
+                        <h3>Tạo Link Cài Đặt IPA</h3>
+                        <p>Tạo liên kết cài đặt trực tiếp cho file IPA trên thiết bị iOS</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Category: Games & Entertainment -->
+        <section class="category">
+            <h2 class="category-title">🎮 Trò Chơi & Giải Trí</h2>
+            <div class="cards-grid">
+                <a href="https://nhut990.github.io/nes/" class="card">
+                    <div class="card-icon">🕹️</div>
+                    <div class="card-content">
+                        <h3>Giả Lập Nintendo NES</h3>
+                        <p>Chơi game NES online ngay trên trình duyệt với nhiều game có sẵn</p>
+                    </div>
+                    <span class="card-link">Mở →</span>
+                </a>
+            </div>
+        </section>
     </div>
-  </div>
 
-<script>
-  "use strict";
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#top">Về Đầu Trang</a>
+            </div>
 
-  const MAX_FILE_SIZE = 200 * 1024 * 1024;
-  const MIN_FILE_SIZE = 10;
+            <div class="copyright">
+                <p>Created by <strong>Minh Nhựt</strong></p>
+                <p>&copy; 2026 - All Rights Reserved</p>
+            </div>
+        </div>
+        <p class="watermark">nhut117se4</p>
+    </footer>
 
-  const IPHONE_SPECS = {
-    "iPhone5,1": { name: "iPhone 5", cap: 1440 }, "iPhone5,2": { name: "iPhone 5", cap: 1440 },
-    "iPhone5,3": { name: "iPhone 5c", cap: 1510 }, "iPhone5,4": { name: "iPhone 5c", cap: 1510 },
-    "iPhone6,1": { name: "iPhone 5s", cap: 1560 }, "iPhone6,2": { name: "iPhone 5s", cap: 1560 },
-    "iPhone7,2": { name: "iPhone 6", cap: 1810 }, "iPhone7,1": { name: "iPhone 6 Plus", cap: 2915 },
-    "iPhone8,1": { name: "iPhone 6s", cap: 1715 }, "iPhone8,2": { name: "iPhone 6s Plus", cap: 2750 },
-    "iPhone8,4": { name: "iPhone SE (2016)", cap: 1624 },
-    "iPhone9,1": { name: "iPhone 7", cap: 1960 }, "iPhone9,3": { name: "iPhone 7", cap: 1960 },
-    "iPhone9,2": { name: "iPhone 7 Plus", cap: 2900 }, "iPhone9,4": { name: "iPhone 7 Plus", cap: 2900 },
-    "iPhone10,1": { name: "iPhone 8", cap: 1821 }, "iPhone10,4": { name: "iPhone 8", cap: 1821 },
-    "iPhone10,2": { name: "iPhone 8 Plus", cap: 2691 }, "iPhone10,5": { name: "iPhone 8 Plus", cap: 2691 },
-    "iPhone10,3": { name: "iPhone X", cap: 2716 }, "iPhone10,6": { name: "iPhone X", cap: 2716 },
-    "iPhone11,2": { name: "iPhone XS", cap: 2658 }, "iPhone11,4": { name: "iPhone XS Max", cap: 3174 },
-    "iPhone11,6": { name: "iPhone XS Max", cap: 3174 }, "iPhone11,8": { name: "iPhone XR", cap: 2942 },
-    "iPhone12,1": { name: "iPhone 11", cap: 3110 }, "iPhone12,3": { name: "iPhone 11 Pro", cap: 3046 },
-    "iPhone12,5": { name: "iPhone 11 Pro Max", cap: 3969 }, "iPhone12,8": { name: "iPhone SE (2020)", cap: 1821 },
-    "iPhone13,1": { name: "iPhone 12 mini", cap: 2227 }, "iPhone13,2": { name: "iPhone 12", cap: 2815 },
-    "iPhone13,3": { name: "iPhone 12 Pro", cap: 2815 }, "iPhone13,4": { name: "iPhone 12 Pro Max", cap: 3687 },
-    "iPhone14,4": { name: "iPhone 13 mini", cap: 2406 }, "iPhone14,5": { name: "iPhone 13", cap: 3227 },
-    "iPhone14,2": { name: "iPhone 13 Pro", cap: 3095 }, "iPhone14,3": { name: "iPhone 13 Pro Max", cap: 4352 },
-    "iPhone14,6": { name: "iPhone SE (2022)", cap: 2018 },
-    "iPhone14,7": { name: "iPhone 14", cap: 3279 }, "iPhone14,8": { name: "iPhone 14 Plus", cap: 4325 },
-    "iPhone15,2": { name: "iPhone 14 Pro", cap: 3200 }, "iPhone15,3": { name: "iPhone 14 Pro Max", cap: 4323 },
-    "iPhone15,4": { name: "iPhone 15", cap: 3349 }, "iPhone15,5": { name: "iPhone 15 Plus", cap: 4383 },
-    "iPhone16,1": { name: "iPhone 15 Pro", cap: 3274 }, "iPhone16,2": { name: "iPhone 15 Pro Max", cap: 4422 },
-    "iPhone17,3": { name: "iPhone 16", cap: 3561 }, "iPhone17,4": { name: "iPhone 16 Plus", cap: 4674 },
-    "iPhone17,1": { name: "iPhone 16 Pro", cap: 3582 }, "iPhone17,2": { name: "iPhone 16 Pro Max", cap: 4685 },
-    "iPhone17,5": { name: "iPhone 16e", cap: 4005 },
-    "iPhone18,3": { name: "iPhone 17", cap: 3692 }, "iPhone18,4": { name: "iPhone Air", cap: 3149 },
-    "iPhone18,1": { name: "iPhone 17 Pro", cap: 3988, capAlt: 4252 },
-    "iPhone18,2": { name: "iPhone 17 Pro Max", cap: 4823, capAlt: 5088 },
-    "iPhone18,5": { name: "iPhone 17e", cap: 4005 },
-    "iPhone19,1": { name: "iPhone 18 Pro", cap: 4056, capAlt: 4288 },
-    "iPhone19,2": { name: "iPhone 18 Pro Max", cap: 5391, capAlt: 5567 },
-    "iPhone19,3": { name: "iPhone 18", cap: 3850 }
-  };
+    <!-- Countdown Tết 2027 Script -->
+    <script>
+    (function () {
+        // 🎯 Mốc giao thừa Tết Đinh Mùi: 00:00 ngày 06/02/2027 (giờ VN, UTC+7)
+        // Muốn đổi mốc chỉ cần sửa chuỗi ISO bên dưới.
+        const targetDate = new Date('2027-02-06T00:00:00+07:00').getTime();
 
-  let currentFileName = "";
-  let extractedNominal = null;
-  let extractedCycle = null;
-  let extractedDate = "--";
+        // Các phần tử của khung số
+        const elDays    = document.getElementById('cd-days');
+        const elHours   = document.getElementById('cd-hours');
+        const elMinutes = document.getElementById('cd-minutes');
+        const elSeconds = document.getElementById('cd-seconds');
 
-  const fileInput = document.getElementById("fileInput");
-  const loadingMsg = document.getElementById("loadingMsg");
-  const popupOverlay = document.getElementById("popupOverlay");
-  const deviceSelect = document.getElementById("deviceSelect");
-  const selectContainer = document.getElementById("selectContainer");
+        // Các phần tử trong câu mô tả
+        const elSDays    = document.getElementById('cd-s-days');
+        const elSHours   = document.getElementById('cd-s-hours');
+        const elSMinutes = document.getElementById('cd-s-minutes');
+        const elSSeconds = document.getElementById('cd-s-seconds');
 
-  function initDropdown() {
-    const sorted = Object.entries(IPHONE_SPECS).sort((a, b) => a[1].name.localeCompare(b[1].name));
-    const added = new Set();
-    deviceSelect.innerHTML = '<option value="">-- Vui lòng chọn dòng máy --</option>';
-    sorted.forEach(([code, spec]) => {
-      if (!added.has(spec.name)) {
-        const opt = document.createElement("option");
-        opt.value = code;
-        opt.textContent = spec.name;
-        deviceSelect.appendChild(opt);
-        added.add(spec.name);
-      }
-    });
-  }
-  initDropdown();
+        const elTitle    = document.querySelector('.countdown-title');
+        const elSentence = document.getElementById('cd-sentence');
 
-  deviceSelect.addEventListener("change", function() {
-    const code = this.value;
-    if (code && IPHONE_SPECS[code]) {
-      document.getElementById("deviceTitle").textContent = `Thông tin pin ${IPHONE_SPECS[code].name} của bạn:`;
-      calculateAndRender(code);
-    }
-  });
+        const pad = (n) => String(n).padStart(2, '0');
 
-  document.addEventListener("keydown", function(e) {
-    if (e.key === "Escape" && popupOverlay.classList.contains("active")) {
-      closePopup();
-    }
-  });
+        let prevSeconds = -1;
+        let isDone = false;
 
-  fileInput.addEventListener("change", async function(e) {
-    if (!e.target.files || !e.target.files[0]) return;
-    const file = e.target.files[0];
+        function updateCountdown() {
+            const diff = targetDate - Date.now();
 
-    if (/session/i.test(file.name)) {
-      alert("❌ File bạn chọn là 'session' (chỉ có metadata, KHÔNG chứa dữ liệu pin).\n\nHãy tìm file Analytics KHÔNG có chữ 'session' trong tên.");
-      fileInput.value = "";
-      return;
-    }
-    if (file.size < MIN_FILE_SIZE) {
-      alert("❌ File rỗng hoặc không hợp lệ.");
-      fileInput.value = "";
-      return;
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      alert("❌ File quá lớn (>200MB). Hãy tách file theo ngày.");
-      fileInput.value = "";
-      return;
-    }
+            // ===== Đã tới / qua giao thừa =====
+            if (diff <= 0) {
+                if (isDone) return;
+                isDone = true;
 
-    currentFileName = file.name;
-    loadingMsg.style.display = "block";
+                // Khung số -> 0
+                elDays.textContent    = '0';
+                elHours.textContent   = '00';
+                elMinutes.textContent = '00';
+                elSeconds.textContent = '00';
 
-    try {
-      let textContent = "";
-      const headerBuf = await file.slice(0, 2).arrayBuffer();
-      const headerBytes = new Uint8Array(headerBuf);
-      const isGzip = headerBytes.length === 2 && headerBytes[0] === 0x1f && headerBytes[1] === 0x8b;
+                // Tiêu đề -> lời chúc
+                if (elTitle) {
+                    elTitle.textContent = '🎉 Chúc Mừng Năm Mới Đinh Mùi 2027! 🎉';
+                }
 
-      if (isGzip) {
-        if (!("DecompressionStream" in window)) {
-          throw new Error("Trình duyệt không hỗ trợ giải nén gzip.");
+                // Câu mô tả -> lời chúc
+                if (elSentence) {
+                    elSentence.innerHTML =
+                        '🎊 Giao thừa đã đến — Chúc Mừng Năm Mới Đinh Mùi 2027, Vạn Sự Như Ý! 🎊';
+                }
+                return;
+            }
+
+            // ===== Đang đếm ngược =====
+            const totalSeconds = Math.floor(diff / 1000);
+            const days    = Math.floor(totalSeconds / 86400);
+            const hours   = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            // Khung số
+            elDays.textContent    = days;           // ngày có thể > 99 -> hiển thị đủ
+            elHours.textContent   = pad(hours);
+            elMinutes.textContent = pad(minutes);
+            elSeconds.textContent = pad(seconds);
+
+            // Câu "Còn X ngày Y giờ Z phút W giây nữa là giao thừa ..."
+            if (elSDays)    elSDays.textContent    = days;
+            if (elSHours)   elSHours.textContent   = pad(hours);
+            if (elSMinutes) elSMinutes.textContent = pad(minutes);
+            if (elSSeconds) elSSeconds.textContent = pad(seconds);
+
+            // Hiệu ứng nảy khi giây đổi
+            if (seconds !== prevSeconds) {
+                elSeconds.classList.remove('tick');
+                void elSeconds.offsetWidth; // force reflow để restart animation
+                elSeconds.classList.add('tick');
+                prevSeconds = seconds;
+            }
         }
-        const ds = new DecompressionStream("gzip");
-        const decompressedStream = file.stream().pipeThrough(ds);
-        textContent = await new Response(decompressedStream).text();
-      } else {
-        textContent = await file.text();
-      }
 
-      processData(textContent);
-    } catch (err) {
-      console.error(err);
-      alert("❌ Lỗi đọc file:\n" + (err.message || "Không xác định") + "\n\nHãy thử giải nén file hoặc dùng tệp khác.");
-    } finally {
-      loadingMsg.style.display = "none";
-      fileInput.value = "";
-    }
-  });
-
-  function extractLastNumber(text, regexList) {
-    for (const regex of regexList) {
-      const flags = regex.flags.includes("g") ? regex.flags : regex.flags + "g";
-      const re = new RegExp(regex.source, flags);
-      let last = null, m;
-      while ((m = re.exec(text)) !== null) {
-        const val = parseInt(m[1], 10);
-        if (!Number.isNaN(val)) last = val;
-        if (m.index === re.lastIndex) re.lastIndex++;
-      }
-      if (last !== null) return last;
-    }
-    return null;
-  }
-
-  function extractLastString(text, regexList) {
-    for (const regex of regexList) {
-      const flags = regex.flags.includes("g") ? regex.flags : regex.flags + "g";
-      const re = new RegExp(regex.source, flags);
-      let last = null, m;
-      while ((m = re.exec(text)) !== null) {
-        if (m[1]) last = m[1].trim();
-        if (m.index === re.lastIndex) re.lastIndex++;
-      }
-      if (last !== null) return last;
-    }
-    return null;
-  }
-
-  function processData(text) {
-    extractedNominal = null;
-    extractedCycle = null;
-    extractedDate = "--";
-
-    extractedNominal = extractLastNumber(text, [
-      /"last_value_NominalChargeCapacity"\s*:\s*(\d+)/i,
-      /"NominalChargeCapacity"\s*:\s*(\d+)/i,
-      /"com\.apple\.power\.battery\.NominalChargeCapacity"\s*:\s*(\d+)/i,
-      /<key>com\.apple\.power\.battery\.NominalChargeCapacity<\/key>\s*<integer>(\d+)<\/integer>/i
-    ]);
-    extractedCycle = extractLastNumber(text, [
-      /"last_value_CycleCount"\s*:\s*(\d+)/i,
-      /"CycleCount"\s*:\s*(\d+)/i,
-      /"com\.apple\.power\.battery\.CycleCount"\s*:\s*(\d+)/i,
-      /<key>com\.apple\.power\.battery\.CycleCount<\/key>\s*<integer>(\d+)<\/integer>/i
-    ]);
-
-    if (extractedNominal === null && extractedCycle === null) {
-      alert("❌ Không tìm thấy dữ liệu pin trong file này.\n\nLưu ý:\n- Phải là file Analytics đầy đủ (không phải file session hay log lỗi app).\n- Nếu chắc chắn đúng file, có thể iOS chưa tổng hợp đủ dữ liệu, hãy thử file mới hơn.");
-      return;
-    }
-
-    let rawDate = extractLastString(text, [
-      /"timestamp"\s*:\s*"(\d{4}-\d{2}-\d{2})/i,
-      /"timestamp"\s*:\s*"(\d{4}\/\d{2}\/\d{2})/i
-    ]);
-    if (!rawDate && currentFileName) {
-      const match = currentFileName.match(/(\d{4}-\d{2}-\d{2})/);
-      if (match) rawDate = match[1];
-    }
-    if (rawDate) {
-      const parts = rawDate.replace(/\//g, "-").split("-");
-      extractedDate = parts[0].length === 4
-        ? `${parts[2]}/${parts[1]}/${parts[0]}`
-        : `${parts[0]}/${parts[1]}/${parts[2]}`;
-    } else {
-      extractedDate = "Không rõ";
-    }
-
-    const productCode = extractLastString(text, [
-      /"product"\s*:\s*"(iPhone\d+,\d+)"/i,
-      /"ProductType"\s*:\s*"(iPhone\d+,\d+)"/i,
-      /<key>ProductType<\/key>\s*<string>(iPhone\d+,\d+)<\/string>/i
-    ]);
-
-    if (productCode && IPHONE_SPECS[productCode]) {
-      selectContainer.style.display = "none";
-      document.getElementById("deviceTitle").textContent = `Thông tin pin ${IPHONE_SPECS[productCode].name} của bạn:`;
-      calculateAndRender(productCode);
-    } else {
-      selectContainer.style.display = "block";
-      deviceSelect.value = "";
-      document.getElementById("deviceTitle").textContent = "Không nhận diện được dòng máy";
-      document.getElementById("valDate").textContent = extractedDate;
-      document.getElementById("valNominal").textContent = extractedNominal !== null ? `${extractedNominal} mAh` : "--";
-      document.getElementById("valCycle").textContent = extractedCycle !== null ? `${extractedCycle} lần` : "--";
-      document.getElementById("valDesign").textContent = "--";
-      document.getElementById("valHealth").textContent = "--";
-    }
-
-    popupOverlay.classList.add("active");
-  }
-
-  function calculateAndRender(productCode) {
-    const spec = IPHONE_SPECS[productCode];
-    let designCap = spec.cap;
-
-    if (spec.capAlt && extractedNominal !== null) {
-      const diffMain = Math.abs(extractedNominal - spec.cap) / spec.cap;
-      const diffAlt  = Math.abs(extractedNominal - spec.capAlt) / spec.capAlt;
-      if (diffAlt < diffMain) designCap = spec.capAlt;
-    }
-
-    document.getElementById("valDate").textContent = extractedDate;
-    document.getElementById("valDesign").textContent = `${designCap} mAh`;
-    document.getElementById("valNominal").textContent = extractedNominal !== null ? `${extractedNominal} mAh` : "--";
-    document.getElementById("valCycle").textContent = extractedCycle !== null ? `${extractedCycle} lần` : "--";
-
-    let healthStr = "--";
-    if (extractedNominal !== null && designCap) {
-      const pct = (extractedNominal / designCap) * 100;
-      if (pct > 150) {
-        healthStr = "Lỗi dữ liệu";
-      } else {
-        healthStr = pct.toFixed(1).replace(".", ",") + "%";
-      }
-    }
-    document.getElementById("valHealth").textContent = healthStr;
-  }
-
-  function closePopup() {
-    popupOverlay.classList.remove("active");
-  }
-</script>
+        // Chạy ngay lần đầu, sau đó mỗi giây
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    })();
+    </script>
 </body>
 </html>
